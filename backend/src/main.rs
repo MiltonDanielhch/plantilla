@@ -7,6 +7,7 @@ use tower_http::cors::CorsLayer;
 // Declaración de módulos de la arquitectura
 mod api;
 mod core;
+mod data;
 
 #[tokio::main]
 async fn main() {
@@ -45,7 +46,7 @@ async fn main() {
     let app = Router::new()
         .route("/", get(root))
         .route("/health", get(health_check))
-        .route("/users", post(api::handlers::user::create_user))
+        .route("/users", post(api::handlers::user::create_user).get(api::handlers::user::get_users))
         .layer(CorsLayer::permissive())
         .with_state(pool);
 

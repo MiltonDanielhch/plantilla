@@ -1,0 +1,42 @@
+---
+// frontend/src/components/UserList.astro
+---
+
+<div class="user-list-container" style="margin-top: 2rem; padding: 1rem; border: 1px solid #374151; border-radius: 8px; background-color: #1f2937;">
+    <h3 style="color: #10b981; margin-bottom: 1rem;">📡 Frecuencia de Usuarios</h3>
+    <ul id="user-list" style="list-style: none; padding: 0;">
+        <li style="color: #9ca3af;">Sintonizando...</li>
+    </ul>
+</div>
+
+<script>
+    async function fetchUsers() {
+        const list = document.getElementById('user-list');
+        if (!list) return;
+
+        try {
+            const res = await fetch('http://localhost:3000/users');
+            if (!res.ok) throw new Error('Error de señal');
+            
+            const users = await res.json();
+            
+            if (users.length === 0) {
+                list.innerHTML = '<li style="color: #9ca3af;">Sin señales detectadas.</li>';
+                return;
+            }
+
+            list.innerHTML = users.map((u: any) => `
+                <li style="padding: 0.5rem; border-bottom: 1px solid #374151; display: flex; justify-content: space-between;">
+                    <span style="font-weight: bold; color: #e5e7eb;">${u.username}</span>
+                    <span style="color: #6b7280; font-size: 0.9em;">${u.email}</span>
+                </li>
+            `).join('');
+
+        } catch (error) {
+            console.error(error);
+            list.innerHTML = '<li style="color: #ef4444;">⚠️ Error de conexión con el Núcleo</li>';
+        }
+    }
+
+    fetchUsers();
+</script>

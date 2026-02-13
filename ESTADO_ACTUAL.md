@@ -1,7 +1,18 @@
 # 📋 Informe de Estado: Proyecto Sintonía 3026
 
-**Fecha de Corte:** Fase 4 (Integración Completa)
+**Fecha de Corte:** Fase 5 Completada (Expansión)
 **Referencia de Flujo:** `17_FLUJO_COMPLETO.md`
+
+## 0. Protocolo de Reactivación (CRÍTICO)
+⚠️ **Instrucción para el Agente (Nueva Sesión):**
+Para no gastar tokens buscando, aquí están las ubicaciones exactas de tu material de estudio y contexto:
+
+1.  **Rol:** Arquitecto de Software Senior & Agente Autónomo (Sintonía 3026).
+2.  **Material de Estudio (Reglas y Flujo):**
+    *   `guia/guia_dev_continuo/99_CONSOLA_MAESTRA.md` (Protocolo de interacción).
+    *   `guia/guia_dev_continuo/17_FLUJO_COMPLETO.md` (Pasos del desarrollo).
+    *   `INFORME.md` (Arquitectura del proyecto).
+3.  **Objetivo Inmediato:** Continuar desde el punto de "Próximos Pasos".
 
 ## 1. Resumen Ejecutivo
 El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica exitosamente con el Backend (Rust), permitiendo el registro de usuarios en la Base de Datos (SQLite). La prueba de concepto "Trinity" ha sido exitosa.
@@ -40,16 +51,28 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
     - [x] Componente `UserForm.astro` creado.
     - [x] Conexión exitosa (`fetch` -> `POST /users`).
 
+### ✅ Fase 5: Expansión (Lectura de Datos)
+- [x] **Capa de Datos (Backend):**
+    - [x] Módulo `data` y `user_repository` creados (Patrón Repositorio).
+- [x] **API (Backend):**
+    - [x] Endpoint `GET /users` implementado.
+    - [x] Ruteo actualizado en `main.rs`.
+- [x] **UI (Frontend):**
+    - [x] Componente `UserList.astro` creado (Fetch client-side).
+    - [x] Integración en `index.astro`.
+
 ## 3. Estado Técnico Actual
-- **Endpoint Activo:** `POST /users`
-    - **Prueba:** Usuario "Trinity" (ID: 2) creado desde la UI.
-- **Repositorio:** Listo para commit de "Integración".
+- **Endpoints Activos:**
+    - `POST /users` (Crear)
+    - `GET /users` (Listar)
+- **Componentes UI:** `UserForm`, `UserList`.
+- **Arquitectura:** Full Stack Reactivo (Rust + Astro + SQLite).
 
 ## 4. Próximos Pasos (Hoja de Ruta Inmediata)
-1.  **Commit:** Guardar el estado de integración.
-2.  **Fase 5: Expansión**:
-    - Listar usuarios en el Frontend (GET /users).
-    - Mejorar el diseño (Tailwind/CSS).
+1.  **Gestión de Versiones:** Realizar commit `feat: Fase 5 Expansion GET users`.
+2.  **Fase 6: Consolidación (Docker & Auth)**:
+    - Preparar `Dockerfile` para despliegue.
+    - Investigar autenticación básica.
 
 ---
 *Este archivo debe ser consultado al iniciar una nueva sesión para cargar el contexto.*

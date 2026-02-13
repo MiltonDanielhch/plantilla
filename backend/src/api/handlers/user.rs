@@ -22,3 +22,14 @@ pub async fn create_user(
         }
     }
 }
+
+pub async fn get_users(
+    State(pool): State<SqlitePool>,
+) -> Result<Json<Vec<User>>, (StatusCode, String)> {
+    let users = crate::data::user_repository::get_all(&pool).await.map_err(|e| {
+        tracing::error!("Error de sintonía al leer usuarios: {:?}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, "Fallo en la matriz de datos".to_string())
+    })?;
+
+    Ok(Json(users))
+}
