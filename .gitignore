@@ -1,0 +1,11 @@
+# Secretos y variables de entorno
+.env
+
+# Guía de desarrollo y manuales
+guia/
+
+# Artefactos de compilación de Rust
+target/
+
+# Dependencias de Node.js
+node_modules/
