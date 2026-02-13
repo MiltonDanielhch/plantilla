@@ -2,6 +2,7 @@ use axum::{routing::{get, post}, Router};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use std::{net::SocketAddr, str::FromStr};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tower_http::cors::CorsLayer;
 
 // Declaración de módulos de la arquitectura
 mod api;
@@ -45,6 +46,7 @@ async fn main() {
         .route("/", get(root))
         .route("/health", get(health_check))
         .route("/users", post(api::handlers::user::create_user))
+        .layer(CorsLayer::permissive())
         .with_state(pool);
 
     // 5. Definir dirección y arrancar
