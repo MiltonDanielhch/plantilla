@@ -1,6 +1,6 @@
 # 📋 Informe de Estado: Proyecto Sintonía 3026
 
-**Fecha de Corte:** Fase 5 Completada (Expansión)
+**Fecha de Corte:** Fase 6 Completada (Consolidación)
 **Referencia de Flujo:** `17_FLUJO_COMPLETO.md`
 
 ## 0. Protocolo de Reactivación (CRÍTICO)
@@ -61,6 +61,20 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
     - [x] Componente `UserList.astro` creado (Fetch client-side).
     - [x] Integración en `index.astro`.
 
+### ✅ Fase 6: Consolidación (Infraestructura Docker)
+- [x] Commit de cierre Fase 5 / Inicio Fase 6.
+- [x] Contenerización (Dockerfile & Compose).
+- [x] Generación de metadatos SQLx (`cargo sqlx prepare`).
+- [x] Despliegue y Construcción en WSL.
+- [x] Verificación de Endpoints (Backend vivo).
+- [x] Integración Full Stack en Docker (Frontend + Backend).
+- [x] Corrección UI (Fecha en UserList).
+
+### 🔄 Fase 7: Autenticación (En Progreso)
+- [ ] Migración DB (Password Hash).
+- [ ] Hashing (Argon2).
+- [ ] Tokens (JWT/Cookies).
+
 ## 3. Estado Técnico Actual
 - **Endpoints Activos:**
     - `POST /users` (Crear)
@@ -69,10 +83,10 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
 - **Arquitectura:** Full Stack Reactivo (Rust + Astro + SQLite).
 
 ## 4. Próximos Pasos (Hoja de Ruta Inmediata)
-1.  **Gestión de Versiones:** Realizar commit `feat: Fase 5 Expansion GET users`.
-2.  **Fase 6: Consolidación (Docker & Auth)**:
-    - Preparar `Dockerfile` para despliegue.
-    - Investigar autenticación básica.
+1.  **Gestión de Versiones:** Realizar commit `feat: Fase 6 Docker Infra`.
+2.  **Fase 7 (Autenticación):**
+    - Instalar dependencias (`argon2`, `tower-cookies`).
+    - Crear migración SQL para agregar columna `password_hash`.
 
 ---
 *Este archivo debe ser consultado al iniciar una nueva sesión para cargar el contexto.*
