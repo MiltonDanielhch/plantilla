@@ -1,4 +1,4 @@
-use axum::{middleware, routing::{get, post}, Router};
+use axum::{http::{header, Method}, middleware, routing::{get, post}, Router};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use std::{net::SocketAddr, str::FromStr};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -43,6 +43,13 @@ async fn main() {
 
     tracing::info!("💾 Memoria conectada: {}", db_url);
 
+    // Configuración CORS estricta para soportar cookies/credentials
+    let cors = CorsLayer::new()
+        .allow_origin("http://localhost:4321".parse::<axum::http::HeaderValue>().unwrap())
+        .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
+        .allow_headers([header::CONTENT_TYPE])
+        .allow_credentials(true);
+
     // 4. Construir la aplicación e inyectar el pool
     let app = Router::new()
         .route("/", get(root))
@@ -53,7 +60,7 @@ async fn main() {
             get(api::handlers::user::dashboard)
             .route_layer(middleware::from_fn(api::middleware::auth_guard))
         )
-        .layer(CorsLayer::permissive())
+        .layer(cors)
         .layer(CookieManagerLayer::new())
         .with_state(pool);
 
