@@ -1,6 +1,6 @@
 # 📋 Informe de Estado: Proyecto Sintonía 3026
 
-**Fecha de Corte:** Fase 8 Completada (Frontend Auth)
+**Fecha de Corte:** Fase 9 Completada (Ciclo de Vida de Sesión)
 **Referencia de Flujo:** `17_FLUJO_COMPLETO.md`
 
 ## 0. Protocolo de Reactivación (CRÍTICO)
@@ -80,10 +80,10 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
 - [x] Página `/login`.
 - [x] Página `/dashboard` (Protegida).
 
-### 🔄 Fase 9: Ciclo de Vida de Sesión (En Progreso)
-- [ ] Endpoint `POST /logout` (Backend).
-- [ ] Lógica de Logout en Frontend (Borrar Cookie).
-- [ ] Mejoras visuales (Feedback de carga).
+### ✅ Fase 9: Ciclo de Vida de Sesión
+- [x] Endpoint `POST /logout` (Backend).
+- [x] Lógica de Logout en Frontend (Borrar Cookie).
+- [x] Mejoras visuales (Feedback de carga).
 
 ## 3. Estado Técnico Actual
 - **Endpoints Activos:**
@@ -93,8 +93,8 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
 - **Arquitectura:** Full Stack Reactivo (Rust + Astro + SQLite).
 
 ## 4. Próximos Pasos (Hoja de Ruta Inmediata)
-1.  **Gestión de Versiones:** Realizar commit `feat: Fase 8 Frontend Auth`.
-2.  **Logout:** Implementar endpoint para destruir la cookie de sesión.
+1.  **Gestión de Versiones:** Realizar commit `feat: Fase 9 Ciclo de Vida Sesion`.
+2.  **Fase 10 (Seguridad):** Implementar validación de inputs estricta.
 
 ---
 *Este archivo debe ser consultado al iniciar una nueva sesión para cargar el contexto.*

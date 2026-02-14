@@ -82,6 +82,11 @@ pub async fn login(
     }
 }
 
+pub async fn logout(cookies: Cookies) -> impl IntoResponse {
+    cookies.remove(Cookie::new("auth_token", ""));
+    (StatusCode::OK, "Sesión cerrada correctamente").into_response()
+}
+
 pub async fn dashboard() -> impl IntoResponse {
     (StatusCode::OK, "🔐 Bienvenido al Panel de Control (Acceso Autorizado)")
 }

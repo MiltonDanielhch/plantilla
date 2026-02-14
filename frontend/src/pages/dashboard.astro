@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import LogoutButton from '../components/LogoutButton.astro';
 ---
 
 <Layout title="Panel de Control - Sintonía 3026">
@@ -22,9 +23,7 @@ import Layout from '../layouts/Layout.astro';
                 </p>
             </div>
 
-            <a href="/login" style="display: inline-block; background-color: #ef4444; color: white; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 4px; font-weight: bold;">
-                Cerrar Sesión (Salir)
-            </a>
+            <LogoutButton />
         </div>
     </main>
 </Layout>

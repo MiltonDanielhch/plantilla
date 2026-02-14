@@ -56,6 +56,7 @@ async fn main() {
         .route("/health", get(health_check))
         .route("/users", post(api::handlers::user::create_user).get(api::handlers::user::get_users))
         .route("/login", post(api::handlers::user::login))
+        .route("/logout", post(api::handlers::user::logout))
         .route("/dashboard", 
             get(api::handlers::user::dashboard)
             .route_layer(middleware::from_fn(api::middleware::auth_guard))

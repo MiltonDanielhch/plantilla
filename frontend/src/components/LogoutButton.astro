@@ -1,0 +1,42 @@
+---
+---
+<button id="logout-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors cursor-pointer" style="background-color: #ef4444; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; font-weight: bold; cursor: pointer; transition: opacity 0.2s;">
+    Cerrar Sesión
+</button>
+
+<script>
+    const btn = document.getElementById('logout-btn') as HTMLButtonElement;
+    
+    if (btn) {
+        btn.addEventListener('click', async () => {
+            // Feedback visual inmediato
+            const originalText = btn.innerText;
+            btn.innerText = "Cerrando...";
+            btn.style.opacity = "0.7";
+            btn.style.cursor = "not-allowed";
+            btn.disabled = true;
+
+            try {
+                // Llamamos al backend para que invalide la cookie
+                const response = await fetch('http://localhost:3000/logout', {
+                    method: 'POST',
+                    credentials: 'include' // CRÍTICO: Permite enviar/recibir cookies
+                });
+
+                if (response.ok) {
+                    // Si el backend confirma, redirigimos al login
+                    window.location.href = '/login';
+                } else {
+                    throw new Error('Fallo en el logout');
+                }
+            } catch (e) {
+                console.error("Error de conexión al cerrar sesión:", e);
+                // Restaurar estado si falla
+                btn.innerText = originalText;
+                btn.style.opacity = "1";
+                btn.style.cursor = "pointer";
+                btn.disabled = false;
+            }
+        });
+    }
+</script>
