@@ -154,6 +154,8 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
 ### 🚀 Fase 25: Despliegue en Producción
 - [x] Definición de Infraestructura (`infra/prod`).
 - [x] Limpieza: Eliminar `docker-compose.yml` redundante de la raíz.
+- [x] Creación de script `setup_server.sh`.
+- [ ] Simulacro de Producción (WSL) - En progreso.
 - [ ] Aprovisionamiento de Servidor (VPS).
 
 ## 3. Estado Técnico Actual
