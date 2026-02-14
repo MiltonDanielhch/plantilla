@@ -1,6 +1,6 @@
 # 📋 Informe de Estado: Proyecto Sintonía 3026
 
-**Fecha de Corte:** Fase 12 Completada (Flujo de Usuario)
+**Fecha de Corte:** Fase 13 Completada (Robustez Backend)
 **Referencia de Flujo:** `17_FLUJO_COMPLETO.md`
 
 ## 0. Protocolo de Reactivación (CRÍTICO)
@@ -99,6 +99,10 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
 - [x] Página dedicada `/register`.
 - [x] Landing Page (`index.astro`) limpia.
 
+### ✅ Fase 13: Robustez
+- [x] Detectar error de restricción única (SQLx).
+- [x] Retornar `409 Conflict` en duplicados.
+
 ## 3. Estado Técnico Actual
 - **Endpoints Activos:**
     - `POST /users` (Crear)
@@ -107,8 +111,8 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
 - **Arquitectura:** Full Stack Reactivo (Rust + Astro + SQLite).
 
 ## 4. Próximos Pasos (Hoja de Ruta Inmediata)
-1.  **Gestión de Versiones:** Realizar commit `feat: Fase 12 Flujo Usuario`.
-2.  **Fase 13 (Robustez):** Manejo de errores específicos (Usuario Duplicado).
+1.  **Gestión de Versiones:** Realizar commit `feat: Fase 13 Robustez Registro`.
+2.  **Fase 14 (Identidad):** Implementar JWT para identificar al usuario en el Dashboard.
 
 ---
 *Este archivo debe ser consultado al iniciar una nueva sesión para cargar el contexto.*

@@ -1,5 +1,6 @@
 use axum::{debug_handler, extract::State, http::StatusCode, Json, response::IntoResponse};
 use sqlx::SqlitePool;
+use sqlx::error::ErrorKind;
 use crate::core::models::user::{CreateUserRequest, LoginRequest, User};
 use argon2::{
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
@@ -39,7 +40,13 @@ pub async fn create_user(
     match result {
         Ok(user) => (StatusCode::CREATED, Json(user)).into_response(),
         Err(e) => {
-            // En un sistema real, manejaríamos mejor los errores (ej. duplicados)
+            // 2. Manejo de errores específicos (Duplicados)
+            if let Some(db_err) = e.as_database_error() {
+                if db_err.kind() == ErrorKind::UniqueViolation {
+                    return (StatusCode::CONFLICT, "El nombre de usuario ya existe").into_response();
+                }
+            }
+
             tracing::error!("Error creando usuario: {:?}", e);
             (StatusCode::INTERNAL_SERVER_ERROR, "Error al crear usuario").into_response()
         }
