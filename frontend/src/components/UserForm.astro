@@ -7,6 +7,10 @@
       <label for="username">Nombre de Usuario</label>
       <input type="text" id="username" name="username" placeholder="Ej. Neo" required />
     </div>
+    <div class="input-group">
+      <label for="password">Contraseña</label>
+      <input type="password" id="password" name="password" placeholder="Mínimo 8 caracteres" required />
+    </div>
     <button type="submit">Conectar a la Matrix</button>
   </form>
   <p id="statusMessage"></p>
@@ -16,25 +20,29 @@
   const form = document.getElementById('registerForm');
   const message = document.getElementById('statusMessage');
 
-  if (form) {
+  if (form && message) {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      message.textContent = "Procesando...";
+      message.style.color = "#fbbf24";
+
       const formData = new FormData(e.target as HTMLFormElement);
-      const username = formData.get('username');
+      const data = Object.fromEntries(formData);
 
       try {
         const response = await fetch('http://localhost:3000/users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username }),
+          body: JSON.stringify(data),
         });
 
         if (response.ok) {
-          const data = await response.json();
-          message.textContent = `✅ Usuario creado: ${data.username} (ID: ${data.id})`;
+          const resData = await response.json();
+          message.textContent = `✅ Usuario creado: ${resData.username} (ID: ${resData.id})`;
           message.style.color = '#4ade80';
         } else {
-          message.textContent = '❌ Error al crear usuario';
+          const errorText = await response.text();
+          message.textContent = `❌ ${errorText}`;
           message.style.color = '#f87171';
         }
       } catch (error) {
@@ -48,7 +56,9 @@
 
 <style>
   .user-card { background: #1f2937; color: white; padding: 2rem; border-radius: 1rem; max-width: 400px; margin: 2rem auto; font-family: system-ui; }
-  input { width: 100%; padding: 0.5rem; margin: 0.5rem 0 1rem; border-radius: 0.25rem; border: none; }
+  .input-group { margin-bottom: 1rem; }
+  label { display: block; margin-bottom: 0.5rem; color: #9ca3af; }
+  input { width: 100%; padding: 0.5rem; border-radius: 0.25rem; border: 1px solid #374151; background: #111827; color: white; }
   button { background: #6366f1; color: white; border: none; padding: 0.75rem; width: 100%; border-radius: 0.25rem; cursor: pointer; font-weight: bold; }
   button:hover { background: #4f46e5; }
 </style>
