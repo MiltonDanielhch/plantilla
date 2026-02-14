@@ -103,7 +103,10 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
 - [x] Detectar error de restricción única (SQLx).
 - [x] Retornar `409 Conflict` en duplicados.
 
-## 3. Estado Técnico Actual
+### 🆔 Fase 14: Identidad (JWT) (En Progreso)
+- [ ] Instalar `jsonwebtoken` y `chrono`.
+- [ ] Generar Token en Login.
+- [ ] Leer Identidad en Dashboard.
 - **Endpoints Activos:**
     - `POST /users` (Crear)
     - `GET /users` (Listar)

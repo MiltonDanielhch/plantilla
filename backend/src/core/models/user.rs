@@ -25,3 +25,9 @@ pub struct LoginRequest {
     pub username: String,
     pub password: String,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Claims {
+    pub sub: String, // Subject (Usuario)
+    pub exp: usize,  // Expiration
+}

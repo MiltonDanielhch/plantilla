@@ -1,13 +1,15 @@
 use axum::{debug_handler, extract::State, http::StatusCode, Json, response::IntoResponse};
 use sqlx::SqlitePool;
 use sqlx::error::ErrorKind;
-use crate::core::models::user::{CreateUserRequest, LoginRequest, User};
+use crate::core::models::user::{CreateUserRequest, LoginRequest, User, Claims};
 use argon2::{
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
 use tower_cookies::{Cookie, Cookies};
 use validator::Validate;
+use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey};
+use chrono::{Utc, Duration};
 
 pub async fn create_user(
     State(pool): State<SqlitePool>,
@@ -88,7 +90,15 @@ pub async fn login(
 
     if Argon2::default().verify_password(payload.password.as_bytes(), &parsed_hash).is_ok() {
         // Crear cookie de sesión (temporalmente un valor fijo)
-        cookies.add(Cookie::new("auth_token", "token-secreto-temporal"));
+        // cookies.add(Cookie::new("auth_token", "token-secreto-temporal"));
+        
+        // GENERAR JWT
+        let expiration = Utc::now().checked_add_signed(Duration::hours(24)).expect("Tiempo inválido").timestamp();
+        let claims = Claims { sub: user.username, exp: expiration as usize };
+        // NOTA: En producción, "secret" debe venir de variables de entorno (.env)
+        let token = encode(&Header::default(), &claims, &EncodingKey::from_secret("secret".as_ref())).unwrap();
+        
+        cookies.add(Cookie::new("auth_token", token));
         (StatusCode::OK, "Login exitoso").into_response()
     } else {
         (StatusCode::UNAUTHORIZED, "Credenciales inválidas").into_response()
@@ -100,6 +110,18 @@ pub async fn logout(cookies: Cookies) -> impl IntoResponse {
     (StatusCode::OK, "Sesión cerrada correctamente").into_response()
 }
 
-pub async fn dashboard() -> impl IntoResponse {
-    (StatusCode::OK, "🔐 Bienvenido al Panel de Control (Acceso Autorizado)")
+pub async fn dashboard(cookies: Cookies) -> impl IntoResponse {
+    let cookie = cookies.get("auth_token").map(|c| c.value().to_string()).unwrap_or_default();
+
+    // Decodificar el token para saber quién es
+    let token_data = decode::<Claims>(
+        &cookie,
+        &DecodingKey::from_secret("secret".as_ref()),
+        &Validation::default()
+    );
+
+    match token_data {
+        Ok(c) => (StatusCode::OK, format!("🔐 Bienvenido al Panel de Control, Agente {}", c.claims.sub)).into_response(),
+        Err(_) => (StatusCode::UNAUTHORIZED, "Sesión inválida o expirada").into_response()
+    }
 }
