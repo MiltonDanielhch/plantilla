@@ -38,8 +38,11 @@
 
         if (response.ok) {
           const resData = await response.json();
-          message.textContent = `✅ Usuario creado: ${resData.username} (ID: ${resData.id})`;
+          message.textContent = `✅ Usuario creado: ${resData.username}. Redirigiendo...`;
           message.style.color = '#4ade80';
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
         } else {
           const errorText = await response.text();
           message.textContent = `❌ ${errorText}`;

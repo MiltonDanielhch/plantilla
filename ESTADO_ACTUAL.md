@@ -1,6 +1,6 @@
 # 📋 Informe de Estado: Proyecto Sintonía 3026
 
-**Fecha de Corte:** Fase 11 Completada (UX Registro)
+**Fecha de Corte:** Fase 12 Completada (Flujo de Usuario)
 **Referencia de Flujo:** `17_FLUJO_COMPLETO.md`
 
 ## 0. Protocolo de Reactivación (CRÍTICO)
@@ -94,6 +94,11 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
 - [x] Actualizar `UserForm` con campo Password.
 - [x] Mostrar errores de validación del Backend en Frontend.
 
+### ✅ Fase 12: Flujo de Usuario
+- [x] Redirección automática al Login tras registro.
+- [x] Página dedicada `/register`.
+- [x] Landing Page (`index.astro`) limpia.
+
 ## 3. Estado Técnico Actual
 - **Endpoints Activos:**
     - `POST /users` (Crear)
@@ -102,8 +107,8 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
 - **Arquitectura:** Full Stack Reactivo (Rust + Astro + SQLite).
 
 ## 4. Próximos Pasos (Hoja de Ruta Inmediata)
-1.  **Gestión de Versiones:** Realizar commit `feat: Fase 11 UX Registro`.
-2.  **Fase 12 (Flujo):** Redirección automática al Login tras registro exitoso.
+1.  **Gestión de Versiones:** Realizar commit `feat: Fase 12 Flujo Usuario`.
+2.  **Fase 13 (Robustez):** Manejo de errores específicos (Usuario Duplicado).
 
 ---
 *Este archivo debe ser consultado al iniciar una nueva sesión para cargar el contexto.*

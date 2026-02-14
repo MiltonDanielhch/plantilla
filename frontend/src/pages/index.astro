@@ -1,19 +1,19 @@
 ---
-import UserForm from '../components/UserForm.astro';
-import UserList from '../components/UserList.astro';
+import Layout from '../layouts/Layout.astro';
 ---
 
-<html lang="es">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Sintonía 3026</title>
-	</head>
-	<body style="background-color: #111827; color: white; font-family: system-ui;">
-		<h1 style="text-align: center; margin-top: 2rem;">Sistema Semilla 3026</h1>
-		<UserForm />
-		<div style="max-width: 400px; margin: 0 auto;"><UserList /></div>
-	</body>
-</html>
+<Layout title="Sistema Semilla 3026">
+    <main style="text-align: center; margin-top: 5rem; color: white; font-family: system-ui;">
+        <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Bienvenido al Sistema Semilla</h1>
+        <p style="color: #9ca3af; margin-bottom: 3rem;">La arquitectura base está operativa.</p>
+        
+        <div style="display: flex; justify-content: center; gap: 2rem;">
+            <a href="/login" style="background-color: #6366f1; color: white; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 0.5rem; font-weight: bold; transition: background-color 0.2s;">
+                Iniciar Sesión
+            </a>
+            <a href="/register" style="background-color: #10b981; color: white; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 0.5rem; font-weight: bold; transition: background-color 0.2s;">
+                Registrarse
+            </a>
+        </div>
+    </main>
+</Layout>
