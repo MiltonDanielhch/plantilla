@@ -1,0 +1,63 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Panel de Control - Sintonía 3026">
+    <main style="max-width: 800px; margin: 2rem auto; padding: 2rem;">
+        <!-- Estado de Carga -->
+        <div id="loading" style="text-align: center; color: #9ca3af; margin-top: 4rem;">
+            <p>Verificando credenciales de acceso...</p>
+        </div>
+
+        <!-- Contenido Protegido (Oculto por defecto) -->
+        <div id="dashboard-content" style="display: none;">
+            <h1 style="color: #10b981; margin-bottom: 1rem; border-bottom: 1px solid #374151; padding-bottom: 1rem;">
+                🎛️ Panel de Control
+            </h1>
+            
+            <div style="background: #1f2937; padding: 2rem; border-radius: 8px; border: 1px solid #374151; margin-bottom: 2rem;">
+                <h3 style="color: #60a5fa; margin-bottom: 0.5rem;">Mensaje del Núcleo:</h3>
+                <p id="secret-message" style="color: #e5e7eb; font-size: 1.2rem; font-family: monospace;">
+                    Cargando datos encriptados...
+                </p>
+            </div>
+
+            <a href="/login" style="display: inline-block; background-color: #ef4444; color: white; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 4px; font-weight: bold;">
+                Cerrar Sesión (Salir)
+            </a>
+        </div>
+    </main>
+</Layout>
+
+<script>
+    const content = document.getElementById('dashboard-content');
+    const loading = document.getElementById('loading');
+    const secretMessage = document.getElementById('secret-message');
+
+    async function initDashboard() {
+        try {
+            // Intentamos obtener el secreto enviando la cookie (credentials: include)
+            const response = await fetch('http://localhost:3000/dashboard', {
+                method: 'GET',
+                credentials: 'include' 
+            });
+
+            if (response.ok) {
+                // ✅ Autorizado: Mostramos el contenido
+                const text = await response.text();
+                if (secretMessage) secretMessage.textContent = text;
+                if (content) content.style.display = 'block';
+                if (loading) loading.style.display = 'none';
+            } else {
+                // ⛔ No Autorizado: Al login
+                window.location.href = '/login';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            if (loading) loading.innerHTML = '<p style="color: #ef4444;">⚠️ Error de conexión con el servidor.</p>';
+        }
+    }
+
+    // Ejecutar al cargar
+    initDashboard();
+</script>

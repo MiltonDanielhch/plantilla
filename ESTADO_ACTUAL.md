@@ -1,6 +1,6 @@
 # 📋 Informe de Estado: Proyecto Sintonía 3026
 
-**Fecha de Corte:** Fase 6 Completada (Consolidación)
+**Fecha de Corte:** Fase 8 Completada (Frontend Auth)
 **Referencia de Flujo:** `17_FLUJO_COMPLETO.md`
 
 ## 0. Protocolo de Reactivación (CRÍTICO)
@@ -70,10 +70,20 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
 - [x] Integración Full Stack en Docker (Frontend + Backend).
 - [x] Corrección UI (Fecha en UserList).
 
-### 🔄 Fase 7: Autenticación (En Progreso)
-- [ ] Migración DB (Password Hash).
-- [ ] Hashing (Argon2).
-- [ ] Tokens (JWT/Cookies).
+### ✅ Fase 7: Autenticación (Seguridad)
+- [x] Migración DB (Password Hash).
+- [x] Hashing (Argon2).
+- [x] Sesiones (Cookies) y Middleware.
+
+### ✅ Fase 8: Integración Frontend Auth (Frontend)
+- [x] Componente `LoginForm` (con `credentials: include`).
+- [x] Página `/login`.
+- [x] Página `/dashboard` (Protegida).
+
+### 🔄 Fase 9: Ciclo de Vida de Sesión (En Progreso)
+- [ ] Endpoint `POST /logout` (Backend).
+- [ ] Lógica de Logout en Frontend (Borrar Cookie).
+- [ ] Mejoras visuales (Feedback de carga).
 
 ## 3. Estado Técnico Actual
 - **Endpoints Activos:**
@@ -83,10 +93,8 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
 - **Arquitectura:** Full Stack Reactivo (Rust + Astro + SQLite).
 
 ## 4. Próximos Pasos (Hoja de Ruta Inmediata)
-1.  **Gestión de Versiones:** Realizar commit `feat: Fase 6 Docker Infra`.
-2.  **Fase 7 (Autenticación):**
-    - Instalar dependencias (`argon2`, `tower-cookies`).
-    - Crear migración SQL para agregar columna `password_hash`.
+1.  **Gestión de Versiones:** Realizar commit `feat: Fase 8 Frontend Auth`.
+2.  **Logout:** Implementar endpoint para destruir la cookie de sesión.
 
 ---
 *Este archivo debe ser consultado al iniciar una nueva sesión para cargar el contexto.*
