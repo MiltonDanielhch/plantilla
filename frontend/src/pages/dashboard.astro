@@ -84,7 +84,7 @@ import AuditTable from '../components/AuditTable.astro';
                 if (loading) loading.style.display = 'none';
             } else {
                 // ⛔ No Autorizado: Al login
-                window.location.href = '/login';
+                window.location.href = '/login/';
             }
         } catch (error) {
             console.error('Error:', error);
@@ -96,7 +96,7 @@ import AuditTable from '../components/AuditTable.astro';
     initDashboard();
 
     // Lógica de Pestañas
-    function switchTab(tab) {
+    function switchTab(tab: string) {
         if (tab === 'users') {
             if(viewUsers) viewUsers.style.display = 'block';
             if(viewAudit) viewAudit.style.display = 'none';

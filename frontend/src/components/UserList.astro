@@ -4,13 +4,21 @@ const { isAdmin = false } = Astro.props;
 
 <div class="user-list-container" data-is-admin={isAdmin} style="margin-top: 2rem; padding: 1rem; border: 1px solid #374151; border-radius: 8px; background-color: #1f2937;">
     <h3 style="color: #10b981; margin-bottom: 1rem;">📡 Frecuencia de Usuarios</h3>
+    
+    <!-- Barra de Búsqueda -->
+    <div style="margin-bottom: 1rem;">
+        <input type="text" id="user-search-input" placeholder="🔍 Buscar por nombre o email..." 
+            style="width: 100%; padding: 0.75rem; background-color: #374151; border: 1px solid #4b5563; border-radius: 6px; color: #e5e7eb; outline: none;"
+        />
+    </div>
+
     <ul id="user-list" style="list-style: none; padding: 0;">
         <li style="color: #9ca3af;">Sintonizando...</li>
     </ul>
 </div>
 
 <script>
-    async function fetchUsers() {
+    async function fetchUsers(query = '') {
         const list = document.getElementById('user-list');
         const container = document.querySelector('.user-list-container') as HTMLElement;
         const isAdmin = container?.dataset.isAdmin === 'true';
@@ -18,7 +26,12 @@ const { isAdmin = false } = Astro.props;
         if (!list) return;
 
         try {
-            const res = await fetch('http://localhost:3000/users');
+            // Construir URL con parámetro de búsqueda si existe
+            const url = query 
+                ? `http://localhost:3000/users?q=${encodeURIComponent(query)}`
+                : 'http://localhost:3000/users';
+
+            const res = await fetch(url);
             if (!res.ok) throw new Error('Error de señal');
             
             const users = await res.json();
@@ -87,5 +100,15 @@ const { isAdmin = false } = Astro.props;
         }
     }
 
+    // Inicialización y Eventos
     fetchUsers();
+
+    // Búsqueda con Debounce (para no saturar el servidor)
+    const searchInput = document.getElementById('user-search-input');
+    let timeout: any;
+    searchInput?.addEventListener('input', (e) => {
+        const val = (e.target as HTMLInputElement).value;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => fetchUsers(val), 300);
+    });
 </script>

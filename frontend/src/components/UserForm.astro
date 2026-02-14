@@ -41,7 +41,7 @@
           message.textContent = `✅ Usuario creado: ${resData.username}. Redirigiendo...`;
           message.style.color = '#4ade80';
           setTimeout(() => {
-            window.location.href = '/login';
+            window.location.href = '/login/';
           }, 2000);
         } else {
           const errorText = await response.text();

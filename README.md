@@ -19,6 +19,10 @@ Arquitectura de software universal, segura y escalable. Diseñada para liberar e
 - Registro inmutable de acciones administrativas en base de datos (`audit_logs`).
 - Visualización integrada en el Dashboard.
 
+### 🔍 Búsqueda Inteligente
+- Filtrado en tiempo real de usuarios por nombre o email.
+- Integración reactiva en el Frontend sin recargas de página.
+
 ## Requisitos Previos
 - **Rust & Cargo**: [Instalar desde rustup.rs](https://rustup.rs/) (El cerebro)
 - **Node.js**: [Instalar LTS](https://nodejs.org/) (La vitrina)

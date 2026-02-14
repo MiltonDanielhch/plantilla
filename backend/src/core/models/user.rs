@@ -36,6 +36,11 @@ pub struct CreateUserRequest {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct UserSearch {
+    pub q: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct LoginRequest {
     pub username: String,
     pub password: String,

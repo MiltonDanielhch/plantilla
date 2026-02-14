@@ -1,7 +1,7 @@
-use axum::{debug_handler, extract::{Path, State}, http::StatusCode, Json, response::IntoResponse};
+use axum::{debug_handler, extract::{Path, State, Query}, http::StatusCode, Json, response::IntoResponse};
 use sqlx::SqlitePool;
 use sqlx::error::ErrorKind;
-use crate::core::models::user::{CreateUserRequest, LoginRequest, User, Claims, AuditLog};
+use crate::core::models::user::{CreateUserRequest, LoginRequest, User, Claims, AuditLog, UserSearch};
 use argon2::{
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
@@ -72,8 +72,9 @@ pub async fn get_audit_logs(
 
 pub async fn get_users(
     State(pool): State<SqlitePool>,
+    Query(params): Query<UserSearch>,
 ) -> Result<Json<Vec<User>>, (StatusCode, String)> {
-    let users = crate::data::user_repository::get_all(&pool).await.map_err(|e| {
+    let users = crate::data::user_repository::get_all(&pool, params.q).await.map_err(|e| {
         tracing::error!("Error de sintonía al leer usuarios: {:?}", e);
         (StatusCode::INTERNAL_SERVER_ERROR, "Fallo en la matriz de datos".to_string())
     })?;

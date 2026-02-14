@@ -51,7 +51,7 @@
                 if (response.ok) {
                     message.textContent = '✅ Acceso Autorizado. Redirigiendo...';
                     message.style.color = '#10b981';
-                    setTimeout(() => window.location.href = '/dashboard', 1000);
+                    setTimeout(() => window.location.href = '/dashboard/', 1000);
                 } else {
                     message.textContent = '⛔ Credenciales Inválidas';
                     message.style.color = '#ef4444';
