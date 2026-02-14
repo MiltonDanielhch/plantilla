@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use validator::Validate;
 
 #[derive(Debug, Serialize, FromRow)]
 pub struct User {
@@ -11,9 +12,11 @@ pub struct User {
     pub created_at: String, 
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct CreateUserRequest {
+    #[validate(length(min = 3, message = "El usuario debe tener al menos 3 caracteres"))]
     pub username: String,
+    #[validate(length(min = 8, message = "La contraseña debe tener al menos 8 caracteres"))]
     pub password: String,
 }
 

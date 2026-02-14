@@ -6,11 +6,17 @@ use argon2::{
     Argon2,
 };
 use tower_cookies::{Cookie, Cookies};
+use validator::Validate;
 
 pub async fn create_user(
     State(pool): State<SqlitePool>,
     Json(payload): Json<CreateUserRequest>,
 ) -> impl IntoResponse {
+    // 0. Validar inputs antes de procesar
+    if let Err(e) = payload.validate() {
+        return (StatusCode::BAD_REQUEST, format!("Datos inválidos: {}", e)).into_response();
+    }
+
     // 1. Generar Salt y Hash seguro
     let salt = SaltString::generate(&mut rand::thread_rng());
     let argon2 = Argon2::default();
