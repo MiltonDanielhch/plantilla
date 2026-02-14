@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
 use validator::Validate;
+use utoipa::{ToSchema, IntoParams};
 
-#[derive(Debug, Serialize, Deserialize, Type, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Type, Clone, PartialEq, ToSchema)]
 #[sqlx(type_name = "TEXT", rename_all = "lowercase")]
 pub enum Role {
     Admin,
@@ -15,7 +16,7 @@ impl Default for Role {
     }
 }
 
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, ToSchema)]
 pub struct User {
     pub id: i64,
     pub username: String,
@@ -27,7 +28,7 @@ pub struct User {
     pub created_at: String, 
 }
 
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct CreateUserRequest {
     #[validate(length(min = 3, message = "El usuario debe tener al menos 3 caracteres"))]
     pub username: String,
@@ -35,12 +36,12 @@ pub struct CreateUserRequest {
     pub password: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
 pub struct UserSearch {
     pub q: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct LoginRequest {
     pub username: String,
     pub password: String,
@@ -53,7 +54,7 @@ pub struct Claims {
     pub exp: usize,  // Expiration
 }
 
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, ToSchema)]
 pub struct AuditLog {
     pub id: i64,
     pub admin_username: String,

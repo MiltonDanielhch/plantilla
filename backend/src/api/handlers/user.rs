@@ -12,6 +12,16 @@ use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey}
 use chrono::{Utc, Duration};
 use serde_json::json;
 
+#[utoipa::path(
+    post,
+    path = "/users",
+    request_body = CreateUserRequest,
+    responses(
+        (status = 201, description = "Usuario creado exitosamente", body = User),
+        (status = 409, description = "El usuario ya existe"),
+        (status = 400, description = "Datos inválidos")
+    )
+)]
 pub async fn create_user(
     State(pool): State<SqlitePool>,
     Json(payload): Json<CreateUserRequest>,
@@ -56,6 +66,13 @@ pub async fn create_user(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/audit-logs",
+    responses(
+        (status = 200, description = "Bitácora de auditoría del sistema", body = Vec<AuditLog>)
+    )
+)]
 pub async fn get_audit_logs(
     State(pool): State<SqlitePool>,
 ) -> Result<Json<Vec<AuditLog>>, (StatusCode, String)> {
@@ -70,6 +87,14 @@ pub async fn get_audit_logs(
     Ok(Json(logs))
 }
 
+#[utoipa::path(
+    get,
+    path = "/users",
+    params(UserSearch),
+    responses(
+        (status = 200, description = "Lista de usuarios registrados", body = Vec<User>)
+    )
+)]
 pub async fn get_users(
     State(pool): State<SqlitePool>,
     Query(params): Query<UserSearch>,
@@ -83,6 +108,15 @@ pub async fn get_users(
 }
 
 #[debug_handler]
+#[utoipa::path(
+    post,
+    path = "/login",
+    request_body = LoginRequest,
+    responses(
+        (status = 200, description = "Login exitoso (Cookie establecida)"),
+        (status = 401, description = "Credenciales inválidas")
+    )
+)]
 pub async fn login(
     State(pool): State<SqlitePool>,
     cookies: Cookies,
@@ -122,11 +156,25 @@ pub async fn login(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/logout",
+    responses(
+        (status = 200, description = "Sesión cerrada correctamente")
+    )
+)]
 pub async fn logout(cookies: Cookies) -> impl IntoResponse {
     cookies.remove(Cookie::new("auth_token", ""));
     (StatusCode::OK, "Sesión cerrada correctamente").into_response()
 }
 
+#[utoipa::path(
+    get,
+    path = "/dashboard",
+    responses(
+        (status = 200, description = "Información del usuario actual")
+    )
+)]
 pub async fn dashboard(cookies: Cookies) -> impl IntoResponse {
     let cookie = cookies.get("auth_token").map(|c| c.value().to_string()).unwrap_or_default();
 
@@ -147,6 +195,15 @@ pub async fn dashboard(cookies: Cookies) -> impl IntoResponse {
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/users/{id}",
+    params(("id" = i64, Path, description = "ID del usuario a eliminar")),
+    responses(
+        (status = 200, description = "Usuario eliminado y auditado"),
+        (status = 401, description = "No autorizado")
+    )
+)]
 pub async fn delete_user(
     State(pool): State<SqlitePool>,
     cookies: Cookies,

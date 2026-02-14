@@ -1,6 +1,6 @@
 # 📋 Informe de Estado: Proyecto Sintonía 3026
 
-**Fecha de Corte:** V1.0 ESTABLE (Fase 17 Completada - Auditoría y Roles)
+**Fecha de Corte:** INICIO V2.0 (Fase 20 - Planificación)
 **Referencia de Flujo:** `17_FLUJO_COMPLETO.md`
 
 ## 0. Protocolo de Reactivación (CRÍTICO)
@@ -128,25 +128,35 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
 - [x] Backend: Struct `UserSearch` y actualización de Query SQL.
 - [x] Frontend: Barra de búsqueda en `UserList` y lógica reactiva.
 
+### ✅ Fase 19: Producción y Limpieza
+- [x] **Producción:** Preparar `Dockerfile` optimizado (Multi-stage) para el Backend.
+- [x] **Despliegue:** Verificar construcción y ejecución.
+- [x] **Limpieza:** Eliminar código muerto o comentarios de debug excesivos.
+
+### 🚀 Fase 21: Documentación Viva (Swagger/OpenAPI)
+- [x] Instalación de `utoipa` y `utoipa-swagger-ui`.
+- [x] Configuración en `main.rs`.
+- [x] Documentación de Modelos y Handlers.
+
 ## 3. Estado Técnico Actual
 - **Endpoints Activos:**
     - `POST /users` (Crear)
     - `GET /users` (Listar)
     - `DELETE /users/:id` (Eliminar - Admin)
     - `GET /audit-logs` (Auditoría)
+    - `GET /swagger-ui` (Documentación Interactiva)
 - **Arquitectura:** Full Stack Reactivo (Rust + Astro + SQLite).
 
 ## 4. Próximos Pasos (Hoja de Ruta Inmediata)
-1.  **Producción:** Preparar `Dockerfile` optimizado (Multi-stage) para el Backend. (COMPLETADO)
-2.  **Despliegue:** Verificar construcción y ejecución. (COMPLETADO)
-3.  **Limpieza:** Eliminar código muerto o comentarios de debug excesivos. (COMPLETADO)
+**Fase 22: Testing Automatizado**
+1.  **Unit Testing:** Crear pruebas para la lógica de negocio (validaciones, hashing).
+2.  **Integration Testing:** Configurar un entorno de pruebas con base de datos en memoria o temporal para probar los endpoints reales.
+3.  **Refactor:** Asegurar que el código sea testable.
 
-# 🎉 PROYECTO FINALIZADO: V1.0 ESTABLE
-El sistema ha alcanzado todos los objetivos de la arquitectura base.
-- Autenticación Segura (Argon2 + JWT + Cookies).
-- Roles y Permisos (RBAC).
-- Auditoría y Logs.
-- Despliegue en Contenedores Optimizado.
+## Histórico de Versiones
+### 🎉 V1.0 ESTABLE (Completada)
+- **Logros:** Autenticación, RBAC, Auditoría, Docker.
+- **Estado:** Funcional y Desplegable.
 
 ---
 *Este archivo debe ser consultado al iniciar una nueva sesión para cargar el contexto.*

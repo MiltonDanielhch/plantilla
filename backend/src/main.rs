@@ -4,11 +4,38 @@ use std::{net::SocketAddr, str::FromStr};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use tower_http::cors::CorsLayer;
 use tower_cookies::CookieManagerLayer;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 // Declaración de módulos de la arquitectura
 mod api;
 mod core;
 mod data;
+
+#[derive(OpenApi)]
+#[openapi(
+    info(title = "Sintonía 3026 API", version = "1.0.0", description = "Documentación viva del sistema Sintonía 3026"),
+    paths(
+        api::handlers::user::create_user,
+        api::handlers::user::get_users,
+        api::handlers::user::login,
+        api::handlers::user::logout,
+        api::handlers::user::delete_user,
+        api::handlers::user::get_audit_logs,
+        api::handlers::user::dashboard,
+    ),
+    components(
+        schemas(
+            core::models::user::User,
+            core::models::user::CreateUserRequest,
+            core::models::user::LoginRequest,
+            core::models::user::Role,
+            core::models::user::AuditLog,
+            core::models::user::UserSearch,
+        )
+    )
+)]
+struct ApiDoc;
 
 #[tokio::main]
 async fn main() {
@@ -52,6 +79,7 @@ async fn main() {
 
     // 4. Construir la aplicación e inyectar el pool
     let app = Router::new()
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .route("/", get(root))
         .route("/health", get(health_check))
         .route("/users", post(api::handlers::user::create_user).get(api::handlers::user::get_users))
