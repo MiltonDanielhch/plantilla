@@ -5,13 +5,17 @@ pub mod data;
 use axum::{
     routing::{delete, get, post},
     Router, middleware,
-    http::{header, Method},
+    http::{header, Method, StatusCode},
+    extract::State,
+    response::IntoResponse,
 };
 use sqlx::SqlitePool;
 use tower_http::cors::CorsLayer;
 use tower_cookies::CookieManagerLayer;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
+use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
+use std::sync::Arc;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -45,6 +49,13 @@ pub fn create_app(pool: SqlitePool) -> Router {
         .allow_headers([header::CONTENT_TYPE])
         .allow_credentials(true);
 
+    // Configuración de Rate Limiting: 10 peticiones por segundo, ráfaga de 20
+    let governor_conf = Arc::new(GovernorConfigBuilder::default()
+        .per_second(10)
+        .burst_size(20)
+        .finish()
+        .unwrap());
+
     Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .route("/", get(root))
@@ -55,10 +66,19 @@ pub fn create_app(pool: SqlitePool) -> Router {
         .route("/users/:id", delete(api::handlers::user::delete_user).route_layer(middleware::from_fn(api::middleware::admin_guard)))
         .route("/dashboard", get(api::handlers::user::dashboard).route_layer(middleware::from_fn(api::middleware::auth_guard)))
         .route("/audit-logs", get(api::handlers::user::get_audit_logs).route_layer(middleware::from_fn(api::middleware::admin_guard)))
-        .layer(cors)
         .layer(CookieManagerLayer::new())
+        .layer(GovernorLayer { config: governor_conf })
+        .layer(cors) // CORS debe ser el último (externo) para manejar errores del Governor
         .with_state(pool)
 }
 
 async fn root() -> &'static str { "Sistema Semilla 3026: Online" }
-async fn health_check() -> &'static str { "OK" }
+async fn health_check(State(pool): State<SqlitePool>) -> impl IntoResponse {
+    match sqlx::query("SELECT 1").execute(&pool).await {
+        Ok(_) => (StatusCode::OK, "Sintonía 3026: Operativo (DB Conectada)"),
+        Err(e) => {
+            tracing::error!("Health Check Fallido: {:?}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Sintonía 3026: Error Crítico (DB Desconectada)")
+        }
+    }
+}

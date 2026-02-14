@@ -1,6 +1,6 @@
 # 📋 Informe de Estado: Proyecto Sintonía 3026
 
-**Fecha de Corte:** INICIO V2.0 (Fase 20 - Planificación)
+**Fecha de Corte:** V2.1 BOILERPLATE MAESTRO (Fase 28 Completada)
 **Referencia de Flujo:** `17_FLUJO_COMPLETO.md`
 
 ## 0. Protocolo de Reactivación (CRÍTICO)
@@ -155,8 +155,24 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
 - [x] Definición de Infraestructura (`infra/prod`).
 - [x] Limpieza: Eliminar `docker-compose.yml` redundante de la raíz.
 - [x] Creación de script `setup_server.sh`.
-- [ ] Simulacro de Producción (WSL) - En progreso.
-- [ ] Aprovisionamiento de Servidor (VPS).
+- [x] Simulacro de Producción (WSL) - Completado.
+- [x] **Documentación de Despliegue:** Guía creada en `guia/guia_dev_continuo/25_DESPLIEGUE_PRODUCCION.md`.
+- [ ] Aprovisionamiento de Servidor (VPS) y Dominio (Pendiente de compra).
+
+### ️ Fase 26: Seguridad Avanzada (Rate Limiting)
+- [x] Dependencia `tower-governor`.
+- [x] Middleware de limitación de peticiones (Global).
+- [x] Configuración de cuotas (10 req/seg).
+
+### 📈 Fase 27: Escalabilidad (Paginación)
+- [x] Actualizar `UserSearch` con `page` y `limit`.
+- [x] Implementar lógica SQL `LIMIT/OFFSET` en Repositorio.
+- [x] Conectar en Handler.
+
+### 🛡️ Fase 28: Robustez Operativa
+- [x] **Graceful Shutdown:** Manejo de señales Ctrl+C/SIGTERM.
+- [x] **Health Check Avanzado:** Verificación de conexión a DB en `/health`.
+- [x] **Validación Final:** Todos los tests (Unitarios + Integración) pasaron exitosamente.
 
 ## 3. Estado Técnico Actual
 - **Endpoints Activos:**
@@ -168,15 +184,19 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
 - **Arquitectura:** Full Stack Reactivo (Rust + Astro + SQLite).
 
 ## 4. Próximos Pasos (Hoja de Ruta Inmediata)
-**Fase 25: Despliegue**
-1.  **Subir:** Hacer Push de la carpeta `infra/prod` a GitHub.
-2.  **VPS:** Conectarse al servidor Linux.
-3.  **Ejecutar:** Clonar y lanzar `docker compose`.
+**PROYECTO FINALIZADO: PLANTILLA MAESTRA V2.1**
+El sistema está listo para ser guardado como base para futuros proyectos.
+1.  **Git:** Hacer commit final (`git commit -m "v2.1: boilerplate robusto"`).
+2.  **Tag:** Crear etiqueta de versión (`git tag v2.1`).
 
 ## Histórico de Versiones
 ### 🎉 V1.0 ESTABLE (Completada)
 - **Logros:** Autenticación, RBAC, Auditoría, Docker.
 - **Estado:** Funcional y Desplegable.
+
+### 🚀 V2.0 INDUSTRIALIZACIÓN (Completada)
+- **Logros:** Swagger, CI/CD, Tests E2E, Rate Limiting, Paginación.
+- **Estado:** Robusto y Escalable.
 
 ---
 *Este archivo debe ser consultado al iniciar una nueva sesión para cargar el contexto.*

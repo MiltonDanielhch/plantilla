@@ -2,7 +2,7 @@ use sqlx::{SqlitePool, QueryBuilder, Sqlite};
 use crate::core::models::user::User;
 
 /// Obtiene todos los usuarios registrados en la frecuencia
-pub async fn get_all(pool: &SqlitePool, filter: Option<String>) -> Result<Vec<User>, sqlx::Error> {
+pub async fn get_all(pool: &SqlitePool, filter: Option<String>, page: i64, limit: i64) -> Result<Vec<User>, sqlx::Error> {
     let mut query_builder: QueryBuilder<Sqlite> = QueryBuilder::new("SELECT id, username, password_hash, role, created_at FROM users");
 
     if let Some(q) = filter {
@@ -12,6 +12,15 @@ pub async fn get_all(pool: &SqlitePool, filter: Option<String>) -> Result<Vec<Us
     }
 
     query_builder.push(" ORDER BY created_at DESC");
+
+    // Paginación
+    let safe_page = if page < 1 { 1 } else { page };
+    let offset = (safe_page - 1) * limit;
+    
+    query_builder.push(" LIMIT ");
+    query_builder.push_bind(limit);
+    query_builder.push(" OFFSET ");
+    query_builder.push_bind(offset);
 
     let query = query_builder.build_query_as::<User>();
     query.fetch_all(pool).await

@@ -36,9 +36,16 @@ pub struct CreateUserRequest {
     pub password: String,
 }
 
+fn default_page() -> i64 { 1 }
+fn default_limit() -> i64 { 10 }
+
 #[derive(Debug, Deserialize, IntoParams, ToSchema)]
 pub struct UserSearch {
     pub q: Option<String>,
+    #[serde(default = "default_page")]
+    pub page: i64,
+    #[serde(default = "default_limit")]
+    pub limit: i64,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
