@@ -1,6 +1,6 @@
 # 📋 Informe de Estado: Proyecto Sintonía 3026
 
-**Fecha de Corte:** Fase 17 Completada (Auditoría y Trazabilidad)
+**Fecha de Corte:** V1.0 ESTABLE (Documentación y Limpieza)
 **Referencia de Flujo:** `17_FLUJO_COMPLETO.md`
 
 ## 0. Protocolo de Reactivación (CRÍTICO)
@@ -128,11 +128,12 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
     - `POST /users` (Crear)
     - `GET /users` (Listar)
     - `DELETE /users/:id` (Eliminar - Admin)
+    - `GET /audit-logs` (Auditoría)
 - **Arquitectura:** Full Stack Reactivo (Rust + Astro + SQLite).
 
 ## 4. Próximos Pasos (Hoja de Ruta Inmediata)
-1.  **Visualización de Auditoría:** Crear endpoint `GET /audit-logs` y vista en Frontend para leer los logs desde el Dashboard.
-2.  **Refinamiento UI:** Organizar el Dashboard con pestañas (Usuarios / Auditoría).
+1.  **Optimización:** Implementar búsqueda/filtrado en la lista de usuarios (Bonus).
+2.  **Producción:** Preparar `Dockerfile` optimizado para despliegue real.
 
 ---
 *Este archivo debe ser consultado al iniciar una nueva sesión para cargar el contexto.*

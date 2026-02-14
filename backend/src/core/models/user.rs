@@ -47,3 +47,12 @@ pub struct Claims {
     pub role: Role,  // Rango del usuario
     pub exp: usize,  // Expiration
 }
+
+#[derive(Debug, Serialize, FromRow)]
+pub struct AuditLog {
+    pub id: i64,
+    pub admin_username: String,
+    pub action: String,
+    pub target: String,
+    pub timestamp: String,
+}

@@ -1,7 +1,7 @@
 use axum::{debug_handler, extract::{Path, State}, http::StatusCode, Json, response::IntoResponse};
 use sqlx::SqlitePool;
 use sqlx::error::ErrorKind;
-use crate::core::models::user::{CreateUserRequest, LoginRequest, User, Claims};
+use crate::core::models::user::{CreateUserRequest, LoginRequest, User, Claims, AuditLog};
 use argon2::{
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
@@ -56,6 +56,20 @@ pub async fn create_user(
     }
 }
 
+pub async fn get_audit_logs(
+    State(pool): State<SqlitePool>,
+) -> Result<Json<Vec<AuditLog>>, (StatusCode, String)> {
+    let logs = sqlx::query_as::<_, AuditLog>("SELECT id, admin_username, action, target, timestamp FROM audit_logs ORDER BY id DESC")
+        .fetch_all(&pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Error obteniendo logs de auditoría: {:?}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Error al consultar la bitácora".to_string())
+        })?;
+
+    Ok(Json(logs))
+}
+
 pub async fn get_users(
     State(pool): State<SqlitePool>,
 ) -> Result<Json<Vec<User>>, (StatusCode, String)> {
@@ -90,9 +104,6 @@ pub async fn login(
     };
 
     if Argon2::default().verify_password(payload.password.as_bytes(), &parsed_hash).is_ok() {
-        // Crear cookie de sesión (temporalmente un valor fijo)
-        // cookies.add(Cookie::new("auth_token", "token-secreto-temporal"));
-        
         // GENERAR JWT
         let expiration = Utc::now().checked_add_signed(Duration::hours(24)).expect("Tiempo inválido").timestamp();
         let claims = Claims { 

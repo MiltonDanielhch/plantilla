@@ -1,0 +1,64 @@
+---
+// frontend/src/components/AuditTable.astro
+---
+<div class="audit-container" style="margin-top: 1rem;">
+    <div style="overflow-x: auto; border: 1px solid #374151; border-radius: 8px;">
+        <table style="width: 100%; border-collapse: collapse; color: #d1d5db; font-size: 0.9rem; background-color: #1f2937;">
+            <thead>
+                <tr style="border-bottom: 2px solid #4b5563; text-align: left; background-color: #374151;">
+                    <th style="padding: 0.75rem;">ID</th>
+                    <th style="padding: 0.75rem;">Agente (Admin)</th>
+                    <th style="padding: 0.75rem;">Acción</th>
+                    <th style="padding: 0.75rem;">Objetivo</th>
+                    <th style="padding: 0.75rem;">Fecha (UTC)</th>
+                </tr>
+            </thead>
+            <tbody id="audit-list">
+                <tr><td colspan="5" style="padding: 1rem; text-align: center; color: #9ca3af;">Cargando registros del sistema...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    async function fetchLogs() {
+        const tbody = document.getElementById('audit-list');
+        if (!tbody) return;
+
+        try {
+            const res = await fetch('http://localhost:3000/audit-logs', {
+                credentials: 'include' // Vital para pasar el admin_guard
+            });
+            
+            if (!res.ok) throw new Error('Acceso denegado o error de servidor');
+            
+            const logs = await res.json();
+            
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="padding: 1rem; text-align: center;">Sin registros de actividad.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = logs.map((log: any) => `
+                <tr style="border-bottom: 1px solid #374151; hover: {background-color: #374151};">
+                    <td style="padding: 0.75rem; color: #6b7280; font-family: monospace;">#${log.id}</td>
+                    <td style="padding: 0.75rem; font-weight: bold; color: #e5e7eb;">${log.admin_username}</td>
+                    <td style="padding: 0.75rem;">
+                        <span style="background: #374151; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; border: 1px solid #4b5563; color: #60a5fa;">
+                            ${log.action}
+                        </span>
+                    </td>
+                    <td style="padding: 0.75rem; color: #fca5a5;">${log.target}</td>
+                    <td style="padding: 0.75rem; color: #9ca3af; font-size: 0.85em;">${log.timestamp}</td>
+                </tr>
+            `).join('');
+
+        } catch (error) {
+            console.error(error);
+            tbody.innerHTML = '<tr><td colspan="5" style="padding: 1rem; text-align: center; color: #ef4444;">⚠️ Error recuperando la bitácora.</td></tr>';
+        }
+    }
+
+    // Ejecutar al montar
+    fetchLogs();
+</script>

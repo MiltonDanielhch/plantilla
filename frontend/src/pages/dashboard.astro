@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import LogoutButton from '../components/LogoutButton.astro';
 import UserList from '../components/UserList.astro';
+import AuditTable from '../components/AuditTable.astro';
 ---
 
 <Layout title="Panel de Control - Sintonía 3026">
@@ -28,8 +29,20 @@ import UserList from '../components/UserList.astro';
             <div id="admin-controls" style="display: none; background: #374151; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid #ef4444;">
                 <h3 style="color: #ef4444; margin-top: 0;">🛡️ Zona de Administración</h3>
                 <p style="font-size: 0.9rem; color: #d1d5db;">Tienes permisos ejecutivos sobre la plataforma.</p>
-                <!-- Lista de usuarios en modo Admin (con botón de eliminar) -->
-                <UserList isAdmin={true} />
+                
+                <!-- Navegación de Pestañas -->
+                <div style="margin-top: 1rem; margin-bottom: 1rem; border-bottom: 1px solid #4b5563; display: flex; gap: 1rem;">
+                    <button id="tab-users" class="admin-tab" style="background: none; border: none; color: #e5e7eb; padding: 0.5rem 1rem; cursor: pointer; border-bottom: 2px solid #10b981; font-weight: bold;">Usuarios</button>
+                    <button id="tab-audit" class="admin-tab" style="background: none; border: none; color: #9ca3af; padding: 0.5rem 1rem; cursor: pointer; border-bottom: 2px solid transparent;">Auditoría</button>
+                </div>
+
+                <!-- Vistas -->
+                <div id="view-users">
+                    <UserList isAdmin={true} />
+                </div>
+                <div id="view-audit" style="display: none;">
+                    <AuditTable />
+                </div>
             </div>
 
             <LogoutButton />
@@ -42,6 +55,10 @@ import UserList from '../components/UserList.astro';
     const loading = document.getElementById('loading');
     const secretMessage = document.getElementById('secret-message');
     const adminControls = document.getElementById('admin-controls');
+    const tabUsers = document.getElementById('tab-users');
+    const tabAudit = document.getElementById('tab-audit');
+    const viewUsers = document.getElementById('view-users');
+    const viewAudit = document.getElementById('view-audit');
 
     async function initDashboard() {
         try {
@@ -77,4 +94,23 @@ import UserList from '../components/UserList.astro';
 
     // Ejecutar al cargar
     initDashboard();
+
+    // Lógica de Pestañas
+    function switchTab(tab) {
+        if (tab === 'users') {
+            if(viewUsers) viewUsers.style.display = 'block';
+            if(viewAudit) viewAudit.style.display = 'none';
+            if(tabUsers) { tabUsers.style.borderBottom = '2px solid #10b981'; tabUsers.style.color = '#e5e7eb'; }
+            if(tabAudit) { tabAudit.style.borderBottom = '2px solid transparent'; tabAudit.style.color = '#9ca3af'; }
+        } else {
+            if(viewUsers) viewUsers.style.display = 'none';
+            if(viewAudit) viewAudit.style.display = 'block';
+            if(tabAudit) { tabAudit.style.borderBottom = '2px solid #60a5fa'; tabAudit.style.color = '#e5e7eb'; }
+            if(tabUsers) { tabUsers.style.borderBottom = '2px solid transparent'; tabUsers.style.color = '#9ca3af'; }
+        }
+    }
+
+    if(tabUsers) tabUsers.addEventListener('click', () => switchTab('users'));
+    if(tabAudit) tabAudit.addEventListener('click', () => switchTab('audit'));
+
 </script>

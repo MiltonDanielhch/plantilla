@@ -65,6 +65,10 @@ async fn main() {
             get(api::handlers::user::dashboard)
             .route_layer(middleware::from_fn(api::middleware::auth_guard))
         )
+        .route("/audit-logs", 
+            get(api::handlers::user::get_audit_logs)
+            .route_layer(middleware::from_fn(api::middleware::admin_guard))
+        )
         .layer(cors)
         .layer(CookieManagerLayer::new())
         .with_state(pool);
