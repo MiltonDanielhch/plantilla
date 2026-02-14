@@ -1,6 +1,6 @@
 # 📋 Informe de Estado: Proyecto Sintonía 3026
 
-**Fecha de Corte:** Fase 13 Completada (Robustez Backend)
+**Fecha de Corte:** Fase 17 Completada (Auditoría y Trazabilidad)
 **Referencia de Flujo:** `17_FLUJO_COMPLETO.md`
 
 ## 0. Protocolo de Reactivación (CRÍTICO)
@@ -103,19 +103,36 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
 - [x] Detectar error de restricción única (SQLx).
 - [x] Retornar `409 Conflict` en duplicados.
 
-### 🆔 Fase 14: Identidad (JWT) (En Progreso)
-- [ ] Instalar `jsonwebtoken` y `chrono`.
-- [ ] Generar Token en Login.
-- [ ] Leer Identidad en Dashboard.
+### ✅ Fase 14: Identidad (JWT)
+- [x] Instalar `jsonwebtoken` y `chrono`.
+- [x] Generar Token en Login.
+- [x] Leer Identidad en Dashboard.
+
+### ✅ Fase 15: Jerarquía (Roles RBAC)
+- [x] Migración SQL: Columna `role` agregada.
+- [x] Núcleo: Enum `Role` implementado con seguridad de tipos.
+- [x] Seguridad: Middleware `admin_guard` creado para proteger rutas.
+- [x] Gestión: Script de ascenso manual (`admin_promote.py`).
+
+### ✅ Fase 16: Poder Ejecutivo (Admin)
+- [x] Endpoint `DELETE /users/:id` protegido con `admin_guard`.
+- [x] Frontend: Botones de eliminación condicionales (solo Admin).
+- [x] Dashboard inteligente: Renderizado basado en Roles (JSON).
+
+### ✅ Fase 17: Auditoría (El Ojo que Todo lo Ve)
+- [x] Tabla `audit_logs` creada.
+- [x] Registro automático de acciones administrativas.
+- [x] Verificación vía script `ver_logs.py`.
+
 - **Endpoints Activos:**
     - `POST /users` (Crear)
     - `GET /users` (Listar)
-- **Componentes UI:** `UserForm`, `UserList`.
+    - `DELETE /users/:id` (Eliminar - Admin)
 - **Arquitectura:** Full Stack Reactivo (Rust + Astro + SQLite).
 
 ## 4. Próximos Pasos (Hoja de Ruta Inmediata)
-1.  **Gestión de Versiones:** Realizar commit `feat: Fase 13 Robustez Registro`.
-2.  **Fase 14 (Identidad):** Implementar JWT para identificar al usuario en el Dashboard.
+1.  **Visualización de Auditoría:** Crear endpoint `GET /audit-logs` y vista en Frontend para leer los logs desde el Dashboard.
+2.  **Refinamiento UI:** Organizar el Dashboard con pestañas (Usuarios / Auditoría).
 
 ---
 *Este archivo debe ser consultado al iniciar una nueva sesión para cargar el contexto.*

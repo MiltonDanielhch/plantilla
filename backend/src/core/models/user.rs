@@ -1,6 +1,19 @@
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
+use sqlx::{FromRow, Type};
 use validator::Validate;
+
+#[derive(Debug, Serialize, Deserialize, Type, Clone, PartialEq)]
+#[sqlx(type_name = "TEXT", rename_all = "lowercase")]
+pub enum Role {
+    Admin,
+    User,
+}
+
+impl Default for Role {
+    fn default() -> Self {
+        Self::User
+    }
+}
 
 #[derive(Debug, Serialize, FromRow)]
 pub struct User {
@@ -8,6 +21,8 @@ pub struct User {
     pub username: String,
     #[serde(skip)]
     pub password_hash: String,
+    #[sqlx(default)] // Maneja casos donde la columna no existía antes (migración suave)
+    pub role: Role,
     // Usamos String por simplicidad inicial (SQLite devuelve texto)
     pub created_at: String, 
 }
@@ -29,5 +44,6 @@ pub struct LoginRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
     pub sub: String, // Subject (Usuario)
+    pub role: Role,  // Rango del usuario
     pub exp: usize,  // Expiration
 }

@@ -1,4 +1,4 @@
-use axum::{debug_handler, extract::State, http::StatusCode, Json, response::IntoResponse};
+use axum::{debug_handler, extract::{Path, State}, http::StatusCode, Json, response::IntoResponse};
 use sqlx::SqlitePool;
 use sqlx::error::ErrorKind;
 use crate::core::models::user::{CreateUserRequest, LoginRequest, User, Claims};
@@ -10,6 +10,7 @@ use tower_cookies::{Cookie, Cookies};
 use validator::Validate;
 use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey};
 use chrono::{Utc, Duration};
+use serde_json::json;
 
 pub async fn create_user(
     State(pool): State<SqlitePool>,
@@ -32,7 +33,7 @@ pub async fn create_user(
     };
 
     let result = sqlx::query_as::<_, User>(
-        "INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id, username, password_hash, created_at"
+        "INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id, username, password_hash, role, created_at"
     )
     .bind(&payload.username)
     .bind(password_hash)
@@ -94,7 +95,11 @@ pub async fn login(
         
         // GENERAR JWT
         let expiration = Utc::now().checked_add_signed(Duration::hours(24)).expect("Tiempo inválido").timestamp();
-        let claims = Claims { sub: user.username, exp: expiration as usize };
+        let claims = Claims { 
+            sub: user.username, 
+            role: user.role, 
+            exp: expiration as usize 
+        };
         // NOTA: En producción, "secret" debe venir de variables de entorno (.env)
         let token = encode(&Header::default(), &claims, &EncodingKey::from_secret("secret".as_ref())).unwrap();
         
@@ -121,7 +126,64 @@ pub async fn dashboard(cookies: Cookies) -> impl IntoResponse {
     );
 
     match token_data {
-        Ok(c) => (StatusCode::OK, format!("🔐 Bienvenido al Panel de Control, Agente {}", c.claims.sub)).into_response(),
+        Ok(c) => (StatusCode::OK, Json(json!({
+            "username": c.claims.sub,
+            "role": c.claims.role,
+            "message": format!("🔐 Panel de Control | Agente: {} | Rango: {:?}", c.claims.sub, c.claims.role)
+        }))).into_response(),
         Err(_) => (StatusCode::UNAUTHORIZED, "Sesión inválida o expirada").into_response()
+    }
+}
+
+pub async fn delete_user(
+    State(pool): State<SqlitePool>,
+    cookies: Cookies,
+    Path(id): Path<i64>,
+) -> impl IntoResponse {
+    // 1. Identificar al Admin (Auditoría)
+    // Aunque el middleware ya validó, necesitamos el username para el log.
+    let admin_username = if let Some(cookie) = cookies.get("auth_token") {
+        if let Ok(token_data) = decode::<Claims>(
+            cookie.value(),
+            &DecodingKey::from_secret("secret".as_ref()),
+            &Validation::default()
+        ) {
+            token_data.claims.sub
+        } else {
+            "Desconocido".to_string()
+        }
+    } else {
+        "Desconocido".to_string()
+    };
+
+    // 2. Obtener datos del objetivo antes de eliminar (para el log)
+    let target_username = sqlx::query_scalar::<_, String>("SELECT username FROM users WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&pool)
+        .await
+        .unwrap_or(None)
+        .unwrap_or_else(|| "Usuario Fantasma".to_string());
+
+    // 3. Ejecutar Eliminación
+    let result = sqlx::query("DELETE FROM users WHERE id = $1")
+        .bind(id)
+        .execute(&pool)
+        .await;
+
+    match result {
+        Ok(_) => {
+            // 4. Registrar en Auditoría
+            let _ = sqlx::query("INSERT INTO audit_logs (admin_username, action, target) VALUES ($1, 'DELETE_USER', $2)")
+                .bind(admin_username)
+                .bind(target_username)
+                .execute(&pool)
+                .await;
+
+            (StatusCode::OK, "Usuario eliminado y auditado").into_response()
+        },
+        Err(e) => {
+            tracing::error!("Error eliminando usuario: {:?}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Error al eliminar").into_response()
+        }
     }
 }

@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import LogoutButton from '../components/LogoutButton.astro';
+import UserList from '../components/UserList.astro';
 ---
 
 <Layout title="Panel de Control - Sintonía 3026">
@@ -23,6 +24,14 @@ import LogoutButton from '../components/LogoutButton.astro';
                 </p>
             </div>
 
+            <!-- Controles de Administrador (Invisibles por defecto) -->
+            <div id="admin-controls" style="display: none; background: #374151; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid #ef4444;">
+                <h3 style="color: #ef4444; margin-top: 0;">🛡️ Zona de Administración</h3>
+                <p style="font-size: 0.9rem; color: #d1d5db;">Tienes permisos ejecutivos sobre la plataforma.</p>
+                <!-- Lista de usuarios en modo Admin (con botón de eliminar) -->
+                <UserList isAdmin={true} />
+            </div>
+
             <LogoutButton />
         </div>
     </main>
@@ -32,6 +41,7 @@ import LogoutButton from '../components/LogoutButton.astro';
     const content = document.getElementById('dashboard-content');
     const loading = document.getElementById('loading');
     const secretMessage = document.getElementById('secret-message');
+    const adminControls = document.getElementById('admin-controls');
 
     async function initDashboard() {
         try {
@@ -43,8 +53,16 @@ import LogoutButton from '../components/LogoutButton.astro';
 
             if (response.ok) {
                 // ✅ Autorizado: Mostramos el contenido
-                const text = await response.text();
-                if (secretMessage) secretMessage.textContent = text;
+                const data = await response.json();
+                
+                if (secretMessage) secretMessage.textContent = data.message;
+                
+                // Lógica de Roles
+                if (data.role === 'Admin' && adminControls) {
+                    adminControls.style.display = 'block';
+                    // Aquí podríamos disparar la carga de la lista de usuarios
+                }
+
                 if (content) content.style.display = 'block';
                 if (loading) loading.style.display = 'none';
             } else {

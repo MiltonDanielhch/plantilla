@@ -1,8 +1,8 @@
 ---
-// frontend/src/components/UserList.astro
+const { isAdmin = false } = Astro.props;
 ---
 
-<div class="user-list-container" style="margin-top: 2rem; padding: 1rem; border: 1px solid #374151; border-radius: 8px; background-color: #1f2937;">
+<div class="user-list-container" data-is-admin={isAdmin} style="margin-top: 2rem; padding: 1rem; border: 1px solid #374151; border-radius: 8px; background-color: #1f2937;">
     <h3 style="color: #10b981; margin-bottom: 1rem;">📡 Frecuencia de Usuarios</h3>
     <ul id="user-list" style="list-style: none; padding: 0;">
         <li style="color: #9ca3af;">Sintonizando...</li>
@@ -12,6 +12,9 @@
 <script>
     async function fetchUsers() {
         const list = document.getElementById('user-list');
+        const container = document.querySelector('.user-list-container') as HTMLElement;
+        const isAdmin = container?.dataset.isAdmin === 'true';
+
         if (!list) return;
 
         try {
@@ -26,11 +29,57 @@
             }
 
             list.innerHTML = users.map((u: any) => `
-                <li style="padding: 0.5rem; border-bottom: 1px solid #374151; display: flex; justify-content: space-between;">
-                    <span style="font-weight: bold; color: #e5e7eb;">${u.username}</span>
-                    <span style="color: #6b7280; font-size: 0.9em;">${u.created_at}</span>
+                <li style="padding: 0.5rem; border-bottom: 1px solid #374151; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span style="font-weight: bold; color: #e5e7eb; display: flex; align-items: center; gap: 0.5rem;">
+                            ${u.username}
+                            <span style="font-size: 0.7em; background: ${u.role === 'Admin' ? '#7f1d1d' : '#374151'}; color: ${u.role === 'Admin' ? '#fca5a5' : '#9ca3af'}; padding: 2px 6px; border-radius: 4px; border: 1px solid ${u.role === 'Admin' ? '#ef4444' : '#4b5563'};">
+                                ${u.role}
+                            </span>
+                        </span>
+                        <span style="color: #6b7280; font-size: 0.8em;">${u.created_at}</span>
+                    </div>
+                    ${isAdmin ? `
+                        <button 
+                            class="delete-btn" 
+                            data-id="${u.id}"
+                            style="background: #7f1d1d; color: #fca5a5; border: 1px solid #ef4444; padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;"
+                        >
+                            ELIMINAR
+                        </button>
+                    ` : ''}
                 </li>
             `).join('');
+
+            // Activar listeners para los botones de eliminar
+            if (isAdmin) {
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const target = e.target as HTMLElement;
+                        const id = target.dataset.id;
+                        if (!id) return;
+
+                        if (!confirm('⚠️ ¿Confirmas la eliminación de este agente?')) return;
+
+                        try {
+                            const res = await fetch(`http://localhost:3000/users/${id}`, {
+                                method: 'DELETE',
+                                credentials: 'include' // Importante: Envía la cookie de Admin
+                            });
+
+                            if (res.ok) {
+                                alert('Agente eliminado.');
+                                fetchUsers(); // Recargar lista
+                            } else {
+                                alert('⛔ Error: No tienes autorización o falló el sistema.');
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            alert('Error de conexión.');
+                        }
+                    });
+                });
+            }
 
         } catch (error) {
             console.error(error);
