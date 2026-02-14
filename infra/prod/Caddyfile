@@ -1,0 +1,17 @@
+# En producción, reemplaza ":80" con tu dominio (ej: mi-app.com)
+:80 {
+    # 1. Proxy para el Backend (API)
+    # Redirigimos /api/* al contenedor del backend
+    handle /api/* {
+        uri strip_prefix /api
+        reverse_proxy backend:3000
+    }
+
+    # 2. Proxy para Swagger (Documentación)
+    handle /swagger-ui* {
+        reverse_proxy backend:3000
+    }
+
+    # 3. Proxy para el Frontend (Todo lo demás)
+    reverse_proxy frontend:4321
+}

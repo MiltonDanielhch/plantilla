@@ -151,6 +151,11 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
 - [x] Definición del Test de Autenticación.
 - [x] Ejecución y validación (Requiere servidores activos).
 
+### 🚀 Fase 25: Despliegue en Producción
+- [x] Definición de Infraestructura (`infra/prod`).
+- [x] Limpieza: Eliminar `docker-compose.yml` redundante de la raíz.
+- [ ] Aprovisionamiento de Servidor (VPS).
+
 ## 3. Estado Técnico Actual
 - **Endpoints Activos:**
     - `POST /users` (Crear)
@@ -161,11 +166,10 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
 - **Arquitectura:** Full Stack Reactivo (Rust + Astro + SQLite).
 
 ## 4. Próximos Pasos (Hoja de Ruta Inmediata)
-**V2.0: INDUSTRIALIZACIÓN COMPLETADA**
-
-El sistema base ahora es robusto, documentado y autotesteable.
-1.  **Mantenimiento:** Vigilar los logs de GitHub Actions en futuros commits.
-2.  **Expansión:** Listo para iniciar el desarrollo de módulos de negocio específicos (V2.1).
+**Fase 25: Despliegue**
+1.  **Subir:** Hacer Push de la carpeta `infra/prod` a GitHub.
+2.  **VPS:** Conectarse al servidor Linux.
+3.  **Ejecutar:** Clonar y lanzar `docker compose`.
 
 ## Histórico de Versiones
 ### 🎉 V1.0 ESTABLE (Completada)

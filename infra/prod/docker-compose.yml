@@ -1,0 +1,45 @@
+services:
+  # --- SERVIDOR WEB (Entrada de Internet) ---
+  caddy:
+    image: caddy:2-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+      - frontend
+
+  # --- CEREBRO (Rust) ---
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - DATABASE_URL=sqlite:/data/sintonia.db
+      - RUST_LOG=info
+      # ¡IMPORTANTE! Cambia esto en producción
+      - JWT_SECRET=secreto_super_seguro_cambiar_en_prod
+    volumes:
+      - db_data:/data
+
+  # --- VITRINA (Astro) ---
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      # El frontend habla con el backend a través del proxy (Caddy) o internamente
+      - PUBLIC_API_URL=/api
+
+# --- PERSISTENCIA ---
+volumes:
+  caddy_data:
+  caddy_config:
+  db_data:
