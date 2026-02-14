@@ -62,3 +62,38 @@ pub struct AuditLog {
     pub target: String,
     pub timestamp: String,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use validator::Validate;
+
+    #[test]
+    fn test_role_default_is_user() {
+        assert_eq!(Role::default(), Role::User);
+    }
+
+    #[test]
+    fn test_create_user_validation() {
+        // Caso 1: Datos válidos
+        let req = CreateUserRequest {
+            username: "usuario_valido".to_string(),
+            password: "passwordSeguro123".to_string(),
+        };
+        assert!(req.validate().is_ok());
+
+        // Caso 2: Usuario muy corto
+        let req_bad_user = CreateUserRequest {
+            username: "yo".to_string(),
+            password: "passwordSeguro123".to_string(),
+        };
+        assert!(req_bad_user.validate().is_err());
+
+        // Caso 3: Password muy corto
+        let req_bad_pass = CreateUserRequest {
+            username: "usuario_valido".to_string(),
+            password: "123".to_string(),
+        };
+        assert!(req_bad_pass.validate().is_err());
+    }
+}

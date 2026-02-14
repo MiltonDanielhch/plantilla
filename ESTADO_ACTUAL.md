@@ -138,6 +138,15 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
 - [x] Configuración en `main.rs`.
 - [x] Documentación de Modelos y Handlers.
 
+### 🧪 Fase 22: Testing Automatizado
+- [x] **Unit Testing:** Pruebas de modelos y validaciones (`models/user.rs`).
+- [x] **Integration Testing:** Configurar entorno y probar flujos (Crear, Login, RBAC).
+- [x] **Refactor:** Asegurar testabilidad de Handlers.
+
+### 🤖 Fase 23: Automatización (CI/CD)
+- [x] Configuración de GitHub Actions (`ci.yml`).
+- [ ] Verificación de ejecución en la nube.
+
 ## 3. Estado Técnico Actual
 - **Endpoints Activos:**
     - `POST /users` (Crear)
@@ -148,10 +157,8 @@ El sistema ha logrado la **Sintonía Total**: El Frontend (Astro) se comunica ex
 - **Arquitectura:** Full Stack Reactivo (Rust + Astro + SQLite).
 
 ## 4. Próximos Pasos (Hoja de Ruta Inmediata)
-**Fase 22: Testing Automatizado**
-1.  **Unit Testing:** Crear pruebas para la lógica de negocio (validaciones, hashing).
-2.  **Integration Testing:** Configurar un entorno de pruebas con base de datos en memoria o temporal para probar los endpoints reales.
-3.  **Refactor:** Asegurar que el código sea testable.
+1.  **Commit & Push:** Subir los cambios al repositorio para activar la primera Action.
+2.  **Verificación:** Confirmar en la pestaña "Actions" de GitHub que el pipeline está en verde.
 
 ## Histórico de Versiones
 ### 🎉 V1.0 ESTABLE (Completada)
