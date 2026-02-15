@@ -1,107 +1,232 @@
 ---
 import DashboardLayout from '../components/layout/dashboard-layout.astro'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui'
+import { api } from '../lib/api'
+import { formatDate } from '../lib/utils'
 
-// Datos de ejemplo - en producción vendrían del backend
-const stats = [
-  { title: 'Total Usuarios', value: 128, change: '+12%', positive: true },
-  { title: 'Usuarios Activos', value: 98, change: '+5%', positive: true },
-  { title: 'Administradores', value: 5, change: '0%', positive: true },
-  { title: 'Nuevos Hoy', value: 3, change: '+8%', positive: true },
-]
+// Verificar autenticación y obtener datos
+let user = null
+let isAdmin = false
+let stats = {
+  total_users: 0,
+  active_users: 0,
+  admin_users: 0,
+  new_users_today: 0,
+}
+let recentActivity: Array<{
+  action: string
+  username: string
+  time: string
+}> = []
+let error = null
 
-const recentActivity = [
-  { action: 'Usuario creado', user: 'admin', time: 'Hace 5 minutos' },
-  { action: 'Login exitoso', user: 'juan.perez', time: 'Hace 15 minutos' },
-  { action: 'Usuario eliminado', user: 'admin', time: 'Hace 1 hora' },
-  { action: 'Configuración actualizada', user: 'admin', time: 'Hace 2 horas' },
-]
+try {
+  const dashboardData = await api.getDashboard()
+  user = dashboardData.user
+  isAdmin = user.role === 'Admin'
+  
+  // Obtener stats y logs si es admin
+  if (isAdmin) {
+    // Obtener usuarios para contar
+    const usersData = await api.getUsers({ limit: 1 })
+    stats.total_users = usersData.total
+    
+    // Obtener logs recientes
+    const logsData = await api.getAuditLogs({ limit: 5 })
+    recentActivity = logsData.data.map(log => ({
+      action: log.action,
+      username: log.username || `Usuario ${log.user_id}`,
+      time: formatDate(log.created_at),
+    }))
+  }
+} catch (err) {
+  console.error('Error loading dashboard:', err)
+  error = 'Error al cargar datos del dashboard'
+}
+
+// Si no hay usuario autenticado, redirigir a login
+if (!user) {
+  return Astro.redirect('/login/')
+}
 ---
 
 <DashboardLayout 
   title="Dashboard" 
-  description="Vista general del sistema"
+  description={`Bienvenido, ${user.username}`}
   currentPath="/dashboard-v4/"
-  isAdmin={true}
+  isAdmin={isAdmin}
 >
-  <!-- Stats Cards -->
-  <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-    {stats.map((stat) => (
-      <Card>
-        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium text-muted-foreground">
-            {stat.title}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div class="text-2xl font-bold">{stat.value}</div>
-          <p class={`text-xs ${stat.positive ? 'text-green-600' : 'text-red-600'}`}>
-            {stat.change} desde ayer
-          </p>
-        </CardContent>
-      </Card>
-    ))}
-  </div>
+  {error && (
+    <div class="mb-6 p-4 rounded-lg bg-destructive/10 text-destructive border border-destructive/20">
+      {error}
+    </div>
+  )}
 
-  <div class="grid gap-6 md:grid-cols-2">
-    <!-- Actividad Reciente -->
-    <Card>
-      <CardHeader>
-        <CardTitle>Actividad Reciente</CardTitle>
-        <CardDescription>Últimas acciones en el sistema</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div class="space-y-4">
-          {recentActivity.map((activity) => (
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span class="text-xs font-medium">{activity.user[0].toUpperCase()}</span>
-                </div>
-                <div>
-                  <p class="text-sm font-medium">{activity.action}</p>
-                  <p class="text-xs text-muted-foreground">por {activity.user}</p>
-                </div>
+  {isAdmin ? (
+    <>
+      <!-- Stats Cards -->
+      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        <Card>
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle class="text-sm font-medium text-muted-foreground">
+              Total Usuarios
+            </CardTitle>
+            <svg class="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+            </svg>
+          </CardHeader>
+          <CardContent>
+            <div class="text-2xl font-bold">{stats.total_users}</div>
+            <p class="text-xs text-muted-foreground">Usuarios registrados</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle class="text-sm font-medium text-muted-foreground">
+              Tu Rol
+            </CardTitle>
+            <svg class="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.031-.057-2.062-.168-3.063A11.99 11.99 0 0020.401 6 11.959 11.959 0 0012 2.25z" />
+            </svg>
+          </CardHeader>
+          <CardContent>
+            <div class="text-2xl font-bold">{user.role}</div>
+            <p class="text-xs text-muted-foreground">Nivel de acceso</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle class="text-sm font-medium text-muted-foreground">
+              ID de Usuario
+            </CardTitle>
+            <svg class="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
+            </svg>
+          </CardHeader>
+          <CardContent>
+            <div class="text-2xl font-bold">#{user.id}</div>
+            <p class="text-xs text-muted-foreground">Identificador único</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle class="text-sm font-medium text-muted-foreground">
+              Estado
+            </CardTitle>
+            <svg class="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </CardHeader>
+          <CardContent>
+            <div class="text-2xl font-bold text-green-600">Activo</div>
+            <p class="text-xs text-muted-foreground">Sesión válida</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div class="grid gap-6 md:grid-cols-2">
+        <!-- Actividad Reciente -->
+        <Card>
+          <CardHeader>
+            <CardTitle>Actividad Reciente</CardTitle>
+            <CardDescription>Últimas acciones en el sistema</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {recentActivity.length > 0 ? (
+              <div class="space-y-4">
+                {recentActivity.map((activity) => (
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span class="text-xs font-medium">{activity.username[0].toUpperCase()}</span>
+                      </div>
+                      <div>
+                        <p class="text-sm font-medium">{activity.action}</p>
+                        <p class="text-xs text-muted-foreground">por {activity.username}</p>
+                      </div>
+                    </div>
+                    <span class="text-xs text-muted-foreground">{activity.time}</span>
+                  </div>
+                ))}
               </div>
-              <span class="text-xs text-muted-foreground">{activity.time}</span>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            ) : (
+              <p class="text-sm text-muted-foreground">No hay actividad reciente</p>
+            )}
+          </CardContent>
+        </Card>
 
-    <!-- Estado del Sistema -->
-    <Card>
-      <CardHeader>
-        <CardTitle>Estado del Sistema</CardTitle>
-        <CardDescription>Información del servidor</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div class="space-y-4">
-          <div class="flex items-center justify-between">
-            <span class="text-sm">Estado del Servidor</span>
-            <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
-              <span class="h-1.5 w-1.5 rounded-full bg-green-600"></span>
-              Operativo
-            </span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-sm">Base de Datos</span>
-            <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
-              <span class="h-1.5 w-1.5 rounded-full bg-green-600"></span>
-              Conectada
-            </span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-sm">Versión</span>
-            <span class="text-sm font-mono text-muted-foreground">v3.0.0 Enterprise</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-sm">Último Deploy</span>
-            <span class="text-sm text-muted-foreground">15 Feb 2026</span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  </div>
+        <!-- Estado del Sistema -->
+        <Card>
+          <CardHeader>
+            <CardTitle>Estado del Sistema</CardTitle>
+            <CardDescription>Información del servidor</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="text-sm">Estado del Servidor</span>
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
+                  <span class="h-1.5 w-1.5 rounded-full bg-green-600"></span>
+                  Operativo
+                </span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm">Base de Datos</span>
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
+                  <span class="h-1.5 w-1.5 rounded-full bg-green-600"></span>
+                  Conectada
+                </span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm">Versión</span>
+                <span class="text-sm font-mono text-muted-foreground">v3.0.0 Enterprise</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm">API</span>
+                <span class="text-sm font-mono text-muted-foreground">/api/v1</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  ) : (
+    <!-- Vista para usuarios normales -->
+    <div class="max-w-2xl mx-auto text-center py-12">
+      <div class="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+        <svg class="h-10 w-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+        </svg>
+      </div>
+      <h2 class="text-2xl font-bold mb-2">¡Bienvenido, {user.username}!</h2>
+      <p class="text-muted-foreground mb-6">
+        Has iniciado sesión correctamente en el sistema Sintonía 3026.
+      </p>
+      <div class="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Tu Perfil</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p class="text-sm text-muted-foreground">Usuario: {user.username}</p>
+            <p class="text-sm text-muted-foreground">Rol: {user.role}</p>
+            <p class="text-sm text-muted-foreground">ID: #{user.id}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Acceso</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p class="text-sm text-muted-foreground">
+              Tienes acceso al dashboard básico. Contacta a un administrador si necesitas permisos adicionales.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )}
 </DashboardLayout>

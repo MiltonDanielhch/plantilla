@@ -1,16 +1,156 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import UserForm from '../components/UserForm.astro';
+import Layout from '../layouts/Layout.astro'
+import { Button, Input, Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui'
+
+// Si ya está autenticado, redirigir al dashboard
+const API_BASE_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000'
+const checkResponse = await fetch(`${API_BASE_URL}/api/v1/dashboard`, {
+  credentials: 'include',
+}).catch(() => null)
+
+if (checkResponse?.ok) {
+  return Astro.redirect('/dashboard-v4/')
+}
 ---
 
-<Layout title="Registro - Sintonía 3026">
-    <main style="max-width: 800px; margin: 4rem auto; padding: 2rem; text-align: center;">
-        <h1 style="color: #6366f1; margin-bottom: 2rem; font-size: 2.5rem;">Únete a la Sintonía</h1>
-        
-        <UserForm />
-        
-        <p style="margin-top: 2rem; color: #9ca3af;">
-            ¿Ya tienes cuenta? <a href="/login" style="color: #6366f1; text-decoration: none; font-weight: bold;">Inicia Sesión aquí</a>
-        </p>
-    </main>
+<Layout title="Registro" description="Crea una cuenta en Sintonía 3026">
+  <div class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+      <!-- Logo -->
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold">
+          <span class="text-primary">Sintonía</span>
+          <span class="text-muted-foreground">3026</span>
+        </h1>
+        <p class="text-muted-foreground mt-2">Crea una nueva cuenta</p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Crear Cuenta</CardTitle>
+          <CardDescription>
+            Completa los datos para registrarte en el sistema
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form id="register-form" class="space-y-4">
+            <div class="space-y-2">
+              <label for="username" class="text-sm font-medium">Usuario</label>
+              <Input
+                type="text"
+                id="username"
+                name="username"
+                placeholder="Elige un nombre de usuario"
+                required
+                autocomplete="username"
+              />
+            </div>
+
+            <div class="space-y-2">
+              <label for="password" class="text-sm font-medium">Contraseña</label>
+              <Input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Mínimo 8 caracteres"
+                required
+                minlength="8"
+                autocomplete="new-password"
+              />
+            </div>
+
+            <div class="space-y-2">
+              <label for="role" class="text-sm font-medium">Rol</label>
+              <select
+                id="role"
+                name="role"
+                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="User">Usuario</option>
+                <option value="Admin">Administrador</option>
+              </select>
+            </div>
+
+            <div id="error-message" class="hidden p-3 rounded-md bg-destructive/10 text-destructive text-sm border border-destructive/20">
+            </div>
+
+            <div id="success-message" class="hidden p-3 rounded-md bg-green-100 text-green-800 text-sm border border-green-200 dark:bg-green-900 dark:text-green-100">
+            </div>
+
+            <Button type="submit" class="w-full" id="submit-btn">
+              <span id="btn-text">Crear Cuenta</span>
+              <span id="btn-loading" class="hidden">Creando...</span>
+            </Button>
+          </form>
+
+          <div class="mt-6 text-center">
+            <p class="text-sm text-muted-foreground">
+              ¿Ya tienes cuenta?{' '}
+              <a href="/login/" class="text-primary hover:underline font-medium">
+                Inicia sesión aquí
+              </a>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <!-- Footer -->
+      <p class="text-center text-xs text-muted-foreground mt-8">
+        © 2026 Sintonía 3026. Todos los derechos reservados.
+      </p>
+    </div>
+  </div>
 </Layout>
+
+<script>
+  import { api } from '../lib/api'
+  
+  const form = document.getElementById('register-form') as HTMLFormElement
+  const errorDiv = document.getElementById('error-message') as HTMLDivElement
+  const successDiv = document.getElementById('success-message') as HTMLDivElement
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement
+  const btnText = document.getElementById('btn-text') as HTMLSpanElement
+  const btnLoading = document.getElementById('btn-loading') as HTMLSpanElement
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    
+    // Reset messages
+    errorDiv.classList.add('hidden')
+    successDiv.classList.add('hidden')
+    
+    // Loading state
+    submitBtn.disabled = true
+    btnText.classList.add('hidden')
+    btnLoading.classList.remove('hidden')
+    
+    const formData = new FormData(form)
+    const data = {
+      username: formData.get('username') as string,
+      password: formData.get('password') as string,
+      role: formData.get('role') as 'User' | 'Admin',
+    }
+    
+    try {
+      await api.createUser(data)
+      
+      // Show success
+      successDiv.textContent = 'Cuenta creada exitosamente. Redirigiendo...'
+      successDiv.classList.remove('hidden')
+      
+      // Redirect after 2 seconds
+      setTimeout(() => {
+        window.location.href = '/login/'
+      }, 2000)
+    } catch (err: any) {
+      // Show error
+      errorDiv.textContent = err.message || 'Error al crear la cuenta'
+      errorDiv.classList.remove('hidden')
+      
+      // Reset button
+      submitBtn.disabled = false
+      btnText.classList.remove('hidden')
+      btnLoading.classList.add('hidden')
+    }
+  })
+</script>

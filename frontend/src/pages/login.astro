@@ -1,10 +1,129 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import LoginForm from '../components/LoginForm.astro';
+import Layout from '../layouts/Layout.astro'
+import { Button, Input, Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui'
+
+// Si ya está autenticado, redirigir al dashboard
+const API_BASE_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000'
+const checkResponse = await fetch(`${API_BASE_URL}/api/v1/dashboard`, {
+  credentials: 'include',
+}).catch(() => null)
+
+if (checkResponse?.ok) {
+  return Astro.redirect('/dashboard-v4/')
+}
 ---
 
-<Layout title="Iniciar Sesión - Sintonía 3026">
-    <main style="display: flex; justify-content: center; align-items: center; min-height: 80vh;">
-        <LoginForm />
-    </main>
+<Layout title="Iniciar Sesión" description="Accede al sistema Sintonía 3026">
+  <div class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+      <!-- Logo -->
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold">
+          <span class="text-primary">Sintonía</span>
+          <span class="text-muted-foreground">3026</span>
+        </h1>
+        <p class="text-muted-foreground mt-2">Inicia sesión para continuar</p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Iniciar Sesión</CardTitle>
+          <CardDescription>
+            Ingresa tus credenciales para acceder al sistema
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form id="login-form" class="space-y-4">
+            <div class="space-y-2">
+              <label for="username" class="text-sm font-medium">Usuario</label>
+              <Input
+                type="text"
+                id="username"
+                name="username"
+                placeholder="Ingresa tu usuario"
+                required
+                autocomplete="username"
+              />
+            </div>
+
+            <div class="space-y-2">
+              <label for="password" class="text-sm font-medium">Contraseña</label>
+              <Input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Ingresa tu contraseña"
+                required
+                autocomplete="current-password"
+              />
+            </div>
+
+            <div id="error-message" class="hidden p-3 rounded-md bg-destructive/10 text-destructive text-sm border border-destructive/20">
+            </div>
+
+            <Button type="submit" class="w-full" id="submit-btn">
+              <span id="btn-text">Iniciar Sesión</span>
+              <span id="btn-loading" class="hidden">Cargando...</span>
+            </Button>
+          </form>
+
+          <div class="mt-6 text-center">
+            <p class="text-sm text-muted-foreground">
+              ¿No tienes cuenta?{' '}
+              <a href="/register/" class="text-primary hover:underline font-medium">
+                Regístrate aquí
+              </a>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <!-- Footer -->
+      <p class="text-center text-xs text-muted-foreground mt-8">
+        © 2026 Sintonía 3026. Todos los derechos reservados.
+      </p>
+    </div>
+  </div>
 </Layout>
+
+<script>
+  import { api } from '../lib/api'
+  
+  const form = document.getElementById('login-form') as HTMLFormElement
+  const errorDiv = document.getElementById('error-message') as HTMLDivElement
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement
+  const btnText = document.getElementById('btn-text') as HTMLSpanElement
+  const btnLoading = document.getElementById('btn-loading') as HTMLSpanElement
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    
+    // Reset error
+    errorDiv.classList.add('hidden')
+    
+    // Loading state
+    submitBtn.disabled = true
+    btnText.classList.add('hidden')
+    btnLoading.classList.remove('hidden')
+    
+    const formData = new FormData(form)
+    const credentials = {
+      username: formData.get('username') as string,
+      password: formData.get('password') as string,
+    }
+    
+    try {
+      await api.login(credentials)
+      window.location.href = '/dashboard-v4/'
+    } catch (err: any) {
+      // Show error
+      errorDiv.textContent = err.message || 'Usuario o contraseña incorrectos'
+      errorDiv.classList.remove('hidden')
+      
+      // Reset button
+      submitBtn.disabled = false
+      btnText.classList.remove('hidden')
+      btnLoading.classList.add('hidden')
+    }
+  })
+</script>
