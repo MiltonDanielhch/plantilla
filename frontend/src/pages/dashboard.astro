@@ -223,7 +223,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../co
         // Obtener usuarios
         try {
           const usersData = await api.getUsers({ limit: 1 })
-          document.getElementById('stat-total-users')!.textContent = usersData.total.toString()
+          const totalUsers = usersData?.total ?? 0
+          document.getElementById('stat-total-users')!.textContent = totalUsers.toString()
         } catch (e) {
           document.getElementById('stat-total-users')!.textContent = '-'
         }
@@ -232,9 +233,10 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../co
         try {
           const logsData = await api.getAuditLogs({ limit: 5 })
           const activityContainer = document.getElementById('recent-activity')
+          const logs = Array.isArray(logsData?.data) ? logsData.data : []
           
-          if (logsData.data.length > 0) {
-            activityContainer!.innerHTML = logsData.data.map(log => `
+          if (logs.length > 0) {
+            activityContainer!.innerHTML = logs.map(log => `
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
                   <div class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">

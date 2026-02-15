@@ -107,6 +107,9 @@ const columns: Column<UserDetails>[] = [
   function renderTable() {
     const state = tableStore.$state.get()
     
+    // Asegurar que state.data sea un array
+    const data = Array.isArray(state.data) ? state.data : []
+    
     // Generar HTML de la tabla
     const tableHTML = `
       <div class="relative w-full overflow-auto rounded-md border">
@@ -115,7 +118,7 @@ const columns: Column<UserDetails>[] = [
             <tr class="border-b bg-muted/50">
               <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-[50px]">
                 <input type="checkbox" id="select-all" class="h-4 w-4 rounded border-primary"
-                  ${state.data.length > 0 && state.data.every(row => state.selectedRows.has(row.id)) ? 'checked' : ''}>
+                  ${data.length > 0 && data.every(row => state.selectedRows.has(row.id)) ? 'checked' : ''}>
               </th>
               ${[
                 { key: 'id', header: 'ID', width: '80px', align: 'center' },
@@ -183,13 +186,13 @@ const columns: Column<UserDetails>[] = [
                   </div>
                 </td>
               </tr>
-            ` : state.data.length === 0 ? `
+            ` : data.length === 0 ? `
               <tr>
                 <td colspan="7" class="p-8 text-center text-muted-foreground">
                   No hay usuarios disponibles
                 </td>
               </tr>
-            ` : state.data.map(row => `
+            ` : data.map(row => `
               <tr class="border-b transition-colors hover:bg-muted/50" data-row-id="${row.id}">
                 <td class="p-4 align-middle w-[50px]">
                   <input type="checkbox" class="row-checkbox h-4 w-4 rounded border-primary" 
@@ -231,7 +234,7 @@ const columns: Column<UserDetails>[] = [
         </table>
       </div>
       
-      ${!state.loading && !state.error && state.data.length > 0 ? `
+      ${!state.loading && !state.error && data.length > 0 ? `
         <div class="flex items-center justify-between py-4">
           <div class="flex items-center gap-2 text-sm text-muted-foreground">
             <span>

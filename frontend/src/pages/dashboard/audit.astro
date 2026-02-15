@@ -329,7 +329,8 @@ import type { AuditLog } from '../../types'
   async function loadLogs() {
     try {
       const response = await api.getAuditLogs({ limit: 100 }) // Cargar más para filtrado local
-      logs = response.data
+      // Asegurar que response.data sea un array
+      logs = Array.isArray(response?.data) ? response.data : []
       filteredLogs = [...logs]
       
       if (totalLogsEl) {

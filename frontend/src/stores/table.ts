@@ -145,7 +145,8 @@ export function createTableStore<T extends { id: number }>() {
 
   function toggleAllSelection() {
     const state = $state.get()
-    const allIds = state.data.map((row) => row.id)
+    const data = Array.isArray(state.data) ? state.data : []
+    const allIds = data.map((row) => row.id)
     const allSelected = allIds.every((id) => state.selectedRows.has(id))
     
     const selectedRows = allSelected 
