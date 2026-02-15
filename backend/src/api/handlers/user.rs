@@ -139,7 +139,11 @@ pub async fn login(
         )
         .map_err(|_| AppError::AuthError("Error generando token".to_string()))?;
 
-        cookies.add(Cookie::new("auth_token", token));
+        let mut cookie = Cookie::new("auth_token", token);
+        cookie.set_http_only(true);
+        cookie.set_same_site(tower_cookies::cookie::SameSite::Lax);
+        cookie.set_path("/");
+        cookies.add(cookie);
         Ok((StatusCode::OK, Json(json!({
             "user": {
                 "id": user_id,
