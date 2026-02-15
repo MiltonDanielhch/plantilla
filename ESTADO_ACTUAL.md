@@ -80,5 +80,3 @@ El sistema ha completado la **Fase 28 (Robustez Operativa)**. Se ha archivado el
 - ✅ `ESTADO_ACTUAL.md` - Estado actualizado al cierre de V3.0 Enterprise
 
 ---
-
-**🚀 Proyecto listo para push a origin/main**
