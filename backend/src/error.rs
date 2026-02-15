@@ -28,8 +28,11 @@ impl IntoResponse for AppError {
         let (status, message) = match self {
             AppError::Database(e) => {
                 tracing::error!("❌ Error de Base de Datos: {:?}", e);
-                (StatusCode::INTERNAL_SERVER_ERROR, "Error interno del servidor".to_string())
-            },
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Error interno del servidor".to_string(),
+                )
+            }
             AppError::NotFound(msg) => (StatusCode::NOT_FOUND, msg),
             AppError::Validation(msg) => (StatusCode::BAD_REQUEST, msg),
             AppError::AuthError(msg) => (StatusCode::UNAUTHORIZED, msg),

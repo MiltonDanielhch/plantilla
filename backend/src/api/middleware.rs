@@ -1,27 +1,35 @@
-use axum::{extract::Request, http::StatusCode, middleware::Next, response::Response};
-use tower_cookies::Cookies;
-use jsonwebtoken::{decode, DecodingKey, Validation};
 use crate::core::models::user::{Claims, Role};
+use axum::{extract::Request, http::StatusCode, middleware::Next, response::Response};
+use jsonwebtoken::{decode, DecodingKey, Validation};
+use tower_cookies::Cookies;
 
-pub async fn auth_guard(cookies: Cookies, req: Request, next: Next) -> Result<Response, StatusCode> {
+pub async fn auth_guard(
+    cookies: Cookies,
+    req: Request,
+    next: Next,
+) -> Result<Response, StatusCode> {
     // Verificamos si existe la cookie de sesión
     if let Some(cookie) = cookies.get("auth_token") {
         // Validar que el token sea real y no haya expirado
         let validation = decode::<Claims>(
             cookie.value(),
             &DecodingKey::from_secret("secret".as_ref()),
-            &Validation::default()
+            &Validation::default(),
         );
 
         if validation.is_ok() {
             return Ok(next.run(req).await);
         }
     }
-    
+
     Err(StatusCode::UNAUTHORIZED)
 }
 
-pub async fn admin_guard(cookies: Cookies, req: Request, next: Next) -> Result<Response, StatusCode> {
+pub async fn admin_guard(
+    cookies: Cookies,
+    req: Request,
+    next: Next,
+) -> Result<Response, StatusCode> {
     let token = cookies.get("auth_token").map(|c| c.value().to_string());
 
     match token {
@@ -29,7 +37,7 @@ pub async fn admin_guard(cookies: Cookies, req: Request, next: Next) -> Result<R
             let token_data = decode::<Claims>(
                 &t,
                 &DecodingKey::from_secret("secret".as_ref()),
-                &Validation::default()
+                &Validation::default(),
             );
 
             match token_data {

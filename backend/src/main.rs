@@ -13,15 +13,13 @@ async fn main() {
 
     // 2. Inicializar Observabilidad (Logs avanzados)
     tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            &settings.log_level,
-        ))
+        .with(tracing_subscriber::EnvFilter::new(&settings.log_level))
         .with(tracing_subscriber::fmt::layer().json())
         .init();
 
     // 3. Conexión a Base de Datos (Crear archivo si no existe)
     let db_url = settings.database_url;
-    
+
     let connection_options = SqliteConnectOptions::from_str(&db_url)
         .unwrap()
         .create_if_missing(true);
@@ -43,14 +41,19 @@ async fn main() {
     let app = create_app(pool);
 
     // 5. Definir dirección y arrancar
-    let addr = format!("{}:{}", settings.host, settings.port).parse::<SocketAddr>().expect("Dirección inválida");
+    let addr = format!("{}:{}", settings.host, settings.port)
+        .parse::<SocketAddr>()
+        .expect("Dirección inválida");
     tracing::info!("🚀 Sintonía 3026 Activada en {}", addr);
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())
-        .with_graceful_shutdown(shutdown_signal())
-        .await
-        .unwrap();
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .with_graceful_shutdown(shutdown_signal())
+    .await
+    .unwrap();
 }
 
 /// Escucha señales de apagado (Ctrl+C o SIGTERM) para cerrar conexiones limpiamente

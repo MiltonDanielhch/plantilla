@@ -1,19 +1,14 @@
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
+use utoipa::{IntoParams, ToSchema};
 use validator::Validate;
-use utoipa::{ToSchema, IntoParams};
 
-#[derive(Debug, Serialize, Deserialize, Type, Clone, PartialEq, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, Type, Clone, PartialEq, ToSchema, Default)]
 #[sqlx(type_name = "TEXT", rename_all = "lowercase")]
 pub enum Role {
     Admin,
+    #[default]
     User,
-}
-
-impl Default for Role {
-    fn default() -> Self {
-        Self::User
-    }
 }
 
 #[derive(Debug, Serialize, FromRow, ToSchema)]
@@ -25,7 +20,7 @@ pub struct User {
     #[sqlx(default)] // Maneja casos donde la columna no existía antes (migración suave)
     pub role: Role,
     // Usamos String por simplicidad inicial (SQLite devuelve texto)
-    pub created_at: String, 
+    pub created_at: String,
 }
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
@@ -36,8 +31,12 @@ pub struct CreateUserRequest {
     pub password: String,
 }
 
-fn default_page() -> i64 { 1 }
-fn default_limit() -> i64 { 10 }
+fn default_page() -> i64 {
+    1
+}
+fn default_limit() -> i64 {
+    10
+}
 
 #[derive(Debug, Deserialize, IntoParams, ToSchema)]
 pub struct UserSearch {
