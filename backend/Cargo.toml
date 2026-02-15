@@ -34,7 +34,7 @@ utoipa = { version = "4.2.0", features = ["axum_extras"] }
 utoipa-swagger-ui = { version = "6.0.0", features = ["axum"] }
 
 # Seguridad (Rate Limiting)
-tower_governor = "0.4.2"
+tower_governor = { version = "0.4.2", features = ["axum"] }
 governor = "0.6.3"
 
 [dev-dependencies]

@@ -14,7 +14,7 @@ use tower_http::cors::CorsLayer;
 use tower_cookies::CookieManagerLayer;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
-use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
+use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer, key_extractor::SmartIpKeyExtractor};
 use std::sync::Arc;
 
 #[derive(OpenApi)]
@@ -53,6 +53,7 @@ pub fn create_app(pool: SqlitePool) -> Router {
     let governor_conf = Arc::new(GovernorConfigBuilder::default()
         .per_second(10)
         .burst_size(20)
+        .key_extractor(SmartIpKeyExtractor)
         .finish()
         .unwrap());
 
