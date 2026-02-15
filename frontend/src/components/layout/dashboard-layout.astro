@@ -42,7 +42,7 @@ const { title, description, currentPath, isAdmin = false } = Astro.props
       <main class="flex-1 overflow-auto p-6">
         {description && (
           <div class="mb-6">
-            <p class="text-muted-foreground">{description}</p>
+            <p class="text-muted-foreground" id="page-description">{description}</p>
           </div>
         )}
         <slot />
