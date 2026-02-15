@@ -1,0 +1,301 @@
+---
+import { cn } from '../../lib/utils'
+import type { TableState } from '../../stores/table'
+
+export interface Column<T = any> {
+  key: string
+  header: string
+  sortable?: boolean
+  filterable?: boolean
+  width?: string
+  align?: 'left' | 'center' | 'right'
+  render?: (row: T) => any
+}
+
+interface Props<T = any> {
+  columns: Column<T>[]
+  state: TableState<T>
+  onSort?: (column: string) => void
+  onFilter?: (column: string, value: string) => void
+  onPageChange?: (page: number) => void
+  onLimitChange?: (limit: number) => void
+  onToggleSelection?: (id: number) => void
+  onToggleAllSelection?: () => void
+  emptyMessage?: string
+  class?: string
+}
+
+const {
+  columns,
+  state,
+  onSort,
+  onFilter,
+  onPageChange,
+  onLimitChange,
+  onToggleSelection,
+  onToggleAllSelection,
+  emptyMessage = 'No hay datos disponibles',
+  class: className = '',
+} = Astro.props
+
+const { data, loading, error, pagination, sorting, filters, selectedRows } = state
+
+// Clases base
+const tableClasses = 'w-full caption-bottom text-sm'
+const headerClasses = '[&_tr]:border-b'
+const rowClasses = cn(
+  'border-b transition-colors',
+  'hover:bg-muted/50',
+  'data-[state=selected]:bg-muted'
+)
+const cellClasses = 'p-4 align-middle [&:has([role=checkbox])]:pr-0'
+const headerCellClasses = cn(
+  'h-12 px-4 text-left align-middle font-medium text-muted-foreground',
+  '[&:has([role=checkbox])]:pr-0'
+)
+
+// Helpers
+const getSortIcon = (column: string) => {
+  if (sorting.column !== column) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2 h-4 w-4 text-muted-foreground"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>`
+  }
+  return sorting.direction === 'asc'
+    ? `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2 h-4 w-4"><path d="m18 15-6-6-6 6"/></svg>`
+    : `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2 h-4 w-4"><path d="m6 9 6 6 6-6"/></svg>`
+}
+
+const isAllSelected = data.length > 0 && data.every((row: any) => selectedRows.has(row.id))
+const hasSelection = selectedRows.size > 0
+const startItem = (pagination.page - 1) * pagination.limit + 1
+const endItem = Math.min(pagination.page * pagination.limit, pagination.total)
+---
+
+<div class={cn('relative w-full overflow-auto rounded-md border', className)}>
+  <table class={tableClasses} data-table>
+    <thead class={headerClasses}>
+      <tr class="border-b bg-muted/50">
+        <!-- Checkbox para selección masiva -->
+        <th class={cn(headerCellClasses, 'w-[50px]')}>
+          <input
+            type="checkbox"
+            class="h-4 w-4 rounded border-primary"
+            checked={isAllSelected}
+            onchange={onToggleAllSelection ? `window.tableActions.toggleAll()` : undefined}
+          />
+        </th>
+        
+        {columns.map((column) => (
+          <th 
+            class={cn(headerCellClasses, column.width && `w-[${column.width}]`)}
+            style={column.align ? `text-align: ${column.align}` : undefined}
+          >
+            <div class="flex items-center gap-2">
+              {column.sortable ? (
+                <button 
+                  class="flex items-center hover:text-foreground"
+                  onclick={onSort ? `window.tableActions.sort('${column.key}')` : undefined}
+                >
+                  {column.header}
+                  <Fragment set:html={getSortIcon(column.key)} />
+                </button>
+              ) : (
+                <span>{column.header}</span>
+              )}
+            </div>
+          </th>
+        ))}
+      </tr>
+      
+      <!-- Fila de filtros -->
+      {columns.some((c) => c.filterable) && (
+        <tr class="border-b bg-muted/30">
+          <th class={cn(headerCellClasses, 'w-[50px]')}></th>
+          {columns.map((column) => (
+            <th class={cn(headerCellClasses, 'py-2')}>
+              {column.filterable && (
+                <input
+                  type="text"
+                  placeholder={`Filtrar ${column.header.toLowerCase()}...`}
+                  class="h-8 w-full rounded-md border border-input bg-transparent px-3 text-xs"
+                  value={filters[column.key] || ''}
+                  oninput={onFilter ? `window.tableActions.filter('${column.key}', this.value)` : undefined}
+                />
+              )}
+            </th>
+          ))}
+        </tr>
+      )}
+    </thead>
+    
+    <tbody class="[&_tr:last-child]:border-0">
+      {loading ? (
+        <tr>
+          <td colspan={columns.length + 1} class="p-8 text-center">
+            <div class="flex items-center justify-center gap-2 text-muted-foreground">
+              <svg class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Cargando...</span>
+            </div>
+          </td>
+        </tr>
+      ) : error ? (
+        <tr>
+          <td colspan={columns.length + 1} class="p-8 text-center">
+            <div class="text-destructive">
+              <p class="font-medium">Error al cargar datos</p>
+              <p class="text-sm text-muted-foreground">{error}</p>
+            </div>
+          </td>
+        </tr>
+      ) : data.length === 0 ? (
+        <tr>
+          <td colspan={columns.length + 1} class="p-8 text-center text-muted-foreground">
+            {emptyMessage}
+          </td>
+        </tr>
+      ) : (
+        data.map((row: any) => (
+          <tr 
+            class={rowClasses}
+            data-selected={selectedRows.has(row.id)}
+          >
+            <td class={cn(cellClasses, 'w-[50px]')}>
+              <input
+                type="checkbox"
+                class="h-4 w-4 rounded border-primary"
+                checked={selectedRows.has(row.id)}
+                onchange={onToggleSelection ? `window.tableActions.toggleRow(${row.id})` : undefined}
+              />
+            </td>
+            {columns.map((column) => (
+              <td 
+                class={cellClasses}
+                style={column.align ? `text-align: ${column.align}` : undefined}
+              >
+                {column.render ? column.render(row) : row[column.key]}
+              </td>
+            ))}
+          </tr>
+        ))
+      )}
+    </tbody>
+  </table>
+</div>
+
+<!-- Controles de paginación -->
+{!loading && !error && data.length > 0 && (
+  <div class="flex items-center justify-between py-4">
+    <div class="flex items-center gap-2 text-sm text-muted-foreground">
+      <span>
+        Mostrando {startItem} a {endItem} de {pagination.total} resultados
+      </span>
+      {hasSelection && (
+        <span class="rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+          {selectedRows.size} seleccionados
+        </span>
+      )}
+    </div>
+    
+    <div class="flex items-center gap-4">
+      <!-- Selector de items por página -->
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-muted-foreground">Filas por página:</span>
+        <select
+          class="h-8 rounded-md border border-input bg-background px-2 text-sm"
+          value={pagination.limit}
+          onchange={onLimitChange ? `window.tableActions.changeLimit(this.value)` : undefined}
+        >
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+      
+      <!-- Controles de navegación -->
+      <div class="flex items-center gap-1">
+        <button
+          class={cn(
+            'inline-flex h-8 w-8 items-center justify-center rounded-md border',
+            'text-sm font-medium transition-colors',
+            pagination.page === 1 
+              ? 'pointer-events-none opacity-50' 
+              : 'hover:bg-accent hover:text-accent-foreground'
+          )}
+          onclick={onPageChange ? `window.tableActions.changePage(${pagination.page - 1})` : undefined}
+          disabled={pagination.page === 1}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        
+        {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+          const pageNum = i + 1
+          const isActive = pageNum === pagination.page
+          
+          return (
+            <button
+              class={cn(
+                'inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-primary text-primary-foreground'
+                  : 'hover:bg-accent hover:text-accent-foreground'
+              )}
+              onclick={onPageChange ? `window.tableActions.changePage(${pageNum})` : undefined}
+            >
+              {pageNum}
+            </button>
+          )
+        })}
+        
+        {pagination.totalPages > 5 && <span class="px-2 text-muted-foreground">...</span>}
+        
+        <button
+          class={cn(
+            'inline-flex h-8 w-8 items-center justify-center rounded-md border',
+            'text-sm font-medium transition-colors',
+            pagination.page === pagination.totalPages
+              ? 'pointer-events-none opacity-50'
+              : 'hover:bg-accent hover:text-accent-foreground'
+          )}
+          onclick={onPageChange ? `window.tableActions.changePage(${pagination.page + 1})` : undefined}
+          disabled={pagination.page === pagination.totalPages}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+<script define:vars={{ state }}>
+  // Hacer las acciones disponibles globalmente para los event handlers inline
+  window.tableState = state
+  window.tableActions = {
+    sort: (column) => {
+      const event = new CustomEvent('table:sort', { detail: { column } })
+      document.dispatchEvent(event)
+    },
+    filter: (column, value) => {
+      const event = new CustomEvent('table:filter', { detail: { column, value } })
+      document.dispatchEvent(event)
+    },
+    changePage: (page) => {
+      const event = new CustomEvent('table:page', { detail: { page } })
+      document.dispatchEvent(event)
+    },
+    changeLimit: (limit) => {
+      const event = new CustomEvent('table:limit', { detail: { limit: parseInt(limit) } })
+      document.dispatchEvent(event)
+    },
+    toggleRow: (id) => {
+      const event = new CustomEvent('table:toggleRow', { detail: { id } })
+      document.dispatchEvent(event)
+    },
+    toggleAll: () => {
+      const event = new CustomEvent('table:toggleAll')
+      document.dispatchEvent(event)
+    },
+  }
+</script>
