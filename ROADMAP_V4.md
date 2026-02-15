@@ -1,103 +1,231 @@
 # 🚀 Roadmap V4.0: Sintonía 2026 Dashboard Edition
 
 > **Fecha de Planificación:** 15 Feb 2026  
-> **Base:** V3.0 Enterprise Completada  
-> **Objetivo:** Transformar el boilerplate en un sistema de dashboard completo y reutilizable
+> **Base:** V3.0 Enterprise Completada (Fases 0-34)  
+> **Objetivo:** Transformar el frontend en un Dashboard profesional con UI Stack moderno
 
 ---
 
 ## 📊 Análisis del Estado Actual
 
-### ✅ Lo que tienes implementado (V3.0 Enterprise)
+### ✅ Lo que YA TIENES IMPLEMENTADO (Fases 0-34 Completadas)
 
-**Backend (Rust + Axum):**
-- ✅ Arquitectura Hexagonal (core/data/api)
-- ✅ Autenticación JWT con cookies HttpOnly
-- ✅ Autorización RBAC (Admin/User)
-- ✅ Logs de auditoría
-- ✅ Repository Pattern (UserRepository trait)
-- ✅ Errores tipados (AppError)
-- ✅ Configuración jerárquica
-- ✅ Observabilidad (tracing JSON)
-- ✅ Rate limiting (Governor)
-- ✅ API versionada (/api/v1)
-- ✅ Swagger/OpenAPI documentation
-- ✅ CORS configurado
-- ✅ SQLx con SQLite
+**Backend (Rust + Axum) - Enterprise Ready:**
+- ✅ **Arquitectura Hexagonal** - core/data/api separados
+- ✅ **Autenticación JWT** - Cookies HttpOnly + SameSite
+- ✅ **Autorización RBAC** - Admin/User roles con middleware
+- ✅ **Repository Pattern** - UserRepository trait + SqliteRepository
+- ✅ **Errores Tipados** - AppError con IntoResponse
+- ✅ **Configuración Jerárquica** - Crate config con entornos
+- ✅ **Observabilidad** - Tracing JSON + request IDs
+- ✅ **Rate Limiting** - 10 req/seg con Governor
+- ✅ **Paginación** - LIMIT/OFFSET implementado (Fase 27)
+- ✅ **Búsqueda/Filtros** - UserSearch con query params (Fase 18)
+- ✅ **API Versionada** - /api/v1
+- ✅ **Swagger/OpenAPI** - Utoipa con UI
+- ✅ **Graceful Shutdown** - Señales SIGTERM (Fase 28)
+- ✅ **Health Checks** - Verificación DB (Fase 28)
+- ✅ **Auditoría** - Tabla audit_logs completa (Fase 17)
+- ✅ **SQLx + SQLite** - Migrations automáticas
+- ✅ **CORS** - Configurado para localhost:4321
 
-**Frontend (Astro):**
-- ✅ Estructura base de Astro
-- ✅ Componentes básicos (LoginForm, UserList, AuditTable, etc.)
-- ✅ Páginas: index, login, register, dashboard
-- ✅ Integración con backend
+**Testing & DevOps:**
+- ✅ **Tests Unitarios** - Backend >80% coverage (Fase 22)
+- ✅ **Tests Integración** - SQLx + test database (Fase 22)
+- ✅ **Tests E2E Configurados** - Playwright listo (Fase 24)
+- ✅ **CI/CD** - GitHub Actions workflow (Fase 23)
+- ✅ **Docker Multi-Stage** - Optimizado para prod (Fase 19)
+- ✅ **Justfile** - Comandos unificados run-backend, run-frontend, check
 
-**DX (Developer Experience):**
-- ✅ Justfile con comandos unificados
-- ✅ Pre-commit hooks listos para configurar
-- ✅ Tests de integración
+**Frontend (Astro) - Básico Funcional:**
+- ✅ **Estructura Astro** - Proyecto base
+- ✅ **Páginas** - index, login, register, dashboard
+- ✅ **Componentes** - LoginForm, UserForm, UserList, AuditTable, LogoutButton
+- ✅ **Dashboard con Tabs** - Users/Audit para admins
+- ✅ **Integración Backend** - Fetch con credentials:include
 
-### ⚠️ Lo que le falta para ser un Dashboard Enterprise completo
+---
 
-**Frontend - UI/UX:**
-- ❌ No tiene Tailwind CSS configurado
-- ❌ No tiene sistema de diseño (componentes reutilizables)
-- ❌ No tiene sistema de iconos
-- ❌ No tiene manejo de estado global
-- ❌ No tiene formularios con validación robusta
-- ❌ No tiene tablas avanzadas (sorting, filtering, pagination)
-- ❌ No tiene notificaciones/toasts
-- ❌ No tiene modales avanzados
-- ❌ No tiene layout de dashboard (sidebar, header, content)
-- ❌ No tiene tema claro/oscuro
-- ❌ No tiene loading states y skeletons
-- ❌ No tiene manejo de errores en UI
+## ⚠️ Lo que REALMENTE FALTA (Gap Analysis)
 
-**Backend - Features:**
-- ❌ No tiene refresh tokens
-- ❌ No tiene paginación en endpoints
-- ❌ No tiene búsqueda/filtros avanzados en API
-- ❌ No tiene exportación de datos (CSV/Excel)
-- ❌ No tiene carga de archivos
-- ❌ No tiene notificaciones en tiempo real (WebSockets/SSE)
-- ❌ No tiene jobs en background
-- ❌ No tiene caché (Redis)
-- ❌ No tiene health checks avanzados
-- ❌ No tiene métricas (Prometheus)
+### Frontend - UI/UX (La mayor prioridad)
+- ❌ **Tailwind CSS** - No instalado (solo estilos inline)
+- ❌ **Sistema de Diseño** - No hay componentes reutilizables
+- ❌ **Tema Claro/Oscuro** - Actualmente solo modo oscuro hardcodeado
+- ❌ **Layout Profesional** - Falta sidebar, header, breadcrumbs
+- ❌ **Tablas Avanzadas** - UserList actual es muy básico (sin sorting visual)
+- ❌ **Notificaciones/Toasts** - Sin feedback visual
+- ❌ **Modales** - Confirmaciones inline en lugar de dialogs
+- ❌ **Iconos** - Sin sistema de iconos (Lucide)
+- ❌ **Loading States** - Sin skeletons
+- ❌ **Formularios** - Sin validación visual ni error handling
+- ❌ **Estado Global** - Auth manejado localmente en cada componente
 
-**DevOps/Infra:**
-- ❌ No tiene Docker/Docker Compose
-- ❌ No tiene CI/CD pipeline
-- ❌ No tiene tests E2E configurados
-- ❌ No tiene despliegue automatizado
+### Backend - Features Premium (Nice to have)
+- ❌ **Refresh Tokens** - JWT actual sin rotación
+- ❌ **Exportación CSV** - Endpoint para exportar users/logs
+- ❌ **Avatar Upload** - Carga de imágenes de perfil
+- ❌ **WebSockets/SSE** - Notificaciones en tiempo real
+- ❌ **Caché Redis** - Cache de sesiones/queries
+
+### DevOps - Producción Real
+- ❌ **Tests E2E Reales** - Playwright configurado pero sin tests implementados
+- ❌ **Docker Compose** - Solo Dockerfile, falta compose.yml
+- ❌ **Deployment** - No hay despliegue automatizado
+- ❌ **Monitoring** - Sin Sentry/LogRocket
+- ❌ **Backups DB** - Automatización de backups
 
 ---
 
 ## 🎨 FASE 35: El Nuevo Stack de UI (Sintonía 2026)
 
+> **Prioridad: ALTA** - Transformar el frontend en un dashboard profesional
+
 ### 1. shadcn/ui para Astro 🎯
 
 **¿Por qué shadcn/ui?**
-- **Ownership total:** Tú eres el dueño del código, no es una dependencia black-box
-- **Minimalista e industrial:** Alineado con tu estética actual
-- **Actualizado semanalmente:** Mantenimiento constante
-- **Tailwind-first:** Integración perfecta con Tailwind CSS
-- **Accesible:** Componentes con a11y incluido
+- **Ownership total:** Tú eres el dueño del código
+- **Minimalista industrial:** Perfecto para tu estética actual
+- **Actualizado semanalmente:** Mantenimiento activo
+- **Tailwind-first:** Integración perfecta
+- **Accesible:** a11y incluido
 - **Type-safe:** TypeScript first
 
-**Implementación para Astro:**
+**Instalación paso a paso:**
 
 ```bash
-# 1. Configurar Tailwind CSS en el frontend
+# 1. Entrar al frontend
 cd frontend
+
+# 2. Instalar Tailwind CSS
 npm install -D tailwindcss postcss autoprefixer
 npx tailwindcss init -p
 
-# 2. Instalar dependencias de shadcn/ui
+# 3. Instalar dependencias shadcn/ui
 npm install -D @tailwindcss/typography class-variance-authority clsx tailwind-merge
-npm install lucide-react  # Iconos
+npm install lucide-astro  # Iconos para Astro (no React)
 
-# 3. Configurar colores (tema Sintonía 2026)
-# Slate/Zinc para estética industrial minimalista
+# 4. Instalar nanostores para estado global
+npm install nanostores
+
+# 5. Configurar tailwind.config.mjs
+cat > tailwind.config.mjs << 'EOF'
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}'],
+  theme: {
+    extend: {
+      colors: {
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        primary: {
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
+        },
+        secondary: {
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
+        },
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
+        },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
+        },
+      },
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+      },
+    },
+  },
+  plugins: [require('@tailwindcss/typography')],
+}
+EOF
+
+# 6. Crear globals.css con tema
+mkdir -p src/styles
+cat > src/styles/globals.css << 'EOF'
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+EOF
+
+# 7. Actualizar Layout.astro para usar el tema
 ```
 
 ### 2. Estructura del Sistema de Diseño
@@ -105,7 +233,7 @@ npm install lucide-react  # Iconos
 ```
 frontend/src/
 ├── components/
-│   ├── ui/                    # Componentes base shadcn/ui
+│   ├── ui/                    # Componentes base (shadcn/ui style)
 │   │   ├── button.astro
 │   │   ├── input.astro
 │   │   ├── card.astro
@@ -117,313 +245,173 @@ frontend/src/
 │   │   ├── skeleton.astro
 │   │   ├── badge.astro
 │   │   ├── avatar.astro
-│   │   ├── select.astro
-│   │   ├── checkbox.astro
-│   │   └── ...
+│   │   └── select.astro
 │   ├── layout/                # Layout components
-│   │   ├── dashboard-shell.astro
+│   │   ├── dashboard-layout.astro
 │   │   ├── sidebar.astro
 │   │   ├── header.astro
-│   │   ├── breadcrumbs.astro
-│   │   └── footer.astro
-│   └── dashboard/             # Componentes específicos del dashboard
+│   │   └── mobile-nav.astro
+│   └── dashboard/             # Componentes específicos
 │       ├── stats-cards.astro
-│       ├── recent-activity.astro
-│       ├── user-management.astro
-│       └── audit-logs.astro
+│       ├── user-table.astro
+│       ├── audit-timeline.astro
+│       └── theme-toggle.astro
 ├── lib/
-│   ├── utils.ts               # Utilidades (cn, formatters)
-│   ├── api.ts                 # Cliente API con fetch interceptors
-│   ├── auth.ts                # Helpers de autenticación
-│   └── constants.ts           # Constantes globales
+│   ├── utils.ts               # cn(), formatters
+│   ├── api.ts                 # Cliente API tipado
+│   └── auth.ts                # Helpers auth
 ├── stores/
-│   └── auth.ts                # Estado global (nanostores)
-├── hooks/
-│   ├── use-auth.ts
-│   ├── use-fetch.ts
-│   └── use-toast.ts
+│   ├── auth.ts                # Estado global auth
+│   └── theme.ts               # Estado tema claro/oscuro
 ├── styles/
-│   └── globals.css            # Variables CSS, tema claro/oscuro
+│   └── globals.css            # Variables CSS + Tailwind
 └── types/
-    └── index.ts               # Tipos TypeScript compartidos
+    └── index.ts               # Tipos TypeScript
 ```
 
-### 3. Componentes Base Requeridos
+### 3. Componentes Core (shadcn/ui para Astro)
 
-#### Core UI Components
-
-| Componente | Props | Descripción |
-|------------|-------|-------------|
-| `Button` | variant, size, loading, disabled | Botón con estados |
-| `Input` | type, placeholder, error, icon | Input con validación |
-| `Card` | title, description, footer, class | Contenedor flexible |
-| `Dialog` | open, onOpenChange, title | Modal accesible |
-| `Table` | data, columns, sorting, pagination | Tabla avanzada |
-| `Tabs` | value, onValueChange, items | Navegación por tabs |
-| `Toast` | type, message, duration | Notificaciones |
-| `Badge` | variant, children | Etiquetas de estado |
-| `Avatar` | src, fallback, size | Imagen de perfil |
-| `Skeleton` | class | Loading placeholder |
-| `Select` | options, value, onChange | Dropdown |
-| `DropdownMenu` | trigger, items | Menú contextual |
-| `Tooltip` | content, children | Ayuda contextual |
-| `Switch` | checked, onChange | Toggle |
-| `Calendar` | value, onChange | Selector de fecha |
-| `Command` | placeholder, items | Búsqueda rápida (⌘K) |
-
-#### Layout Components
+Crear componentes base como Astro components:
 
 ```astro
 ---
-// dashboard-shell.astro - Layout principal
+// components/ui/button.astro
+import { cn } from '../../lib/utils';
+
+interface Props {
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  size?: 'default' | 'sm' | 'lg' | 'icon';
+  class?: string;
+  href?: string;
+  type?: 'button' | 'submit' | 'reset';
+  disabled?: boolean;
+}
+
+const { 
+  variant = 'default', 
+  size = 'default', 
+  class: className = '',
+  href,
+  type = 'button',
+  disabled = false
+} = Astro.props;
+
+const variants = {
+  default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+  destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+  outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+  secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+  ghost: 'hover:bg-accent hover:text-accent-foreground',
+  link: 'text-primary underline-offset-4 hover:underline',
+};
+
+const sizes = {
+  default: 'h-10 px-4 py-2',
+  sm: 'h-9 rounded-md px-3',
+  lg: 'h-11 rounded-md px-8',
+  icon: 'h-10 w-10',
+};
+
+const classes = cn(
+  'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  variants[variant],
+  sizes[size],
+  className
+);
+---
+
+{href ? (
+  <a href={href} class={classes}>
+    <slot />
+  </a>
+) : (
+  <button type={type} disabled={disabled} class={classes}>
+    <slot />
+  </button>
+)}
+```
+
+### 4. Layout del Dashboard
+
+```astro
+---
+// components/layout/dashboard-layout.astro
+import Sidebar from './sidebar.astro';
+import Header from './header.astro';
+import { cn } from '../../lib/utils';
+
 interface Props {
   title: string;
   description?: string;
 }
+
+const { title, description } = Astro.props;
 ---
 
-<div class="flex h-screen bg-background">
-  <Sidebar />
-  <div class="flex-1 flex flex-col overflow-hidden">
-    <Header />
-    <main class="flex-1 overflow-auto p-6">
-      <slot />
-    </main>
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width" />
+  <title>{title} | Sintonía 3026</title>
+  <meta name="description" content={description} />
+</head>
+<body class="min-h-screen bg-background font-sans antialiased">
+  <div class="flex h-screen overflow-hidden">
+    <Sidebar />
+    <div class="flex flex-1 flex-col overflow-hidden">
+      <Header title={title} />
+      <main class="flex-1 overflow-auto p-6">
+        <slot />
+      </main>
+    </div>
   </div>
-</div>
+</body>
+</html>
 ```
 
-### 4. Tema Sintonía 2026
+### 5. Páginas Nuevas del Dashboard
 
-#### Paleta de Colores (CSS Variables)
+Reemplazar las páginas actuales con versiones profesionales:
 
-```css
-:root {
-  /* Industrial Minimalist Theme */
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 222.2 47.4% 11.2%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 222.2 84% 4.9%;
-  --radius: 0.5rem;
-}
+1. **/dashboard** - Overview con stats cards
+2. **/dashboard/users** - User management con tabla avanzada
+3. **/dashboard/audit** - Audit logs con timeline
+4. **/dashboard/settings** - Perfil y preferencias
 
-.dark {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 210 40% 98%;
-  --primary-foreground: 222.2 47.4% 11.2%;
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 212.7 26.8% 83.9%;
-}
-```
-
-#### Tipografía
-
-- **Primary:** Inter o Geist (moderna, legible)
-- **Mono:** JetBrains Mono o Fira Code (para código/logs)
-- **Tamaños:** Escala 1.25 (minor third)
-
-### 5. Arquitectura del Dashboard
-
-#### Layout Principal
-
-```
-┌─────────────────────────────────────────────────────┐
-│  Logo    Search                    User   Bell   ⚙️  │ Header
-├─────────────────────────────────────────────────────┤
-│        │                                            │
-│   Nav  │          Content Area                      │
-│        │                                            │
-│  Home  │  ┌──────────────────────────────────┐     │
-│  Users │  │  Breadcrumbs > Page Title          │     │
-│  Audit │  ├──────────────────────────────────┤     │
-│        │  │                                    │     │
-│        │  │   Cards / Stats / Charts           │     │
-│        │  │                                    │     │
-│        │  │   ┌─────┐ ┌─────┐ ┌─────┐        │     │
-│        │  │   │Card1│ │Card2│ │Card3│        │     │
-│        │  │   └─────┘ └─────┘ └─────┘        │     │
-│        │  │                                    │     │
-│        │  │   Data Table                       │     │
-│        │  │   ┌────────────────────────────┐   │     │
-│        │  │   │ ...                        │   │     │
-│        │  │   └────────────────────────────┘   │     │
-│        │  │                                    │     │
-└────────┴──────────────────────────────────────────┘
-```
-
-#### Páginas del Dashboard
-
-1. **Overview/Dashboard** (`/dashboard`)
-   - Stats cards (usuarios totales, activos, admins)
-   - Gráfico de actividad reciente
-   - Tabla de últimas acciones
-   - Alertas/notificaciones
-
-2. **User Management** (`/dashboard/users`)
-   - Tabla con filtros, sorting, pagination
-   - Acciones: View, Edit, Delete, Activate
-   - Búsqueda en tiempo real
-   - Exportar a CSV
-
-3. **Audit Logs** (`/dashboard/audit`)
-   - Timeline de eventos
-   - Filtros por fecha, usuario, acción
-   - Exportar logs
-
-4. **Settings** (`/dashboard/settings`)
-   - Perfil de usuario
-   - Preferencias (tema, notificaciones)
-   - Configuración de cuenta
-
-5. **System** (`/dashboard/system`) - Solo Admin
-   - Estado del sistema
-   - Métricas de performance
-   - Configuración avanzada
-
-### 6. Cliente API Avanzado
-
-```typescript
-// lib/api.ts
-import type { User, AuditLog } from '../types';
-
-class ApiClient {
-  private baseUrl: string;
-  
-  constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
-  }
-  
-  private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      credentials: 'include', // Para cookies HttpOnly
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-    });
-    
-    if (!response.ok) {
-      const error = await response.json();
-      throw new ApiError(error.message, response.status);
-    }
-    
-    return response.json();
-  }
-  
-  // Users
-  async getUsers(params?: { search?: string; page?: number; limit?: number }) {
-    const query = new URLSearchParams(params as Record<string, string>);
-    return this.request<User[]>(`/api/v1/users?${query}`);
-  }
-  
-  async createUser(data: CreateUserInput) {
-    return this.request<User>('/api/v1/users', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-  
-  async deleteUser(id: string) {
-    return this.request<void>(`/api/v1/users/${id}`, {
-      method: 'DELETE',
-    });
-  }
-  
-  // Auth
-  async login(credentials: LoginInput) {
-    return this.request<{ user: User }>('/api/v1/login', {
-      method: 'POST',
-      body: JSON.stringify(credentials),
-    });
-  }
-  
-  async logout() {
-    return this.request<void>('/api/v1/logout', { method: 'POST' });
-  }
-  
-  // Audit
-  async getAuditLogs(params?: AuditLogParams) {
-    const query = new URLSearchParams(params as Record<string, string>);
-    return this.request<AuditLog[]>(`/api/v1/audit-logs?${query}`);
-  }
-}
-
-export const api = new ApiClient(import.meta.env.PUBLIC_API_URL || 'http://localhost:3000');
-```
-
-### 7. Manejo de Estado (Nanostores)
+### 6. Estado Global con Nanostores
 
 ```typescript
 // stores/auth.ts
 import { atom, computed } from 'nanostores';
-import type { User } from '../types';
 
-// State
+export interface User {
+  id: number;
+  username: string;
+  role: 'Admin' | 'User';
+}
+
 export const $user = atom<User | null>(null);
 export const $isLoading = atom(false);
-export const $error = atom<string | null>(null);
 
-// Computed
-export const $isAuthenticated = computed($user, (user) => user !== null);
-export const $isAdmin = computed($user, (user) => user?.role === 'Admin');
+export const $isAuthenticated = computed($user, user => user !== null);
+export const $isAdmin = computed($user, user => user?.role === 'Admin');
 
-// Actions
-export async function login(credentials: { username: string; password: string }) {
+export async function fetchUser() {
   $isLoading.set(true);
-  $error.set(null);
-  
   try {
-    const response = await fetch('/api/v1/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(credentials),
-      credentials: 'include',
-    });
-    
-    if (!response.ok) throw new Error('Login failed');
-    
-    const data = await response.json();
-    $user.set(data.user);
-  } catch (err) {
-    $error.set(err instanceof Error ? err.message : 'Unknown error');
+    const res = await fetch('/api/v1/dashboard', { credentials: 'include' });
+    if (res.ok) {
+      const data = await res.json();
+      $user.set(data.user);
+    } else {
+      $user.set(null);
+    }
+  } catch {
+    $user.set(null);
   } finally {
     $isLoading.set(false);
   }
-}
-
-export function logout() {
-  $user.set(null);
-  fetch('/api/v1/logout', { method: 'POST', credentials: 'include' });
 }
 ```
 
@@ -431,114 +419,108 @@ export function logout() {
 
 ## 🏗️ FASES RESTANTES DEL ROADMAP
 
-### FASE 36: Backend Features Avanzados
+### FASE 36: Backend Features Premium (Opcional)
 
-#### 36.1 Refresh Tokens
-```rust
-// Implementar rotating refresh tokens
-pub struct TokenPair {
-    pub access_token: String,
-    pub refresh_token: String,
-    pub expires_in: i64,
-}
-```
+**Prioridad: MEDIA** - Mejoras que agregan valor pero no son críticas
 
-#### 36.2 Paginación y Filtros
-```rust
-// En todos los endpoints de listado
-pub struct PaginationParams {
-    pub page: i64,
-    pub limit: i64,
-    pub sort_by: Option<String>,
-    pub sort_order: Option<String>,
-}
+- [ ] **Refresh Tokens** - Rotación de tokens JWT
+- [ ] **Export CSV Endpoint** - `/api/v1/users/export`
+- [ ] **Avatar Upload** - Carga de imágenes de perfil
+- [ ] **WebSockets/SSE** - Notificaciones en tiempo real
+- [ ] **Cache Redis** - Mejora de performance
 
-pub struct PaginatedResponse<T> {
-    pub data: Vec<T>,
-    pub total: i64,
-    pub page: i64,
-    pub limit: i64,
-    pub total_pages: i64,
-}
-```
+### FASE 37: Tests E2E con Playwright
 
-#### 36.3 Búsqueda Full-Text
-```rust
-// Implementar con SQLite FTS5 o migrar a PostgreSQL
-pub async fn search_users(
-    &self,
-    query: &str,
-    pagination: PaginationParams,
-) -> Result<PaginatedResponse<User>, AppError>;
-```
+**Prioridad: ALTA** - Completar los tests configurados
 
-#### 36.4 Exportación de Datos
-```rust
-// Exportar a CSV/Excel
-pub async fn export_users_csv(&self, filters: UserFilters) -> Result<Vec<u8>, AppError>;
-```
+- [ ] Login flow (happy path)
+- [ ] Login con credenciales inválidas
+- [ ] Acceso a dashboard protegido
+- [ ] CRUD de usuarios (admin)
+- [ ] Visualización de audit logs
+- [ ] Logout
+- [ ] Responsive testing
 
-#### 36.5 Carga de Archivos
-```rust
-// Avatar uploads, documentos, etc.
-pub async fn upload_file(
-    &self,
-    user_id: i64,
-    file: Multipart,
-) -> Result<FileUpload, AppError>;
-```
+### FASE 38: DevOps & Producción
 
-#### 36.6 WebSockets / SSE
-```rust
-// Notificaciones en tiempo real
-pub async fn ws_handler(
-    ws: WebSocketUpgrade,
-    State(state): State<AppState>,
-) -> impl IntoResponse;
-```
+**Prioridad: MEDIA** - Preparar para producción real
 
-### FASE 37: Testing y Calidad
+- [ ] **Docker Compose** - Dev y prod environments
+- [ ] **GitHub Actions** - Deploy automático
+- [ ] **Fly.io/Railway** - Hosting gratuito/pago
+- [ ] **Sentry** - Error tracking
+- [ ] **Backups automáticos** - Base de datos
+- [ ] **SSL/HTTPS** - Certificados
 
-- [ ] Tests unitarios (backend >80% coverage)
-- [ ] Tests de integración (Playwright)
-- [ ] Tests E2E (login flow, CRUD operations)
-- [ ] Lighthouse CI (performance audit)
-- [ ] Accessibility audit (WCAG 2.1)
-- [ ] Load testing (k6)
+### FASE 39: Optimizaciones
 
-### FASE 38: DevOps y Deployment
+**Prioridad: BAJA** - Nice to have
 
-- [ ] Docker multi-stage build
-- [ ] Docker Compose (dev/prod)
-- [ ] GitHub Actions CI/CD
-- [ ] Fly.io / Railway / Render deployment
-- [ ] Database backups automatizados
-- [ ] Monitoring (Sentry, LogRocket)
-
-### FASE 39: Documentación
-
-- [ ] Storybook para componentes UI
-- [ ] Guía de contribución
-- [ ] Documentación API (mejorar Swagger)
-- [ ] Videos tutoriales (opcional)
-
-### FASE 40: Optimizaciones
-
-- [ ] Lazy loading de imágenes
-- [ ] Code splitting en Astro
-- [ ] Caché HTTP headers
-- [ ] Service Worker para offline
-- [ ] Image optimization (Sharp)
+- [ ] **Storybook** - Documentación de componentes
+- [ ] **Lighthouse CI** - Performance audit
+- [ ] **Lazy loading** - Imágenes y componentes
+- [ ] **Service Worker** - Offline support
+- [ ] **Image optimization** - Sharp/Cloudinary
 
 ---
 
 ## 📦 Componentes Dashboard Específicos
 
-### UserTable Component (Avanzado)
+### StatsCards Component
+
+```astro
+---
+// components/dashboard/stats-cards.astro
+import { Users, UserCheck, Shield, UserPlus } from 'lucide-astro';
+import Card from '../ui/card.astro';
+
+interface Props {
+  stats: {
+    totalUsers: number;
+    activeUsers: number;
+    adminUsers: number;
+    newUsersToday: number;
+  };
+}
+
+const { stats } = Astro.props;
+
+const cards = [
+  { title: 'Total Usuarios', value: stats.totalUsers, icon: Users, trend: '+12%', color: 'text-blue-600' },
+  { title: 'Usuarios Activos', value: stats.activeUsers, icon: UserCheck, trend: '+5%', color: 'text-green-600' },
+  { title: 'Administradores', value: stats.adminUsers, icon: Shield, trend: '0%', color: 'text-purple-600' },
+  { title: 'Nuevos Hoy', value: stats.newUsersToday, icon: UserPlus, trend: '+8%', color: 'text-orange-600' },
+];
+---
+
+<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+  {cards.map((card) => (
+    <Card class="p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-muted-foreground">{card.title}</p>
+          <p class="text-2xl font-bold">{card.value.toLocaleString()}</p>
+          <p class="text-xs text-green-600 mt-1">{card.trend} desde ayer</p>
+        </div>
+        <div class={cn("p-3 rounded-full bg-muted", card.color)}>
+          <card.icon class="w-5 h-5" />
+        </div>
+      </div>
+    </Card>
+  ))}
+</div>
+```
+
+### UserTable Component Avanzado
 
 ```astro
 ---
 // components/dashboard/user-table.astro
+import Table from '../ui/table.astro';
+import Badge from '../ui/badge.astro';
+import Button from '../ui/button.astro';
+import type { User } from '../../types';
+
 interface Props {
   users: User[];
   total: number;
@@ -552,128 +534,75 @@ const totalPages = Math.ceil(total / limit);
 
 <div class="rounded-md border">
   <Table>
-    <TableHeader>
-      <TableRow>
-        <TableHead class="w-[100px]">ID</TableHead>
-        <TableHead>Usuario</TableHead>
-        <TableHead>Rol</TableHead>
-        <TableHead>Estado</TableHead>
-        <TableHead class="text-right">Acciones</TableHead>
-      </TableRow>
-    </TableHeader>
-    <TableBody>
+    <Table.Header>
+      <Table.Row>
+        <Table.Head>Usuario</Table.Head>
+        <Table.Head>Rol</Table.Head>
+        <Table.Head>Estado</Table.Head>
+        <Table.Head class="text-right">Acciones</Table.Head>
+      </Table.Row>
+    </Table.Header>
+    <Table.Body>
       {users.map((user) => (
-        <TableRow key={user.id}>
-          <TableCell class="font-medium">{user.id}</TableCell>
-          <TableCell>
-            <div class="flex items-center gap-2">
-              <Avatar src={user.avatar} fallback={user.username[0]} />
+        <Table.Row>
+          <Table.Cell>
+            <div class="flex items-center gap-3">
+              <div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <span class="font-medium">{user.username[0].toUpperCase()}</span>
+              </div>
               <div>
                 <div class="font-medium">{user.username}</div>
                 <div class="text-sm text-muted-foreground">{user.email}</div>
               </div>
             </div>
-          </TableCell>
-          <TableCell>
+          </Table.Cell>
+          <Table.Cell>
             <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>
               {user.role}
             </Badge>
-          </TableCell>
-          <TableCell>
+          </Table.Cell>
+          <Table.Cell>
             <div class="flex items-center gap-2">
-              <div class={`h-2 w-2 rounded-full ${user.isActive ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span class={cn(
+                "h-2 w-2 rounded-full",
+                user.isActive ? "bg-green-500" : "bg-red-500"
+              )} />
               {user.isActive ? 'Activo' : 'Inactivo'}
             </div>
-          </TableCell>
-          <TableCell class="text-right">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Editar</DropdownMenuItem>
-                <DropdownMenuItem>Ver detalles</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem class="text-red-600">
-                  Eliminar
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </TableCell>
-        </TableRow>
+          </Table.Cell>
+          <Table.Cell class="text-right">
+            <Button variant="ghost" size="sm">Editar</Button>
+            <Button variant="ghost" size="sm" class="text-destructive">Eliminar</Button>
+          </Table.Cell>
+        </Table.Row>
       ))}
-    </TableBody>
+    </Table.Body>
   </Table>
   
-  <div class="flex items-center justify-between px-4 py-4">
-    <div class="text-sm text-muted-foreground">
+  <!-- Pagination -->
+  <div class="flex items-center justify-between px-4 py-4 border-t">
+    <p class="text-sm text-muted-foreground">
       Mostrando {(page - 1) * limit + 1} a {Math.min(page * limit, total)} de {total} usuarios
+    </p>
+    <div class="flex gap-2">
+      <Button 
+        variant="outline" 
+        size="sm" 
+        disabled={page === 1}
+        href={`?page=${page - 1}`}
+      >
+        Anterior
+      </Button>
+      <Button 
+        variant="outline" 
+        size="sm" 
+        disabled={page === totalPages}
+        href={`?page=${page + 1}`}
+      >
+        Siguiente
+      </Button>
     </div>
-    <Pagination>
-      <PaginationContent>
-        <PaginationItem>
-          <PaginationPrevious href={`?page=${page - 1}`} disabled={page === 1} />
-        </PaginationItem>
-        {Array.from({ length: totalPages }, (_, i) => (
-          <PaginationItem key={i}>
-            <PaginationLink href={`?page=${i + 1}`} isActive={page === i + 1}>
-              {i + 1}
-            </PaginationLink>
-          </PaginationItem>
-        ))}
-        <PaginationItem>
-          <PaginationNext href={`?page=${page + 1}`} disabled={page === totalPages} />
-        </PaginationItem>
-      </PaginationContent>
-    </Pagination>
   </div>
-</div>
-```
-
-### StatsCards Component
-
-```astro
----
-// components/dashboard/stats-cards.astro
-interface Props {
-  stats: {
-    totalUsers: number;
-    activeUsers: number;
-    adminUsers: number;
-    newUsersToday: number;
-  };
-}
-
-const { stats } = Astro.props;
-
-const cards = [
-  { title: 'Total Usuarios', value: stats.totalUsers, icon: Users, trend: '+12%' },
-  { title: 'Usuarios Activos', value: stats.activeUsers, icon: UserCheck, trend: '+5%' },
-  { title: 'Administradores', value: stats.adminUsers, icon: Shield, trend: '0%' },
-  { title: 'Nuevos Hoy', value: stats.newUsersToday, icon: UserPlus, trend: '+8%' },
-];
----
-
-<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-  {cards.map((card) => (
-    <Card>
-      <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle class="text-sm font-medium">{card.title}</CardTitle>
-        <card.icon className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div class="text-2xl font-bold">{card.value.toLocaleString()}</div>
-        <p class="text-xs text-muted-foreground">
-          <span class={`${card.trend.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
-            {card.trend}
-          </span>{' '}
-          desde el mes pasado
-        </p>
-      </CardContent>
-    </Card>
-  ))}
 </div>
 ```
 
@@ -681,109 +610,125 @@ const cards = [
 
 ## 🎯 Plan de Implementación Sugerido
 
-### Sprint 1: Foundation (1 semana)
-1. Configurar Tailwind CSS
-2. Configurar sistema de colores y variables CSS
-3. Crear utilidades base (cn, formatters)
-4. Implementar layout principal (sidebar, header)
-5. Configurar tema claro/oscuro
+### Sprint 1: Foundation (3-4 días)
+1. ✅ Instalar Tailwind CSS + configurar
+2. ✅ Crear globals.css con tema claro/oscuro
+3. ✅ Actualizar Layout.astro con estructura base
+4. ✅ Crear lib/utils.ts con cn()
+5. ✅ Implementar Button, Input, Card básicos
 
-### Sprint 2: Core Components (1 semana)
-1. Implementar Button, Input, Card
-2. Implementar Table con sorting/pagination
-3. Implementar Dialog, Dropdown
-4. Implementar Toast notifications
-5. Implementar Badge, Avatar, Skeleton
+### Sprint 2: Layout Profesional (2-3 días)
+1. ✅ Crear Sidebar component
+2. ✅ Crear Header component
+3. ✅ Crear DashboardLayout
+4. ✅ Implementar ThemeToggle
+5. ✅ Migrar dashboard.astro al nuevo layout
 
-### Sprint 3: Dashboard Pages (1 semana)
-1. Crear página Overview con stats
-2. Refactorizar User Management con nueva tabla
-3. Refactorizar Audit Logs con timeline
-4. Crear página Settings
-5. Implementar búsqueda y filtros
+### Sprint 3: Componentes Core (3-4 días)
+1. ✅ Implementar Table con sorting
+2. ✅ Implementar Badge, Avatar
+3. ✅ Implementar Dialog (modales)
+4. ✅ Implementar Toast notifications
+5. ✅ Implementar DropdownMenu
 
-### Sprint 4: Backend Enhancements (1 semana)
-1. Agregar paginación a endpoints
-2. Implementar refresh tokens
-3. Agregar filtros de búsqueda
-4. Implementar exportación CSV
-5. Mejorar manejo de errores
+### Sprint 4: Estado Global y API (2-3 días)
+1. ✅ Configurar nanostores
+2. ✅ Crear stores/auth.ts
+3. ✅ Crear stores/theme.ts
+4. ✅ Crear lib/api.ts tipado
+5. ✅ Refactorizar componentes para usar stores
 
-### Sprint 5: Polish & Testing (1 semana)
-1. Responsive design
-2. Loading states
-3. Error boundaries
-4. Tests E2E
-5. Performance audit
+### Sprint 5: Páginas del Dashboard (3-4 días)
+1. ✅ Crear /dashboard/index con stats
+2. ✅ Crear /dashboard/users con tabla avanzada
+3. ✅ Crear /dashboard/audit con timeline
+4. ✅ Crear /dashboard/settings
+5. ✅ Actualizar login/register con nuevos componentes
 
----
+### Sprint 6: Polish & Testing (2-3 días)
+1. ✅ Responsive design
+2. ✅ Loading skeletons
+3. ✅ Error boundaries
+4. ✅ Implementar tests E2E con Playwright
+5. ✅ Performance audit con Lighthouse
 
-## 🚀 Stack Tecnológico Completo
-
-### Frontend
-| Tecnología | Versión | Uso |
-|------------|---------|-----|
-| Astro | ^5.x | Framework principal |
-| Tailwind CSS | ^3.x | Styling |
-| shadcn/ui | - | Componentes base |
-| Lucide Icons | ^0.x | Iconos |
-| Nanostores | ^0.x | State management |
-| TypeScript | ^5.x | Type safety |
-| Playwright | ^1.x | E2E testing |
-
-### Backend
-| Tecnología | Versión | Uso |
-|------------|---------|-----|
-| Rust | 1.75+ | Lenguaje principal |
-| Axum | ^0.7 | Web framework |
-| SQLx | ^0.7 | Database |
-| Tokio | ^1.x | Async runtime |
-| Serde | ^1.x | Serialization |
-| Validator | ^0.16 | Validation |
-| Utoipa | ^4.x | OpenAPI |
-
-### DevOps
-| Tecnología | Uso |
-|------------|-----|
-| Docker | Containerización |
-| GitHub Actions | CI/CD |
-| Sentry | Error tracking |
-| Fly.io/Railway | Hosting |
+**Total estimado:** 2-3 semanas de trabajo
 
 ---
 
-## 📊 Métricas de Éxito
+## 🚀 Stack Tecnológico Actualizado
 
+### Frontend (Actual + Nuevo)
+| Tecnología | Estado | Uso |
+|------------|--------|-----|
+| Astro 5.x | ✅ Ya tienes | Framework principal |
+| Tailwind CSS 3.x | ❌ Instalar | Styling |
+| lucide-astro | ❌ Instalar | Iconos |
+| nanostores | ❌ Instalar | Estado global |
+| shadcn/ui patterns | ❌ Implementar | Componentes base |
+| TypeScript | ✅ Ya tienes | Type safety |
+| Playwright | ✅ Ya tienes | E2E testing |
+
+### Backend (Ya Completo)
+| Tecnología | Estado | Uso |
+|------------|--------|-----|
+| Rust 1.75+ | ✅ Completo | Lenguaje principal |
+| Axum 0.7 | ✅ Completo | Web framework |
+| SQLx | ✅ Completo | Database |
+| JWT + Cookies | ✅ Completo | Auth |
+| Swagger | ✅ Completo | Documentación |
+
+---
+
+## 📊 Métricas de Éxito V4.0
+
+- **UI/UX:** Dashboard profesional con shadcn/ui
 - **Performance:** Lighthouse score >90
-- **Accesibilidad:** WCAG 2.1 AA compliance
-- **Coverage:** >80% backend, >60% frontend
-- **UX:** <3s time to interactive
-- **DX:** `just check` <30s
+- **Accesibilidad:** Keyboard navigation + ARIA labels
+- **Testing:** Tests E2E pasando (>80%)
+- **DX:** `just check` <30s, hot reload funcional
+- **Responsive:** Mobile-first design
 
 ---
 
-## 🎓 Recursos de Aprendizaje
+## 🎓 Recursos Rápidos
 
-### shadcn/ui
-- [Documentación oficial](https://ui.shadcn.com)
-- [Repositorio GitHub](https://github.com/shadcn-ui/ui)
+### shadcn/ui para Astro
+```bash
+# Ver ejemplos de componentes
+# https://ui.shadcn.com/docs/components/accordion
+# Adaptar a .astro files en lugar de .tsx
+```
 
-### Astro
-- [Astro Docs](https://docs.astro.build)
-- [Astro Islands Architecture](https://docs.astro.build/en/concepts/islands/)
+### Tailwind + Astro
+- [Astro + Tailwind Guide](https://docs.astro.build/en/guides/integrations-guide/tailwind/)
 
-### Tailwind CSS
-- [Tailwind Docs](https://tailwindcss.com/docs)
-- [Tailwind UI](https://tailwindui.com) (referencia)
-
-### Rust
-- [Rust Book](https://doc.rust-lang.org/book/)
-- [Axum Examples](https://github.com/tokio-rs/axum/tree/main/examples)
+### Nanostores
+```typescript
+// Ejemplo completo en stores/
+// https://github.com/nanostores/nanostores
+```
 
 ---
 
-**Nota:** Este roadmap está diseñado para ser implementado incrementalmente. Cada fase puede ser completada independientemente y el sistema seguirá funcionando.
+## 📋 Checklist de Cierre V4.0
 
-**Versión:** V4.0 Roadmap  
+- [ ] Tailwind CSS instalado y configurado
+- [ ] Tema claro/oscuro funcionando
+- [ ] Layout profesional (sidebar + header)
+- [ ] Componentes base implementados (Button, Input, Card, Table, Dialog, Toast)
+- [ ] Estado global con nanostores
+- [ ] Cliente API tipado
+- [ ] Dashboard pages migradas
+- [ ] Responsive design
+- [ ] Tests E2E implementados
+- [ ] Lighthouse score >90
+
+---
+
+**Nota:** Este roadmap está enfocado principalmente en **mejorar el Frontend** porque el Backend ya está Enterprise-ready. Las mejoras del backend son opcionales (Fase 36+).
+
+**Versión:** V4.0 Roadmap Actualizado  
 **Última actualización:** 15 Feb 2026  
-**Autor:** Sintonía 3026
+**Estado:** Fases 0-34 Completadas ✅  
+**Próximo foco:** Fase 35 (UI Stack) 🎨
