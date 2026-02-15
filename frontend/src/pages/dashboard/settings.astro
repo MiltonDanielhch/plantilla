@@ -1,0 +1,518 @@
+---
+import DashboardLayout from '../../components/layout/dashboard-layout.astro'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui'
+import Button from '../../components/ui/button.astro'
+import type { User } from '../../types'
+---
+
+<DashboardLayout 
+  title="Configuración" 
+  description="Gestiona tu cuenta y preferencias"
+  currentPath="/dashboard/settings/"
+>
+  <div id="loading-state" class="flex items-center justify-center min-h-[60vh]">
+    <div class="text-center">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+      <p class="text-muted-foreground">Cargando configuración...</p>
+    </div>
+  </div>
+
+  <div id="settings-content" class="hidden max-w-4xl mx-auto space-y-6">
+    <!-- Header -->
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Configuración</h1>
+      <p class="text-muted-foreground">
+        Gestiona tu perfil, seguridad y preferencias del sistema.
+      </p>
+    </div>
+
+    <div class="grid gap-6 md:grid-cols-[250px_1fr]">
+      <!-- Tabs de navegación -->
+      <nav class="flex flex-col gap-2">
+        <button class="tab-btn text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-primary text-primary-foreground" data-tab="profile">
+          <div class="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Perfil
+          </div>
+        </button>
+        <button class="tab-btn text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground" data-tab="security">
+          <div class="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Seguridad
+          </div>
+        </button>
+        <button class="tab-btn text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground" data-tab="appearance">
+          <div class="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+            Apariencia
+          </div>
+        </button>
+      </nav>
+
+      <!-- Contenido de tabs -->
+      <div class="space-y-6">
+        <!-- Tab: Perfil -->
+        <div id="tab-profile" class="tab-content">
+          <Card>
+            <CardHeader>
+              <CardTitle>Información del Perfil</CardTitle>
+              <CardDescription>
+                Actualiza tu información personal y datos de contacto.
+              </CardDescription>
+            </CardHeader>
+            <CardContent class="space-y-6">
+              <!-- Avatar -->
+              <div class="flex items-center gap-6">
+                <div class="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary" id="profile-avatar">
+                  U
+                </div>
+                <div class="space-y-2">
+                  <Button variant="outline" size="sm" id="upload-avatar-btn">
+                    Cambiar avatar
+                  </Button>
+                  <p class="text-xs text-muted-foreground">
+                    JPG, GIF o PNG. Máximo 1MB.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Formulario -->
+              <div class="grid gap-4 md:grid-cols-2">
+                <div class="space-y-2">
+                  <label class="text-sm font-medium">Nombre de usuario</label>
+                  <input 
+                    type="text" 
+                    id="username-input"
+                    class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    disabled
+                  />
+                  <p class="text-xs text-muted-foreground">El nombre de usuario no se puede cambiar.</p>
+                </div>
+                
+                <div class="space-y-2">
+                  <label class="text-sm font-medium">Email</label>
+                  <input 
+                    type="email" 
+                    id="email-input"
+                    placeholder="tu@email.com"
+                    class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  />
+                </div>
+                
+                <div class="space-y-2">
+                  <label class="text-sm font-medium">Rol</label>
+                  <input 
+                    type="text" 
+                    id="role-input"
+                    class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    disabled
+                  />
+                  <p class="text-xs text-muted-foreground">Contacta a un administrador para cambiar tu rol.</p>
+                </div>
+                
+                <div class="space-y-2">
+                  <label class="text-sm font-medium">ID de Usuario</label>
+                  <input 
+                    type="text" 
+                    id="id-input"
+                    class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm font-mono text-xs"
+                    disabled
+                  />
+                </div>
+              </div>
+
+              <div class="flex justify-end">
+                <Button id="save-profile-btn">
+                  Guardar cambios
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card class="mt-6 border-destructive/50">
+            <CardHeader>
+              <CardTitle class="text-destructive">Zona de Peligro</CardTitle>
+              <CardDescription>
+                Acciones irreversibles para tu cuenta.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="font-medium">Eliminar cuenta</p>
+                  <p class="text-sm text-muted-foreground">
+                    Elimina permanentemente tu cuenta y todos tus datos.
+                  </p>
+                </div>
+                <Button variant="destructive" size="sm" id="delete-account-btn">
+                  Eliminar cuenta
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <!-- Tab: Seguridad -->
+        <div id="tab-security" class="tab-content hidden">
+          <Card>
+            <CardHeader>
+              <CardTitle>Cambiar Contraseña</CardTitle>
+              <CardDescription>
+                Actualiza tu contraseña para mantener tu cuenta segura.
+              </CardDescription>
+            </CardHeader>
+            <CardContent class="space-y-6">
+              <div class="space-y-2">
+                <label class="text-sm font-medium">Contraseña actual</label>
+                <input 
+                  type="password" 
+                  id="current-password"
+                  class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                />
+              </div>
+              
+              <div class="space-y-2">
+                <label class="text-sm font-medium">Nueva contraseña</label>
+                <input 
+                  type="password" 
+                  id="new-password"
+                  class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                />
+                <p class="text-xs text-muted-foreground">
+                  Mínimo 8 caracteres, incluyendo mayúsculas, minúsculas y números.
+                </p>
+              </div>
+              
+              <div class="space-y-2">
+                <label class="text-sm font-medium">Confirmar nueva contraseña</label>
+                <input 
+                  type="password" 
+                  id="confirm-password"
+                  class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                />
+              </div>
+
+              <div class="flex justify-end">
+                <Button id="change-password-btn">
+                  Cambiar contraseña
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card class="mt-6">
+            <CardHeader>
+              <CardTitle>Sesiones Activas</CardTitle>
+              <CardDescription>
+                Gestiona tus sesiones activas en diferentes dispositivos.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div class="space-y-4">
+                <div class="flex items-center justify-between p-4 rounded-lg border">
+                  <div class="flex items-center gap-4">
+                    <div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+                    </div>
+                    <div>
+                      <p class="font-medium">Este dispositivo</p>
+                      <p class="text-sm text-muted-foreground">Último acceso: Ahora</p>
+                    </div>
+                  </div>
+                  <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
+                    Activa
+                  </span>
+                </div>
+              </div>
+              
+              <div class="mt-4 pt-4 border-t">
+                <Button variant="outline" id="logout-all-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                  Cerrar todas las sesiones
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <!-- Tab: Apariencia -->
+        <div id="tab-appearance" class="tab-content hidden">
+          <Card>
+            <CardHeader>
+              <CardTitle>Tema</CardTitle>
+              <CardDescription>
+                Personaliza la apariencia de la aplicación.
+              </CardDescription>
+            </CardHeader>
+            <CardContent class="space-y-6">
+              <div class="grid gap-4 md:grid-cols-3">
+                <button class="theme-btn relative rounded-lg border-2 p-4 text-left transition-colors hover:bg-accent" data-theme="light">
+                  <div class="mb-3 h-24 rounded-md bg-slate-100 border flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-600"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                  </div>
+                  <p class="font-medium">Claro</p>
+                  <p class="text-xs text-muted-foreground">Tema claro para uso diurno</p>
+                  <div class="theme-indicator absolute top-4 right-4 hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-primary"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                  </div>
+                </button>
+                
+                <button class="theme-btn relative rounded-lg border-2 p-4 text-left transition-colors hover:bg-accent border-primary" data-theme="dark">
+                  <div class="mb-3 h-24 rounded-md bg-slate-900 border flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-400"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                  </div>
+                  <p class="font-medium">Oscuro</p>
+                  <p class="text-xs text-muted-foreground">Tema oscuro para uso nocturno</p>
+                  <div class="theme-indicator absolute top-4 right-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-primary"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                  </div>
+                </button>
+                
+                <button class="theme-btn relative rounded-lg border-2 p-4 text-left transition-colors hover:bg-accent" data-theme="system">
+                  <div class="mb-3 h-24 rounded-md bg-gradient-to-br from-slate-100 to-slate-900 border flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-600"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+                  </div>
+                  <p class="font-medium">Sistema</p>
+                  <p class="text-xs text-muted-foreground">Sigue la configuración del sistema</p>
+                  <div class="theme-indicator absolute top-4 right-4 hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-primary"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                  </div>
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card class="mt-6">
+            <CardHeader>
+              <CardTitle>Idioma</CardTitle>
+              <CardDescription>
+                Selecciona el idioma de la interfaz.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <select class="h-10 w-full max-w-xs rounded-md border border-input bg-background px-3 text-sm">
+                <option value="es">Español</option>
+                <option value="en">English</option>
+              </select>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div id="error-state" class="hidden flex items-center justify-center min-h-[60vh]">
+    <div class="text-center max-w-md">
+      <div class="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+        <svg class="h-6 w-6 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+        </svg>
+      </div>
+      <h3 class="text-lg font-semibold mb-2">Error al cargar configuración</h3>
+      <p class="text-muted-foreground mb-4" id="error-message">No se pudo cargar la información</p>
+      <Button id="retry-btn">Reintentar</Button>
+    </div>
+  </div>
+</DashboardLayout>
+
+<script>
+  import { api } from '../../lib/api'
+  import { $user } from '../../stores/auth'
+  import type { User } from '../../types'
+
+  // Referencias DOM
+  const loadingState = document.getElementById('loading-state')
+  const settingsContent = document.getElementById('settings-content')
+  const errorState = document.getElementById('error-state')
+
+  // Cargar datos del usuario
+  function loadUserData(user: User) {
+    const avatarEl = document.getElementById('profile-avatar')
+    const usernameInput = document.getElementById('username-input') as HTMLInputElement
+    const roleInput = document.getElementById('role-input') as HTMLInputElement
+    const idInput = document.getElementById('id-input') as HTMLInputElement
+    
+    if (avatarEl) {
+      avatarEl.textContent = user.username.charAt(0).toUpperCase()
+    }
+    if (usernameInput) {
+      usernameInput.value = user.username
+    }
+    if (roleInput) {
+      roleInput.value = user.role
+    }
+    if (idInput) {
+      idInput.value = user.id.toString()
+    }
+  }
+
+  // Tabs
+  function initTabs() {
+    const tabBtns = document.querySelectorAll('.tab-btn')
+    const tabContents = document.querySelectorAll('.tab-content')
+    
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tabId = btn.getAttribute('data-tab')
+        
+        // Actualizar botones
+        tabBtns.forEach(b => {
+          b.classList.remove('bg-primary', 'text-primary-foreground')
+          b.classList.add('text-muted-foreground', 'hover:bg-accent', 'hover:text-accent-foreground')
+        })
+        btn.classList.remove('text-muted-foreground', 'hover:bg-accent', 'hover:text-accent-foreground')
+        btn.classList.add('bg-primary', 'text-primary-foreground')
+        
+        // Mostrar contenido
+        tabContents.forEach(content => {
+          content.classList.add('hidden')
+        })
+        document.getElementById(`tab-${tabId}`)?.classList.remove('hidden')
+      })
+    })
+  }
+
+  // Theme selector
+  function initThemeSelector() {
+    const themeBtns = document.querySelectorAll('.theme-btn')
+    
+    themeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const theme = btn.getAttribute('data-theme')
+        
+        // Actualizar UI
+        themeBtns.forEach(b => {
+          b.classList.remove('border-primary')
+          b.querySelector('.theme-indicator')?.classList.add('hidden')
+        })
+        btn.classList.add('border-primary')
+        btn.querySelector('.theme-indicator')?.classList.remove('hidden')
+        
+        // Aplicar tema (placeholder - se implementaría con lógica real)
+        showToast(`Tema ${theme} seleccionado`, 'success')
+      })
+    })
+  }
+
+  // Toast notifications
+  function showToast(message: string, type: 'success' | 'error' | 'info' = 'info') {
+    const toast = document.createElement('div')
+    const colors = {
+      success: 'bg-green-500',
+      error: 'bg-destructive',
+      info: 'bg-primary',
+    }
+    
+    toast.className = `fixed bottom-4 right-4 ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg z-50 transition-all duration-300`
+    toast.innerHTML = `<div class="flex items-center gap-2"><span>${message}</span></div>`
+    
+    document.body.appendChild(toast)
+    
+    setTimeout(() => {
+      toast.style.opacity = '0'
+      toast.style.transform = 'translateY(20px)'
+      setTimeout(() => toast.remove(), 300)
+    }, 3000)
+  }
+
+  // Event listeners
+  function initEventListeners() {
+    // Guardar perfil
+    document.getElementById('save-profile-btn')?.addEventListener('click', () => {
+      showToast('Perfil actualizado correctamente', 'success')
+    })
+    
+    // Cambiar contraseña
+    document.getElementById('change-password-btn')?.addEventListener('click', () => {
+      const current = (document.getElementById('current-password') as HTMLInputElement)?.value
+      const newPass = (document.getElementById('new-password') as HTMLInputElement)?.value
+      const confirm = (document.getElementById('confirm-password') as HTMLInputElement)?.value
+      
+      if (!current || !newPass || !confirm) {
+        showToast('Por favor completa todos los campos', 'error')
+        return
+      }
+      
+      if (newPass !== confirm) {
+        showToast('Las contraseñas no coinciden', 'error')
+        return
+      }
+      
+      if (newPass.length < 8) {
+        showToast('La contraseña debe tener al menos 8 caracteres', 'error')
+        return
+      }
+      
+      showToast('Contraseña cambiada correctamente', 'success')
+      
+      // Limpiar campos
+      ;(document.getElementById('current-password') as HTMLInputElement).value = ''
+      ;(document.getElementById('new-password') as HTMLInputElement).value = ''
+      ;(document.getElementById('confirm-password') as HTMLInputElement).value = ''
+    })
+    
+    // Eliminar cuenta
+    document.getElementById('delete-account-btn')?.addEventListener('click', () => {
+      if (confirm('¿Estás seguro? Esta acción no se puede deshacer.')) {
+        showToast('Función no disponible - Contacta a un administrador', 'info')
+      }
+    })
+    
+    // Cerrar todas las sesiones
+    document.getElementById('logout-all-btn')?.addEventListener('click', async () => {
+      if (confirm('¿Cerrar todas las sesiones? Tendrás que iniciar sesión nuevamente.')) {
+        await api.logout()
+        window.location.href = '/login/'
+      }
+    })
+    
+    // Upload avatar
+    document.getElementById('upload-avatar-btn')?.addEventListener('click', () => {
+      showToast('Función de avatar en desarrollo', 'info')
+    })
+  }
+
+  // Inicializar
+  async function init() {
+    try {
+      // Verificar autenticación y cargar datos
+      const dashboardData = await api.getDashboard()
+      const user = dashboardData.user
+      
+      // Actualizar store
+      $user.set(user)
+      
+      // Mostrar contenido
+      loadingState?.classList.add('hidden')
+      settingsContent?.classList.remove('hidden')
+      
+      // Cargar datos
+      loadUserData(user)
+      
+      // Inicializar componentes
+      initTabs()
+      initThemeSelector()
+      initEventListeners()
+      
+    } catch (err: any) {
+      console.error('Init error:', err)
+      
+      if (err.status === 401) {
+        window.location.href = '/login/'
+        return
+      }
+      
+      loadingState?.classList.add('hidden')
+      errorState?.classList.remove('hidden')
+      document.getElementById('error-message')!.textContent = err.message || 'Error al cargar la configuración'
+    }
+  }
+
+  // Ejecutar
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init)
+  } else {
+    init()
+  }
+</script>
