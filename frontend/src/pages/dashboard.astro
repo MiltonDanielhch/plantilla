@@ -51,6 +51,7 @@ import AuditTable from '../components/AuditTable.astro';
 </Layout>
 
 <script>
+    import { API_BASE_URL } from '../config';
     const content = document.getElementById('dashboard-content');
     const loading = document.getElementById('loading');
     const secretMessage = document.getElementById('secret-message');
@@ -63,7 +64,7 @@ import AuditTable from '../components/AuditTable.astro';
     async function initDashboard() {
         try {
             // Intentamos obtener el secreto enviando la cookie (credentials: include)
-            const response = await fetch('http://localhost:3000/dashboard', {
+            const response = await fetch(`${API_BASE_URL}/dashboard`, {
                 method: 'GET',
                 credentials: 'include' 
             });

@@ -1,0 +1,4 @@
+host = "0.0.0.0"
+port = 3000
+database_url = "sqlite://backend.db"
+log_level = "info"

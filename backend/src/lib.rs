@@ -1,6 +1,8 @@
 pub mod api;
 pub mod core;
 pub mod data;
+pub mod settings;
+pub mod error;
 
 use axum::{
     routing::{delete, get, post},
@@ -58,16 +60,19 @@ pub fn create_app(pool: SqlitePool) -> Router {
         .finish()
         .unwrap());
 
-    Router::new()
-        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
-        .route("/", get(root))
-        .route("/health", get(health_check))
+    let api_v1 = Router::new()
         .route("/users", post(api::handlers::user::create_user).get(api::handlers::user::get_users))
         .route("/login", post(api::handlers::user::login))
         .route("/logout", post(api::handlers::user::logout))
         .route("/users/:id", delete(api::handlers::user::delete_user).route_layer(middleware::from_fn(api::middleware::admin_guard)))
         .route("/dashboard", get(api::handlers::user::dashboard).route_layer(middleware::from_fn(api::middleware::auth_guard)))
-        .route("/audit-logs", get(api::handlers::user::get_audit_logs).route_layer(middleware::from_fn(api::middleware::admin_guard)))
+        .route("/audit-logs", get(api::handlers::user::get_audit_logs).route_layer(middleware::from_fn(api::middleware::admin_guard)));
+
+    Router::new()
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
+        .route("/", get(root))
+        .route("/health", get(health_check))
+        .nest("/api/v1", api_v1)
         .layer(CookieManagerLayer::new())
         .layer(GovernorLayer { config: governor_conf })
         .layer(cors) // CORS debe ser el último (externo) para manejar errores del Governor

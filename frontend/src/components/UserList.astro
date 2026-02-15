@@ -18,6 +18,7 @@ const { isAdmin = false } = Astro.props;
 </div>
 
 <script>
+    import { API_BASE_URL } from '../config';
     async function fetchUsers(query = '') {
         const list = document.getElementById('user-list');
         const container = document.querySelector('.user-list-container') as HTMLElement;
@@ -27,9 +28,9 @@ const { isAdmin = false } = Astro.props;
 
         try {
             // Construir URL con parámetro de búsqueda si existe
-            const url = query 
-                ? `http://localhost:3000/users?q=${encodeURIComponent(query)}`
-                : 'http://localhost:3000/users';
+            const url = query
+                ? `${API_BASE_URL}/users?q=${encodeURIComponent(query)}`
+                : `${API_BASE_URL}/users`;
 
             const res = await fetch(url);
             if (!res.ok) throw new Error('Error de señal');
@@ -75,7 +76,7 @@ const { isAdmin = false } = Astro.props;
                         if (!confirm('⚠️ ¿Confirmas la eliminación de este agente?')) return;
 
                         try {
-                            const res = await fetch(`http://localhost:3000/users/${id}`, {
+                            const res = await fetch(`${API_BASE_URL}/users/${id}`, {
                                 method: 'DELETE',
                                 credentials: 'include' // Importante: Envía la cookie de Admin
                             });

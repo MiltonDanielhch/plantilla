@@ -9,24 +9,28 @@ El sistema ha completado la **Fase 28 (Robustez Operativa)**. Se ha archivado el
 
 ## 2. Fases Activas (V3.0 Enterprise)
 
-### 🏗️ Fase 29: Observabilidad Avanzada (En Progreso)
+### 🏗️ Fase 29: Observabilidad Avanzada (Completada)
 - [x] Configuración de `tracing-subscriber` (JSON).
 - [x] Implementación de `TraceLayer` (Trace ID).
-- [ ] Verificación de logs estructurados (Prueba final).
+- [x] Verificación de logs estructurados (Prueba final).
 
-### ⚙️ Fase 30: Configuración Jerárquica (Pendiente)
-- [ ] Implementar Crate `config`.
-- [ ] Separar entornos (Default/Prod).
+### ⚙️ Fase 30: Configuración Jerárquica (Completada)
+- [x] Implementar Crate `config`.
+- [x] Separar entornos (Default/Prod).
+- [x] Corrección de lectura de variables de entorno (`APP_PORT`).
 
-### 🚨 Fase 31: Errores Tipados (Pendiente)
-- [ ] Definir `AppError`.
-- [ ] Implementar `IntoResponse`.
+### 🚨 Fase 31: Errores Tipados (Completada)
+- [x] Definir `AppError`.
+- [x] Implementar `IntoResponse`.
+- [x] Refactorizar todos los Handlers (`user.rs`).
 
-### 🏷️ Fase 32: Versionado API (Pendiente)
-- [ ] Router `/api/v1`.
+### 🏷️ Fase 32: Versionado API (Completada)
+- [x] Router `/api/v1` implementado.
+- [x] Actualizar Frontend (Astro) a `/api/v1`.
 
-### 🛠️ Fase 33: Automatización DX (Pendiente)
-- [ ] Configurar `Justfile`.
+### 🛠️ Fase 33: Automatización DX (Completada)
+- [x] Instalar `just` (Instrucción dada).
+- [x] Crear `Justfile` con comandos `run-backend`, `run-frontend` y `check`.
 
 ### 🔌 Fase 34: Abstracción DB (Pendiente)
 - [ ] Refactorizar Repositorio (Traits).

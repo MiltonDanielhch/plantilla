@@ -11,10 +11,11 @@ use validator::Validate;
 use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey};
 use chrono::{Utc, Duration};
 use serde_json::json;
+use crate::error::AppError;
 
 #[utoipa::path(
     post,
-    path = "/users",
+    path = "/api/v1/users",
     request_body = CreateUserRequest,
     responses(
         (status = 201, description = "Usuario creado exitosamente", body = User),
@@ -25,22 +26,18 @@ use serde_json::json;
 pub async fn create_user(
     State(pool): State<SqlitePool>,
     Json(payload): Json<CreateUserRequest>,
-) -> impl IntoResponse {
+) -> Result<(StatusCode, Json<User>), AppError> {
     // 0. Validar inputs antes de procesar
     if let Err(e) = payload.validate() {
-        return (StatusCode::BAD_REQUEST, format!("Datos inválidos: {}", e)).into_response();
+        return Err(AppError::Validation(format!("Datos inválidos: {}", e)));
     }
 
     // 1. Generar Salt y Hash seguro
     let salt = SaltString::generate(&mut rand::thread_rng());
     let argon2 = Argon2::default();
-    let password_hash = match argon2.hash_password(payload.password.as_bytes(), &salt) {
-        Ok(hash) => hash.to_string(),
-        Err(e) => {
-            tracing::error!("Error hasheando password: {:?}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Error de seguridad").into_response();
-        }
-    };
+    let password_hash = argon2.hash_password(payload.password.as_bytes(), &salt)
+        .map_err(|e| AppError::AuthError(format!("Error de seguridad: {}", e)))?
+        .to_string();
 
     let result = sqlx::query_as::<_, User>(
         "INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id, username, password_hash, role, created_at"
@@ -51,45 +48,40 @@ pub async fn create_user(
     .await;
 
     match result {
-        Ok(user) => (StatusCode::CREATED, Json(user)).into_response(),
+        Ok(user) => Ok((StatusCode::CREATED, Json(user))),
         Err(e) => {
             // 2. Manejo de errores específicos (Duplicados)
             if let Some(db_err) = e.as_database_error() {
                 if db_err.kind() == ErrorKind::UniqueViolation {
-                    return (StatusCode::CONFLICT, "El nombre de usuario ya existe").into_response();
+                    return Err(AppError::Conflict("El nombre de usuario ya existe".to_string()));
                 }
             }
-
-            tracing::error!("Error creando usuario: {:?}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, "Error al crear usuario").into_response()
+            // Otros errores de DB
+            Err(AppError::Database(e))
         }
     }
 }
 
 #[utoipa::path(
     get,
-    path = "/audit-logs",
+    path = "/api/v1/audit-logs",
     responses(
         (status = 200, description = "Bitácora de auditoría del sistema", body = Vec<AuditLog>)
     )
 )]
 pub async fn get_audit_logs(
     State(pool): State<SqlitePool>,
-) -> Result<Json<Vec<AuditLog>>, (StatusCode, String)> {
+) -> Result<Json<Vec<AuditLog>>, AppError> {
     let logs = sqlx::query_as::<_, AuditLog>("SELECT id, admin_username, action, target, timestamp FROM audit_logs ORDER BY id DESC")
         .fetch_all(&pool)
-        .await
-        .map_err(|e| {
-            tracing::error!("Error obteniendo logs de auditoría: {:?}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, "Error al consultar la bitácora".to_string())
-        })?;
+        .await?;
 
     Ok(Json(logs))
 }
 
 #[utoipa::path(
     get,
-    path = "/users",
+    path = "/api/v1/users",
     params(UserSearch),
     responses(
         (status = 200, description = "Lista de usuarios registrados", body = Vec<User>)
@@ -98,11 +90,8 @@ pub async fn get_audit_logs(
 pub async fn get_users(
     State(pool): State<SqlitePool>,
     Query(params): Query<UserSearch>,
-) -> Result<Json<Vec<User>>, (StatusCode, String)> {
-    let users = crate::data::user_repository::get_all(&pool, params.q, params.page, params.limit).await.map_err(|e| {
-        tracing::error!("Error de sintonía al leer usuarios: {:?}", e);
-        (StatusCode::INTERNAL_SERVER_ERROR, "Fallo en la matriz de datos".to_string())
-    })?;
+) -> Result<Json<Vec<User>>, AppError> {
+    let users = crate::data::user_repository::get_all(&pool, params.q, params.page, params.limit).await?;
 
     Ok(Json(users))
 }
@@ -110,7 +99,7 @@ pub async fn get_users(
 #[debug_handler]
 #[utoipa::path(
     post,
-    path = "/login",
+    path = "/api/v1/login",
     request_body = LoginRequest,
     responses(
         (status = 200, description = "Login exitoso (Cookie establecida)"),
@@ -121,22 +110,15 @@ pub async fn login(
     State(pool): State<SqlitePool>,
     cookies: Cookies,
     Json(payload): Json<LoginRequest>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, AppError> {
     // 1. Buscar usuario en DB
-    let user = match crate::data::user_repository::get_by_username(&pool, &payload.username).await {
-        Ok(Some(u)) => u,
-        Ok(None) => return (StatusCode::UNAUTHORIZED, "Credenciales inválidas").into_response(),
-        Err(e) => {
-            tracing::error!("Error buscando usuario: {:?}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, "Error interno").into_response();
-        }
-    };
+    let user = crate::data::user_repository::get_by_username(&pool, &payload.username)
+        .await?
+        .ok_or(AppError::AuthError("Credenciales inválidas".to_string()))?;
 
     // 2. Verificar password
-    let parsed_hash = match PasswordHash::new(&user.password_hash) {
-        Ok(h) => h,
-        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, "Error de datos").into_response(),
-    };
+    let parsed_hash = PasswordHash::new(&user.password_hash)
+        .map_err(|_| AppError::AuthError("Error verificando credenciales".to_string()))?;
 
     if Argon2::default().verify_password(payload.password.as_bytes(), &parsed_hash).is_ok() {
         // GENERAR JWT
@@ -147,18 +129,19 @@ pub async fn login(
             exp: expiration as usize 
         };
         // NOTA: En producción, "secret" debe venir de variables de entorno (.env)
-        let token = encode(&Header::default(), &claims, &EncodingKey::from_secret("secret".as_ref())).unwrap();
+        let token = encode(&Header::default(), &claims, &EncodingKey::from_secret("secret".as_ref()))
+            .map_err(|_| AppError::AuthError("Error generando token".to_string()))?;
         
         cookies.add(Cookie::new("auth_token", token));
-        (StatusCode::OK, "Login exitoso").into_response()
+        Ok((StatusCode::OK, "Login exitoso"))
     } else {
-        (StatusCode::UNAUTHORIZED, "Credenciales inválidas").into_response()
+        Err(AppError::AuthError("Credenciales inválidas".to_string()))
     }
 }
 
 #[utoipa::path(
     post,
-    path = "/logout",
+    path = "/api/v1/logout",
     responses(
         (status = 200, description = "Sesión cerrada correctamente")
     )
@@ -170,12 +153,12 @@ pub async fn logout(cookies: Cookies) -> impl IntoResponse {
 
 #[utoipa::path(
     get,
-    path = "/dashboard",
+    path = "/api/v1/dashboard",
     responses(
         (status = 200, description = "Información del usuario actual")
     )
 )]
-pub async fn dashboard(cookies: Cookies) -> impl IntoResponse {
+pub async fn dashboard(cookies: Cookies) -> Result<impl IntoResponse, AppError> {
     let cookie = cookies.get("auth_token").map(|c| c.value().to_string()).unwrap_or_default();
 
     // Decodificar el token para saber quién es
@@ -186,18 +169,18 @@ pub async fn dashboard(cookies: Cookies) -> impl IntoResponse {
     );
 
     match token_data {
-        Ok(c) => (StatusCode::OK, Json(json!({
+        Ok(c) => Ok((StatusCode::OK, Json(json!({
             "username": c.claims.sub,
             "role": c.claims.role,
             "message": format!("🔐 Panel de Control | Agente: {} | Rango: {:?}", c.claims.sub, c.claims.role)
-        }))).into_response(),
-        Err(_) => (StatusCode::UNAUTHORIZED, "Sesión inválida o expirada").into_response()
+        })))),
+        Err(_) => Err(AppError::AuthError("Sesión inválida o expirada".to_string()))
     }
 }
 
 #[utoipa::path(
     delete,
-    path = "/users/{id}",
+    path = "/api/v1/users/{id}",
     params(("id" = i64, Path, description = "ID del usuario a eliminar")),
     responses(
         (status = 200, description = "Usuario eliminado y auditado"),
@@ -208,7 +191,7 @@ pub async fn delete_user(
     State(pool): State<SqlitePool>,
     cookies: Cookies,
     Path(id): Path<i64>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, AppError> {
     // 1. Identificar al Admin (Auditoría)
     // Aunque el middleware ya validó, necesitamos el username para el log.
     let admin_username = if let Some(cookie) = cookies.get("auth_token") {
@@ -234,25 +217,17 @@ pub async fn delete_user(
         .unwrap_or_else(|| "Usuario Fantasma".to_string());
 
     // 3. Ejecutar Eliminación
-    let result = sqlx::query("DELETE FROM users WHERE id = $1")
+    sqlx::query("DELETE FROM users WHERE id = $1")
         .bind(id)
         .execute(&pool)
-        .await;
+        .await?;
 
-    match result {
-        Ok(_) => {
-            // 4. Registrar en Auditoría
-            let _ = sqlx::query("INSERT INTO audit_logs (admin_username, action, target) VALUES ($1, 'DELETE_USER', $2)")
-                .bind(admin_username)
-                .bind(target_username)
-                .execute(&pool)
-                .await;
+    // 4. Registrar en Auditoría
+    let _ = sqlx::query("INSERT INTO audit_logs (admin_username, action, target) VALUES ($1, 'DELETE_USER', $2)")
+        .bind(admin_username)
+        .bind(target_username)
+        .execute(&pool)
+        .await?; // Si falla el log, ¿fallamos la petición? Por ahora sí, para garantizar integridad.
 
-            (StatusCode::OK, "Usuario eliminado y auditado").into_response()
-        },
-        Err(e) => {
-            tracing::error!("Error eliminando usuario: {:?}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, "Error al eliminar").into_response()
-        }
-    }
+    Ok((StatusCode::OK, "Usuario eliminado y auditado"))
 }

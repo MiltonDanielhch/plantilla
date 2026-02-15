@@ -1,4 +1,4 @@
-use backend::create_app; // Importamos desde nuestra propia lib
+use backend::{create_app, settings::Settings}; // Importamos Settings
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use std::{net::SocketAddr, str::FromStr};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -8,16 +8,19 @@ async fn main() {
     // 1. Cargar variables de entorno
     dotenv::dotenv().ok();
 
+    // 1.1 Cargar Configuración Jerárquica
+    let settings = Settings::new().expect("❌ Fallo al cargar configuración (config/default.toml)");
+
     // 2. Inicializar Observabilidad (Logs avanzados)
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
-            std::env::var("RUST_LOG").unwrap_or_else(|_| "info".into()),
+            &settings.log_level,
         ))
         .with(tracing_subscriber::fmt::layer().json())
         .init();
 
     // 3. Conexión a Base de Datos (Crear archivo si no existe)
-    let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL no configurada");
+    let db_url = settings.database_url;
     
     let connection_options = SqliteConnectOptions::from_str(&db_url)
         .unwrap()
@@ -40,7 +43,7 @@ async fn main() {
     let app = create_app(pool);
 
     // 5. Definir dirección y arrancar
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
+    let addr = format!("{}:{}", settings.host, settings.port).parse::<SocketAddr>().expect("Dirección inválida");
     tracing::info!("🚀 Sintonía 3026 Activada en {}", addr);
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();

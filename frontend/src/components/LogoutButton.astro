@@ -5,6 +5,7 @@
 </button>
 
 <script>
+    import { API_BASE_URL } from '../config';
     const btn = document.getElementById('logout-btn') as HTMLButtonElement;
     
     if (btn) {
@@ -18,7 +19,7 @@
 
             try {
                 // Llamamos al backend para que invalide la cookie
-                const response = await fetch('http://localhost:3000/logout', {
+                const response = await fetch(`${API_BASE_URL}/logout`, {
                     method: 'POST',
                     credentials: 'include' // CRÍTICO: Permite enviar/recibir cookies
                 });

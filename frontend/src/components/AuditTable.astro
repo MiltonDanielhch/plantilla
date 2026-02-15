@@ -21,12 +21,13 @@
 </div>
 
 <script>
+    import { API_BASE_URL } from '../config';
     async function fetchLogs() {
         const tbody = document.getElementById('audit-list');
         if (!tbody) return;
 
         try {
-            const res = await fetch('http://localhost:3000/audit-logs', {
+            const res = await fetch(`${API_BASE_URL}/audit-logs`, {
                 credentials: 'include' // Vital para pasar el admin_guard
             });
             
