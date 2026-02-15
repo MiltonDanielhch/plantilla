@@ -17,11 +17,11 @@ sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite", "migrate
 
 # Observabilidad (Los Ojos)
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 
 # Utilidades (Herramientas)
 dotenv = "0.15"
-tower-http = { version = "0.5", features = ["cors", "trace"] }
+tower-http = { version = "0.5", features = ["cors", "request-id", "trace", "util"] }
 argon2 = "0.5.3"
 tower-cookies = "0.10"
 rand = { version = "0.8.5", features = ["std", "std_rng"] }

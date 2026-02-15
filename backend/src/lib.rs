@@ -5,12 +5,13 @@ pub mod data;
 use axum::{
     routing::{delete, get, post},
     Router, middleware,
-    http::{header, Method, StatusCode},
+    http::{header, Method, StatusCode, Request},
     extract::State,
     response::IntoResponse,
 };
 use sqlx::SqlitePool;
 use tower_http::cors::CorsLayer;
+use tower_http::{trace::TraceLayer, request_id::{MakeRequestUuid, SetRequestIdLayer}};
 use tower_cookies::CookieManagerLayer;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -70,6 +71,17 @@ pub fn create_app(pool: SqlitePool) -> Router {
         .layer(CookieManagerLayer::new())
         .layer(GovernorLayer { config: governor_conf })
         .layer(cors) // CORS debe ser el último (externo) para manejar errores del Governor
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(|request: &Request<_>| {
+                    let request_id = request.headers().get("x-request-id")
+                        .and_then(|v| v.to_str().ok())
+                        .unwrap_or("unknown");
+                    tracing::info_span!("http_request", request_id = %request_id, method = %request.method(), uri = %request.uri())
+                })
+                .on_response(tower_http::trace::DefaultOnResponse::new().level(tracing::Level::INFO))
+        )
+        .layer(SetRequestIdLayer::x_request_id(MakeRequestUuid))
         .with_state(pool)
 }
 
