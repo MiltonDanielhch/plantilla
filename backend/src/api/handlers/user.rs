@@ -130,6 +130,7 @@ pub async fn login(
             sub: username.clone(),
             role: role.clone(),
             exp: expiration as usize,
+            user_id: user_id,
         };
         // NOTA: En producción, "secret" debe venir de variables de entorno (.env)
         let token = encode(
@@ -193,8 +194,11 @@ pub async fn dashboard(cookies: Cookies) -> Result<impl IntoResponse, AppError> 
         Ok(c) => Ok((
             StatusCode::OK,
             Json(json!({
-                "username": c.claims.sub,
-                "role": c.claims.role,
+                "user": {
+                    "id": c.claims.user_id,
+                    "username": c.claims.sub,
+                    "role": c.claims.role
+                },
                 "message": format!("🔐 Panel de Control | Agente: {} | Rango: {:?}", c.claims.sub, c.claims.role)
             })),
         )),

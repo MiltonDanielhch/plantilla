@@ -55,9 +55,10 @@ pub struct LoginRequest {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    pub sub: String, // Subject (Usuario)
-    pub role: Role,  // Rango del usuario
-    pub exp: usize,  // Expiration
+    pub sub: String,  // Subject (Usuario)
+    pub role: Role,   // Rango del usuario
+    pub exp: usize,   // Expiration
+    pub user_id: i64, // ID del usuario
 }
 
 #[derive(Debug, Serialize, FromRow, ToSchema)]
