@@ -158,3 +158,102 @@ Este documento archiva el progreso detallado de las fases ya completadas para ma
 - [x] **Graceful Shutdown:** Manejo de señales Ctrl+C/SIGTERM.
 - [x] **Health Check Avanzado:** Verificación de conexión a DB en `/health`.
 - [x] **Validación Final:** Todos los tests (Unitarios + Integración) pasaron exitosamente.
+
+---
+
+## ✅ Fases Completadas (V3.0 Enterprise)
+
+### 🏗️ Fase 29: Observabilidad Avanzada
+- [x] Configuración de `tracing-subscriber` (JSON).
+- [x] Implementación de `TraceLayer` (Trace ID).
+- [x] Verificación de logs estructurados.
+
+### ⚙️ Fase 30: Configuración Jerárquica
+- [x] Implementar Crate `config`.
+- [x] Separar entornos (Default/Prod).
+- [x] Corrección de lectura de variables de entorno (`APP_PORT`).
+
+### 🚨 Fase 31: Errores Tipados
+- [x] Definir `AppError`.
+- [x] Implementar `IntoResponse`.
+- [x] Refactorizar todos los Handlers (`user.rs`).
+
+### 🏷️ Fase 32: Versionado API
+- [x] Router `/api/v1` implementado.
+
+### 🛠️ Fase 33: Automatización DX
+- [x] Configurar `Justfile`.
+- [x] Comandos `run-backend`, `run-frontend` y `check` funcionando.
+
+### 🔌 Fase 34: Abstracción DB
+- [x] Definir `UserRepository` Trait.
+- [x] Implementar `SqliteRepository`.
+- [x] Refactorizar Handlers para eliminar SQL crudo.
+
+---
+
+## ✅ Fases Completadas (V4.0 Dashboard Edition)
+
+### 🎨 Fase 35: El Nuevo Stack de UI (Sintonía 2026)
+**Fecha:** 15 Feb 2026  
+**Rama:** `feature/v4-dashboard`  
+**Estado:** Completada y funcional
+
+#### Sprint 1: Foundation
+- [x] **Tailwind CSS v4** instalado y configurado
+- [x] **@tailwindcss/postcss** integración con PostCSS
+- [x] **Tema shadcn/ui** - Variables CSS con modo oscuro
+- [x] **Utilidades** - cn(), formatDate(), formatNumber()
+
+#### Componentes UI Base
+- [x] **Button** - 6 variants (default, destructive, outline, secondary, ghost, link), 4 sizes
+- [x] **Input** - Con soporte para errores y estados
+- [x] **Card** - Sistema completo (Header, Title, Description, Content, Footer)
+- [x] **Badge** - 4 variants (default, secondary, destructive, outline)
+- [x] **Avatar** - Con fallback para iniciales
+
+#### Layout Profesional
+- [x] **Sidebar** - Navegación lateral responsive con iconos SVG
+- [x] **Header** - Con título, búsqueda, notificaciones y logout
+- [x] **DashboardLayout** - Layout principal que combina Sidebar + Header
+
+#### Conexión Backend
+- [x] **Tipos TypeScript** - User, AuditLog, PaginatedResponse en `src/types/`
+- [x] **Cliente API** - ApiClient con todos los endpoints en `src/lib/api.ts`
+- [x] **Estado Global** - Nanostores para auth ($user, $isAdmin) en `src/stores/auth.ts`
+- [x] **Client-side Auth** - Verificación de autenticación en navegador
+
+#### Páginas Migradas al Nuevo Diseño
+- [x] **/dashboard/** - Dashboard profesional con datos reales del backend
+- [x] **/login/** - Nuevo diseño con Card, Input, Button y validación
+- [x] **/register/** - Nuevo diseño con selección de rol
+
+#### Backend Fixes para Frontend
+- [x] **Login JSON** - Retorna `{ user: {...} }` en lugar de texto plano
+- [x] **Cookie config** - httpOnly, sameSite=Lax, path=/
+- [x] **JWT Claims** - Agregado user_id al token
+- [x] **Dashboard endpoint** - Estructura correcta { user: { id, username, role } }
+
+#### Bugs Corregidos
+- [x] Error "Cannot read properties of undefined (reading 'role')"
+- [x] Cookie no se enviaba entre dominios (localhost:4321 ↔ localhost:3000)
+- [x] Login retornaba texto plano en lugar de JSON
+- [x] SSR no tenía acceso a cookies (solucionado con client-side auth)
+- [x] Ownership de variables en login handler (Rust)
+
+#### Commits Realizados
+1. `5dd1017` - Sprint 1: Foundation con Tailwind CSS v4
+2. `8b5998b` - Agrega componentes UI base
+3. `622bd50` - Agrega layout profesional con Sidebar y Header
+4. `58df7ee` - Agrega página de ejemplo con nuevo layout
+5. `5dc343c` - Fix: Corrige iconos y enlaces en sidebar
+6. `644c905` - Fix: Importa globals.css en DashboardLayout
+7. `b773546` - Conecta con backend y migra páginas
+8. `b611bc4` - Fix: Login retorna JSON, reemplaza dashboard antiguo
+9. `8349add` - Fix: Corrige ownership en login handler
+10. `5755552` - Fix: Configura cookie correctamente
+11. `28134d2` - Fix: Cambia a client-side authentication
+12. `91754b5` - Fix: Agrega user_id a JWT Claims
+13. `508e8fc` - docs: Actualiza ROADMAP_V4.md y ESTADO_ACTUAL.md
+
+**Total:** 13 commits, ~2,000 líneas de código nuevo
