@@ -1,0 +1,107 @@
+---
+import DashboardLayout from '../components/layout/dashboard-layout.astro'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui'
+
+// Datos de ejemplo - en producción vendrían del backend
+const stats = [
+  { title: 'Total Usuarios', value: 128, change: '+12%', positive: true },
+  { title: 'Usuarios Activos', value: 98, change: '+5%', positive: true },
+  { title: 'Administradores', value: 5, change: '0%', positive: true },
+  { title: 'Nuevos Hoy', value: 3, change: '+8%', positive: true },
+]
+
+const recentActivity = [
+  { action: 'Usuario creado', user: 'admin', time: 'Hace 5 minutos' },
+  { action: 'Login exitoso', user: 'juan.perez', time: 'Hace 15 minutos' },
+  { action: 'Usuario eliminado', user: 'admin', time: 'Hace 1 hora' },
+  { action: 'Configuración actualizada', user: 'admin', time: 'Hace 2 horas' },
+]
+---
+
+<DashboardLayout 
+  title="Dashboard" 
+  description="Vista general del sistema"
+  currentPath="/dashboard"
+  isAdmin={true}
+>
+  <!-- Stats Cards -->
+  <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+    {stats.map((stat) => (
+      <Card>
+        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle class="text-sm font-medium text-muted-foreground">
+            {stat.title}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="text-2xl font-bold">{stat.value}</div>
+          <p class={`text-xs ${stat.positive ? 'text-green-600' : 'text-red-600'}`}>
+            {stat.change} desde ayer
+          </p>
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+
+  <div class="grid gap-6 md:grid-cols-2">
+    <!-- Actividad Reciente -->
+    <Card>
+      <CardHeader>
+        <CardTitle>Actividad Reciente</CardTitle>
+        <CardDescription>Últimas acciones en el sistema</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div class="space-y-4">
+          {recentActivity.map((activity) => (
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span class="text-xs font-medium">{activity.user[0].toUpperCase()}</span>
+                </div>
+                <div>
+                  <p class="text-sm font-medium">{activity.action}</p>
+                  <p class="text-xs text-muted-foreground">por {activity.user}</p>
+                </div>
+              </div>
+              <span class="text-xs text-muted-foreground">{activity.time}</span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+
+    <!-- Estado del Sistema -->
+    <Card>
+      <CardHeader>
+        <CardTitle>Estado del Sistema</CardTitle>
+        <CardDescription>Información del servidor</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-sm">Estado del Servidor</span>
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+              <span class="h-1.5 w-1.5 rounded-full bg-green-600"></span>
+              Operativo
+            </span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm">Base de Datos</span>
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+              <span class="h-1.5 w-1.5 rounded-full bg-green-600"></span>
+              Conectada
+            </span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm">Versión</span>
+            <span class="text-sm font-mono text-muted-foreground">v3.0.0 Enterprise</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm">Último Deploy</span>
+            <span class="text-sm text-muted-foreground">15 Feb 2026</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+</DashboardLayout>
