@@ -116,14 +116,19 @@ pub async fn login(
         .verify_password(payload.password.as_bytes(), &parsed_hash)
         .is_ok()
     {
+        // Guardar datos antes de mover
+        let user_id = user.id;
+        let username = user.username.clone();
+        let role = user.role.clone();
+        
         // GENERAR JWT
         let expiration = Utc::now()
             .checked_add_signed(Duration::hours(24))
             .expect("Tiempo inválido")
             .timestamp();
         let claims = Claims {
-            sub: user.username,
-            role: user.role,
+            sub: username.clone(),
+            role: role.clone(),
             exp: expiration as usize,
         };
         // NOTA: En producción, "secret" debe venir de variables de entorno (.env)
@@ -137,9 +142,9 @@ pub async fn login(
         cookies.add(Cookie::new("auth_token", token));
         Ok((StatusCode::OK, Json(json!({
             "user": {
-                "id": user.id,
-                "username": user.username,
-                "role": user.role
+                "id": user_id,
+                "username": username,
+                "role": role
             },
             "message": "Login exitoso"
         }))))
