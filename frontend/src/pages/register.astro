@@ -9,7 +9,7 @@ const checkResponse = await fetch(`${API_BASE_URL}/api/v1/dashboard`, {
 }).catch(() => null)
 
 if (checkResponse?.ok) {
-  return Astro.redirect('/dashboard-v4/')
+  return Astro.redirect('/dashboard/')
 }
 ---
 

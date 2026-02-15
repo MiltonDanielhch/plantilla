@@ -9,12 +9,12 @@ interface Props {
 const { currentPath, isAdmin = false } = Astro.props
 
 const navItems = [
-  { href: '/dashboard-v4/', label: 'Dashboard', icon: 'home' },
+  { href: '/dashboard/', label: 'Dashboard', icon: 'home' },
   ...(isAdmin ? [
-    { href: '/dashboard-v4/users/', label: 'Usuarios', icon: 'users' },
-    { href: '/dashboard-v4/audit/', label: 'Auditoría', icon: 'shield' },
+    { href: '/dashboard/users/', label: 'Usuarios', icon: 'users' },
+    { href: '/dashboard/audit/', label: 'Auditoría', icon: 'shield' },
   ] : []),
-  { href: '/dashboard-v4/settings/', label: 'Configuración', icon: 'settings' },
+  { href: '/dashboard/settings/', label: 'Configuración', icon: 'settings' },
 ]
 
 const icons: Record<string, string> = {
@@ -29,7 +29,7 @@ const icons: Record<string, string> = {
   <div class="flex h-full flex-col">
     <!-- Logo -->
     <div class="flex h-16 items-center border-b px-6">
-      <a href="/dashboard-v4/" class="flex items-center gap-2 font-bold text-xl">
+      <a href="/dashboard/" class="flex items-center gap-2 font-bold text-xl">
         <span class="text-primary">Sintonía</span>
         <span class="text-muted-foreground">3026</span>
       </a>

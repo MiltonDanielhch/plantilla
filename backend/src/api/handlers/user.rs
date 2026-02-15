@@ -135,7 +135,14 @@ pub async fn login(
         .map_err(|_| AppError::AuthError("Error generando token".to_string()))?;
 
         cookies.add(Cookie::new("auth_token", token));
-        Ok((StatusCode::OK, "Login exitoso"))
+        Ok((StatusCode::OK, Json(json!({
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "role": user.role
+            },
+            "message": "Login exitoso"
+        }))))
     } else {
         Err(AppError::AuthError("Credenciales inválidas".to_string()))
     }
