@@ -171,6 +171,61 @@ class ApiClient {
     }
     return this.request<StatsData>('/api/v1/stats', { headers })
   }
+
+  // Export CSV
+  async exportUsers() {
+    const url = `${API_BASE_URL}/api/v1/users/export`
+    const response = await fetch(url, {
+      method: 'GET',
+      credentials: 'include',
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new ApiError(
+        errorData.message || `Error ${response.status}`,
+        response.status
+      )
+    }
+    
+    // Descargar archivo
+    const blob = await response.blob()
+    const downloadUrl = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = downloadUrl
+    a.download = 'users_export.csv'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(downloadUrl)
+  }
+
+  async exportAuditLogs() {
+    const url = `${API_BASE_URL}/api/v1/audit-logs/export`
+    const response = await fetch(url, {
+      method: 'GET',
+      credentials: 'include',
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new ApiError(
+        errorData.message || `Error ${response.status}`,
+        response.status
+      )
+    }
+    
+    // Descargar archivo
+    const blob = await response.blob()
+    const downloadUrl = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = downloadUrl
+    a.download = 'audit_logs_export.csv'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(downloadUrl)
+  }
 }
 
 export const api = new ApiClient()

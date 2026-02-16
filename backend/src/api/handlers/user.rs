@@ -11,9 +11,10 @@ use argon2::{
 };
 use axum::{
     debug_handler,
+    body::Body,
     extract::{Path, Query, State},
-    http::StatusCode,
-    response::IntoResponse,
+    http::{header, StatusCode},
+    response::{IntoResponse, Response},
     Json,
 };
 use chrono::{Duration, Utc};
@@ -22,6 +23,7 @@ use serde_json::json;
 use sqlx::SqlitePool;
 use tower_cookies::{Cookie, Cookies};
 use validator::Validate;
+use csv::WriterBuilder;
 
 #[utoipa::path(
     post,
@@ -340,4 +342,96 @@ pub async fn get_user_by_id(
     let repo = SqliteRepository::new(pool);
     let user = repo.get_by_id(id).await?.ok_or(AppError::NotFound("Usuario no encontrado".to_string()))?;
     Ok(Json(user))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/users/export",
+    responses(
+        (status = 200, description = "Exportación CSV de usuarios", content_type = "text/csv"),
+        (status = 500, description = "Error al generar CSV")
+    )
+)]
+pub async fn export_users(
+    State(pool): State<SqlitePool>,
+) -> Result<Response, AppError> {
+    let repo = SqliteRepository::new(pool);
+    let (users, _total) = repo.get_all(None, 1, 10000).await?; // Obtener todos los usuarios
+    
+    let mut wtr = WriterBuilder::new()
+        .has_headers(true)
+        .from_writer(vec![]);
+    
+    // Escribir encabezados
+    wtr.write_record(&["ID", "Username", "Email", "Role", "Created At"])
+        .map_err(|e| AppError::Database(sqlx::Error::Io(std::io::Error::new(std::io::ErrorKind::Other, e))))?;
+    
+    // Escribir datos
+    for user in users {
+        wtr.write_record(&[
+            user.id.to_string(),
+            user.username,
+            user.email.unwrap_or_default(),
+            format!("{:?}", user.role),
+            user.created_at,
+        ]).map_err(|e| AppError::Database(sqlx::Error::Io(std::io::Error::new(std::io::ErrorKind::Other, e))))?;
+    }
+    
+    let data = wtr.into_inner()
+        .map_err(|e| AppError::Database(sqlx::Error::Io(std::io::Error::new(std::io::ErrorKind::Other, e))))?;
+    
+    let response = Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "text/csv; charset=utf-8")
+        .header(header::CONTENT_DISPOSITION, "attachment; filename=\"users_export.csv\"")
+        .body(Body::from(data))
+        .map_err(|e| AppError::Database(sqlx::Error::Io(std::io::Error::new(std::io::ErrorKind::Other, e))))?;
+    
+    Ok(response)
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/audit-logs/export",
+    responses(
+        (status = 200, description = "Exportación CSV de logs de auditoría", content_type = "text/csv"),
+        (status = 500, description = "Error al generar CSV")
+    )
+)]
+pub async fn export_audit_logs(
+    State(pool): State<SqlitePool>,
+) -> Result<Response, AppError> {
+    let repo = SqliteRepository::new(pool);
+    let logs = repo.get_audit_logs().await?;
+    
+    let mut wtr = WriterBuilder::new()
+        .has_headers(true)
+        .from_writer(vec![]);
+    
+    // Escribir encabezados
+    wtr.write_record(&["ID", "Admin Username", "Action", "Target", "Timestamp"])
+        .map_err(|e| AppError::Database(sqlx::Error::Io(std::io::Error::new(std::io::ErrorKind::Other, e))))?;
+    
+    // Escribir datos
+    for log in logs {
+        wtr.write_record(&[
+            log.id.to_string(),
+            log.admin_username,
+            log.action,
+            log.target,
+            log.timestamp,
+        ]).map_err(|e| AppError::Database(sqlx::Error::Io(std::io::Error::new(std::io::ErrorKind::Other, e))))?;
+    }
+    
+    let data = wtr.into_inner()
+        .map_err(|e| AppError::Database(sqlx::Error::Io(std::io::Error::new(std::io::ErrorKind::Other, e))))?;
+    
+    let response = Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "text/csv; charset=utf-8")
+        .header(header::CONTENT_DISPOSITION, "attachment; filename=\"audit_logs_export.csv\"")
+        .body(Body::from(data))
+        .map_err(|e| AppError::Database(sqlx::Error::Io(std::io::Error::new(std::io::ErrorKind::Other, e))))?;
+    
+    Ok(response)
 }

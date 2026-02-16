@@ -27,31 +27,34 @@ use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 #[derive(OpenApi)]
-#[openapi(
-    info(
-        title = "Sintonía 3026 API",
-        version = "1.0.0",
-        description = "Documentación viva del sistema Sintonía 3026"
-    ),
-    paths(
-        api::handlers::user::create_user,
-        api::handlers::user::get_users,
-        api::handlers::user::login,
-        api::handlers::user::logout,
-        api::handlers::user::delete_user,
-        api::handlers::user::get_audit_logs,
-        api::handlers::user::dashboard,
-        api::handlers::user::get_stats,
-    ),
-    components(schemas(
-        core::models::user::User,
-        core::models::user::CreateUserRequest,
-        core::models::user::LoginRequest,
-        core::models::user::Role,
-        core::models::user::AuditLog,
-        core::models::user::UserSearch,
-    ))
-)]
+    #[openapi(
+        info(
+            title = "Sintonía 3026 API",
+            version = "1.0.0",
+            description = "Documentación viva del sistema Sintonía 3026"
+        ),
+        paths(
+            api::handlers::user::create_user,
+            api::handlers::user::get_users,
+            api::handlers::user::login,
+            api::handlers::user::logout,
+            api::handlers::user::delete_user,
+            api::handlers::user::get_audit_logs,
+            api::handlers::user::dashboard,
+            api::handlers::user::get_stats,
+            api::handlers::user::export_users,
+            api::handlers::user::export_audit_logs,
+        ),
+        components(schemas(
+            core::models::user::User,
+            core::models::user::CreateUserRequest,
+            core::models::user::UpdateUserRequest,
+            core::models::user::LoginRequest,
+            core::models::user::Role,
+            core::models::user::AuditLog,
+            core::models::user::UserSearch,
+        ))
+    )]
 pub struct ApiDoc;
 
 pub fn create_app(pool: SqlitePool) -> Router {
@@ -98,7 +101,9 @@ pub fn create_app(pool: SqlitePool) -> Router {
         .route("/users/:id", 
             delete(api::handlers::user::delete_user)
             .get(api::handlers::user::get_user_by_id)) // Agregamos GET para ver detalle/editar
+        .route("/users/export", get(api::handlers::user::export_users))
         .route("/audit-logs", get(api::handlers::user::get_audit_logs))
+        .route("/audit-logs/export", get(api::handlers::user::export_audit_logs))
         .route_layer(middleware::from_fn(api::middleware::admin_guard));
 
     let api_v1 = Router::new()
