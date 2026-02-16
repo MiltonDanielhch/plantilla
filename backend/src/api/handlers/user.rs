@@ -199,7 +199,9 @@ pub async fn login(
     )
 )]
 pub async fn logout(cookies: Cookies) -> impl IntoResponse {
-    cookies.remove(Cookie::new("auth_token", ""));
+    let mut cookie = Cookie::new("auth_token", "");
+    cookie.set_path("/");
+    cookies.remove(cookie);
     (StatusCode::OK, Json(json!({"message": "Sesión cerrada correctamente"}))).into_response()
 }
 

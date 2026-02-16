@@ -1,0 +1,31 @@
+---
+import '../styles/globals.css';
+export const prerender = false;
+---
+
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cerrando sesión...</title>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-background text-foreground">
+  <div class="flex flex-col items-center gap-4">
+    <!-- Spinner simple -->
+    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    <p class="text-muted-foreground">Cerrando sesión...</p>
+  </div>
+
+  <script>
+    import { api } from '../lib/api';
+
+    // Ejecutar logout y redirigir. 
+    // Si falla la API, forzamos la redirección igual para no dejar atrapado al usuario.
+    api.logout().catch(() => {
+        document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        window.location.href = '/login';
+    });
+  </script>
+</body>
+</html>

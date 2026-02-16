@@ -22,16 +22,31 @@ El sistema cuenta con un Dashboard completamente funcional, autenticación robus
 
 ---
 
-## 🚀 Fase Activa: Fase 38 (Backend Features Premium)
+## 🚨 Fase Activa: Corrección de Bugs y Funcionalidades Base
 
-**Objetivo:** Implementar funcionalidades "Enterprise" en el Backend para cerrar las features visuales del Dashboard.
+**Objetivo:** Reparar funcionalidades rotas y completar acciones básicas de gestión (CRUD) antes de añadir nuevas features.
 
-### 📋 Tareas Pendientes
-- [ ] **Export CSV:** Endpoint `/api/v1/users/export` (Prioridad Alta).
-- [ ] **Avatar Upload:** Soporte `multipart/form-data` en Axum.
-- [ ] **Refresh Tokens:** Rotación de JWT para mayor seguridad.
+### 📋 Lista de Bugs y Faltantes (Prioridad Máxima)
+- [ ] **Buscador de Usuarios:** Backend solo busca por `username`, falta soporte para email.
+- [x] **Logout (Salir):** Página `/logout` creada para manejar cierre de sesión.
+- [x] **Link Nuevo Usuario:** Corregido (confirmado por usuario).
+- [ ] **Acciones Faltantes:** Faltan botones/vistas para "Ver Detalle" y "Editar Usuario".
+- [ ] **Campo Email:** 🔄 En Progreso (Migración DB creada).
+- [ ] **Export CSV:** (Pospuesto hasta arreglar lo anterior).
 
-**Prioridad:** ALTA
+**Estado:** 🛑 EN REPARACIÓN
+
+---
+
+### 🔧 Fase 38: Backend Features Premium (PENDIENTE)
+**Objetivo:** Features adicionales del backend (CSV, Uploads, Websockets).
+
+- [ ] **Export CSV** - Endpoint `/api/v1/users/export`
+- [ ] **Avatar Upload** - Carga de imágenes de perfil
+- [ ] **Refresh Tokens** - Rotación de JWT para mayor seguridad
+- [ ] **Stats Endpoint** - Mejorar métricas
+
+**Prioridad:** MEDIA (Siguiente en la lista)
 
 ---
 
@@ -139,12 +154,12 @@ $isAuthenticated // Boolean
 
 ## 🎨 Próximo Trabajo Sugerido (Pulido)
 
-### Opción 1: Exportar CSV (Backend)
-**Objetivo:** Permitir descargar la lista de usuarios.
-**Pasos:**
-1. Agregar crate `csv`.
-2. Crear endpoint `GET /api/v1/users/export`.
-3. Reactivar botón en Frontend.
+### Opción 1: Implementar Email y Edición
+**Objetivo:** Que la gestión de usuarios sea real y completa.
+**Tareas:**
+1. Migración DB para campo `email`.
+2. Endpoint `PUT /users/:id`.
+3. Pantalla de Edición.
 
 ---
 
@@ -168,8 +183,8 @@ cd backend && cargo build --release
 
 ## 📝 Notas para el Siguiente Chat
 
-1. **Foco:** Fase 38 iniciada.
-2. **Prioridad:** Implementar Exportación CSV.
+1. **Foco:** Corrección de Bugs Críticos.
+2. **Prioridad:** Arreglar Logout, Email y Acciones de Usuario.
 
 ### Archivos Clave Recientes:
 - `frontend/src/components/ui/*` - Componentes base

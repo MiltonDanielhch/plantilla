@@ -51,7 +51,10 @@ class ApiClient {
   }
 
   async logout() {
-    return this.request<void>('/api/v1/logout', { method: 'POST' })
+    await this.request<void>('/api/v1/logout', { method: 'POST' })
+    // Limpiar cookie de sesión (Frontend/SSR) y redirigir
+    document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    window.location.href = '/login';
   }
 
   async getDashboard() {
@@ -61,7 +64,7 @@ class ApiClient {
   // Users
   async getUsers(params?: UserSearch, token?: string) {
     const query = new URLSearchParams()
-    if (params?.search) query.set('search', params.search)
+    if (params?.search) query.set('q', params.search) // Fix: Backend espera 'q', no 'search'
     if (params?.page) query.set('page', params.page.toString())
     if (params?.limit) query.set('limit', params.limit.toString())
     
