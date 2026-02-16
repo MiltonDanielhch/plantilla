@@ -44,7 +44,12 @@ if (Astro.locals.user?.isAuthenticated) {
             </div>
 
             <div class="space-y-2">
-              <label for="password" class="text-sm font-medium">Contraseña</label>
+              <div class="flex items-center justify-between">
+                <label for="password" class="text-sm font-medium">Contraseña</label>
+                <a href="/forgot-password/" class="text-xs text-primary hover:underline">
+                  ¿Olvidaste tu contraseña?
+                </a>
+              </div>
               <Input
                 type="password"
                 id="password"
@@ -112,8 +117,8 @@ if (Astro.locals.user?.isAuthenticated) {
       
       // 2. Guardar token en cookie para SSR (Lax para que viaje en navegaciones)
       // Usamos 'session' como nombre estándar para el frontend
-      if (response.token) {
-        document.cookie = `session=${response.token}; path=/; max-age=86400; SameSite=Lax`;
+      if (response.access_token) {
+        document.cookie = `session=${response.access_token}; path=/; max-age=86400; SameSite=Lax`;
       }
 
       // 3. Redirigir al dashboard

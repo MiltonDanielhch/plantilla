@@ -50,7 +50,7 @@ El sistema cuenta con un Dashboard completamente funcional, autenticación robus
     *   [x] Actualizar UI de Settings para mostrar imagen real en lugar de iniciales.
 3.  **Seguridad Avanzada:**
     *   [x] **Refresh Tokens:** Implementar rotación de tokens para evitar sesiones largas inseguras (actualmente 24h fijas).
-    *   [ ] **Recuperación de Contraseña:** Flujo de "Olvidé mi contraseña" (requiere envío de emails).
+    *   [x] **Recuperación de Contraseña:** Flujo de "Olvidé mi contraseña" (requiere envío de emails).
     *   [ ] **Verificación de Email:** Enviar correo de confirmación al registrarse para validar cuentas.
 
 ### 🔧 Fase 38: Backend Features Premium (PENDIENTE)

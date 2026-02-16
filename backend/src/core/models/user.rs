@@ -106,6 +106,27 @@ pub struct TokenResponse {
     pub token_type: String,
 }
 
+#[derive(Debug, Serialize, FromRow)]
+pub struct PasswordResetToken {
+    pub id: i64,
+    pub user_id: i64,
+    pub token: String,
+    pub expires_at: String,
+    pub created_at: String,
+    pub used: bool,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct ForgotPasswordRequest {
+    pub email: String,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct ResetPasswordRequest {
+    pub token: String,
+    pub new_password: String,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -45,6 +45,9 @@ csv = "1.3.0"
 # Refresh Tokens
 uuid = { version = "1.10", features = ["v4"] }
 
+# Email Service
+lettre = { version = "0.11", features = ["tokio1-native-tls", "builder"] }
+
 [dev-dependencies]
 tower = { version = "0.4", features = ["util"] }
 mime = "0.3"

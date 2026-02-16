@@ -2,6 +2,7 @@ pub mod api;
 pub mod core;
 pub mod data;
 pub mod error;
+pub mod services;
 pub mod settings;
 
 use axum::{
@@ -83,11 +84,13 @@ pub fn create_app(pool: SqlitePool) -> Router {
             .unwrap(),
     );
 
-    // 1. Rutas Públicas (Login, Registro, Logout, Refresh)
+    // 1. Rutas Públicas (Login, Registro, Logout, Refresh, Password Reset)
     let public_routes = Router::new()
         .route("/login", post(api::handlers::user::login))
         .route("/logout", post(api::handlers::user::logout))
         .route("/refresh", post(api::handlers::user::refresh_token))
+        .route("/forgot-password", post(api::handlers::user::forgot_password))
+        .route("/reset-password", post(api::handlers::user::reset_password))
         .route("/users", post(api::handlers::user::create_user)); // Registro público
 
     // 2. Rutas Protegidas (Requieren Auth)

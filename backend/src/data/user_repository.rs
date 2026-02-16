@@ -1,5 +1,5 @@
 use crate::core::{
-    models::user::{AuditLog, RefreshToken, User},
+    models::user::{AuditLog, PasswordResetToken, RefreshToken, User},
     repository::UserRepository,
 };
 use crate::error::AppError;
@@ -205,6 +205,58 @@ impl UserRepository for SqliteRepository {
     async fn revoke_user_refresh_tokens(&self, user_id: i64) -> Result<(), AppError> {
         sqlx::query("DELETE FROM refresh_tokens WHERE user_id = $1")
             .bind(user_id)
+            .execute(&self.pool)
+            .await
+            .map_err(AppError::Database)?;
+        Ok(())
+    }
+
+    async fn get_by_email(&self, email: &str) -> Result<Option<User>, AppError> {
+        sqlx::query_as::<_, User>(
+            "SELECT id, username, email, password_hash, role, avatar_url, created_at FROM users WHERE email = $1",
+        )
+        .bind(email)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(AppError::Database)
+    }
+
+    async fn update_password(&self, id: i64, password_hash: &str) -> Result<(), AppError> {
+        sqlx::query("UPDATE users SET password_hash = $1 WHERE id = $2")
+            .bind(password_hash)
+            .bind(id)
+            .execute(&self.pool)
+            .await
+            .map_err(AppError::Database)?;
+        Ok(())
+    }
+
+    // Password Reset Tokens
+    async fn create_password_reset_token(&self, user_id: i64, token: &str, expires_at: &str) -> Result<PasswordResetToken, AppError> {
+        sqlx::query_as::<_, PasswordResetToken>(
+            "INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ($1, $2, $3) RETURNING id, user_id, token, expires_at, created_at, used"
+        )
+        .bind(user_id)
+        .bind(token)
+        .bind(expires_at)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(AppError::Database)
+    }
+
+    async fn get_password_reset_token(&self, token: &str) -> Result<Option<PasswordResetToken>, AppError> {
+        sqlx::query_as::<_, PasswordResetToken>(
+            "SELECT id, user_id, token, expires_at, created_at, used FROM password_reset_tokens WHERE token = $1"
+        )
+        .bind(token)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(AppError::Database)
+    }
+
+    async fn mark_password_reset_token_used(&self, token_id: i64) -> Result<(), AppError> {
+        sqlx::query("UPDATE password_reset_tokens SET used = TRUE WHERE id = $1")
+            .bind(token_id)
             .execute(&self.pool)
             .await
             .map_err(AppError::Database)?;

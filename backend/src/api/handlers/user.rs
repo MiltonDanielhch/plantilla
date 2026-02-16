@@ -1,7 +1,9 @@
 use crate::core::models::user::{
-    AuditLog, Claims, CreateUserRequest, LoginRequest, RefreshRequest, TokenResponse, User, UserSearch,
+    AuditLog, Claims, CreateUserRequest, ForgotPasswordRequest, LoginRequest, RefreshRequest, 
+    ResetPasswordRequest, TokenResponse, User, UserSearch,
 };
 use crate::core::models::user::UpdateUserRequest;
+use crate::services::email::{create_email_service, EmailService};
 use crate::core::repository::UserRepository;
 use crate::data::user_repository::SqliteRepository;
 use crate::error::AppError;
@@ -617,4 +619,121 @@ pub async fn refresh_token(
         expires_in: 15 * 60, // 15 minutos en segundos
         token_type: "Bearer".to_string(),
     }))
+}
+
+pub async fn forgot_password(
+    State(pool): State<SqlitePool>,
+    Json(payload): Json<ForgotPasswordRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    // Validar email
+    if payload.email.is_empty() || !payload.email.contains('@') {
+        return Err(AppError::Validation("Email inválido".to_string()));
+    }
+    
+    let repo = SqliteRepository::new(pool);
+    
+    // Buscar usuario por email
+    let user = match repo.get_by_email(&payload.email).await? {
+        Some(u) => u,
+        None => {
+            // Por seguridad, no revelar si el email existe o no
+            return Ok((StatusCode::OK, Json(json!({
+                "message": "Si el email existe, recibirás instrucciones para restablecer tu contraseña"
+            }))));
+        }
+    };
+    
+    // Verificar que el usuario tenga email
+    if user.email.is_none() {
+        return Ok((StatusCode::OK, Json(json!({
+            "message": "Si el email existe, recibirás instrucciones para restablecer tu contraseña"
+        }))));
+    }
+    
+    // Generar token único
+    let reset_token = uuid::Uuid::new_v4().to_string();
+    let expiration = Utc::now()
+        .checked_add_signed(Duration::hours(1))
+        .expect("Tiempo inválido")
+        .timestamp();
+    
+    // Guardar token en base de datos
+    let expires_at = chrono::NaiveDateTime::from_timestamp(expiration, 0)
+        .format("%Y-%m-%d %H:%M:%S")
+        .to_string();
+    
+    repo.create_password_reset_token(user.id, &reset_token, &expires_at).await?;
+    
+    // Enviar email (si el servicio está configurado)
+    if let Some(email_service) = create_email_service() {
+        if let Err(e) = email_service.send_password_reset(
+            &payload.email,
+            &reset_token,
+            &user.username
+        ).await {
+            tracing::error!("Error enviando email de recuperación: {}", e);
+            // No fallamos la petición, pero logeamos el error
+        }
+    } else {
+        // En desarrollo, logear el token para poder probar
+        tracing::info!("Password reset token para {}: {}", payload.email, reset_token);
+        tracing::info!("URL de reset: http://localhost:4321/reset-password?token={}", reset_token);
+    }
+    
+    Ok((StatusCode::OK, Json(json!({
+        "message": "Si el email existe, recibirás instrucciones para restablecer tu contraseña"
+    }))))
+}
+
+pub async fn reset_password(
+    State(pool): State<SqlitePool>,
+    Json(payload): Json<ResetPasswordRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    // Validar contraseña
+    if payload.new_password.len() < 8 {
+        return Err(AppError::Validation("La contraseña debe tener al menos 8 caracteres".to_string()));
+    }
+    
+    let repo = SqliteRepository::new(pool);
+    
+    // Buscar el token
+    let stored_token = match repo.get_password_reset_token(&payload.token).await? {
+        Some(t) => t,
+        None => return Err(AppError::AuthError("Token inválido".to_string())),
+    };
+    
+    // Verificar que no haya sido usado
+    if stored_token.used {
+        return Err(AppError::AuthError("Token ya fue utilizado".to_string()));
+    }
+    
+    // Verificar que no haya expirado
+    let expires_at = chrono::NaiveDateTime::parse_from_str(&stored_token.expires_at, "%Y-%m-%d %H:%M:%S")
+        .map_err(|_| AppError::AuthError("Error parseando fecha de expiración".to_string()))?;
+    
+    let now = chrono::Local::now().naive_local();
+    if now > expires_at {
+        return Err(AppError::AuthError("Token expirado".to_string()));
+    }
+    
+    // Generar hash de la nueva contraseña
+    let salt = SaltString::generate(&mut rand::thread_rng());
+    let argon2 = Argon2::default();
+    let password_hash = argon2
+        .hash_password(payload.new_password.as_bytes(), &salt)
+        .map_err(|e| AppError::AuthError(format!("Error de seguridad: {}", e)))?
+        .to_string();
+    
+    // Actualizar contraseña
+    repo.update_password(stored_token.user_id, &password_hash).await?;
+    
+    // Marcar token como usado
+    repo.mark_password_reset_token_used(stored_token.id).await?;
+    
+    // Revocar todos los refresh tokens del usuario (forzar re-login)
+    repo.revoke_user_refresh_tokens(stored_token.user_id).await?;
+    
+    Ok((StatusCode::OK, Json(json!({
+        "message": "Contraseña actualizada correctamente"
+    }))))
 }
