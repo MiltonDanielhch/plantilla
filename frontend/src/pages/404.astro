@@ -1,0 +1,40 @@
+---
+import '../styles/globals.css';
+import { Button } from "../components/ui/button";
+import { FileQuestion } from "lucide-react";
+---
+
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 - Página no encontrada | Sintonía 3026</title>
+    <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
+</head>
+<body class="bg-background text-foreground min-h-screen flex flex-col items-center justify-center p-4 text-center">
+    <div class="space-y-6 max-w-md animate-in fade-in zoom-in duration-500">
+        <div class="flex justify-center">
+            <div class="h-24 w-24 rounded-full bg-muted/50 flex items-center justify-center ring-8 ring-muted/20">
+                <FileQuestion class="h-12 w-12 text-muted-foreground" />
+            </div>
+        </div>
+        
+        <div class="space-y-2">
+            <h1 class="text-4xl font-bold tracking-tight lg:text-5xl">404</h1>
+            <h2 class="text-xl font-semibold tracking-tight">Página no encontrada</h2>
+            <p class="text-muted-foreground">
+                Lo sentimos, no pudimos encontrar la ruta que estás buscando. Puede que haya sido movida o eliminada.
+            </p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+            <a href="/dashboard">
+                <Button size="lg" className="w-full sm:w-auto">Volver al Dashboard</Button>
+            </a>
+            <a href="javascript:history.back()">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto">Regresar</Button>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,6 +1,9 @@
 ---
 import DashboardLayout from '../../components/layout/dashboard-layout.astro';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button } from '../../components/ui';
+import { EmptyState } from '../../components/ui/empty-state.tsx';
+import { Skeleton } from '../../components/ui/skeleton.tsx';
+import { DeleteUserDialog } from '../../components/dashboard/users/delete-user-dialog.tsx';
 import { api } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import type { UserDetails } from '../../types';
@@ -8,6 +11,7 @@ import type { UserDetails } from '../../types';
 export const prerender = false;
 
 // 1. Get query params for server-side filtering/pagination
+const url = Astro.url;
 const page = parseInt(Astro.url.searchParams.get("page") || "1", 10);
 const limit = parseInt(Astro.url.searchParams.get("limit") || "10", 10);
 const search = Astro.url.searchParams.get("search") || undefined;
@@ -45,6 +49,15 @@ const pagination = usersResult?.meta;
         </div>
     )}
 
+    <!-- Loading Skeleton (Hidden by default, for client-side transitions) -->
+    <div id="users-loading" class="hidden space-y-4">
+        <div class="flex justify-between">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-8 w-32" />
+        </div>
+        <Skeleton className="h-[400px] w-full rounded-xl" />
+    </div>
+
     {!error && (
     <div class="space-y-6">
         <div class="flex items-center justify-between">
@@ -74,14 +87,15 @@ const pagination = usersResult?.meta;
             </CardHeader>
             <CardContent>
                 <!-- Search Form -->
-                <form method="get" class="mb-4">
+                <form id="search-form" method="get" class="mb-4">
                     <div class="flex gap-2">
-                        <input type="search" name="search" placeholder="Buscar por usuario o email..." value={search} class="w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                        <input id="search-input" type="search" name="search" placeholder="Buscar por usuario o email..." value={search} class="w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
                         <Button type="submit">Buscar</Button>
                     </div>
                 </form>
 
                 <!-- Users Table -->
+                {users.length > 0 ? (
                 <div class="relative w-full overflow-auto rounded-md border">
                     <table class="w-full caption-bottom text-sm">
                         <thead class="[&_tr]:border-b">
@@ -110,9 +124,7 @@ const pagination = usersResult?.meta;
                                             <a href={`/dashboard/users/${user.id}`} class="text-primary hover:text-primary/80 text-sm font-medium transition-colors">
                                                 Editar
                                             </a>
-                                            <button class="text-destructive hover:text-destructive/80 text-sm font-medium transition-colors delete-btn" data-id={user.id}>
-                                                Eliminar
-                                            </button>
+                                            <DeleteUserDialog client:load userId={user.id} username={user.username} />
                                         </div>
                                     </td>
                                 </tr>
@@ -120,6 +132,20 @@ const pagination = usersResult?.meta;
                         </tbody>
                     </table>
                 </div>
+                ) : (
+                    <EmptyState 
+                        title={search ? "No se encontraron usuarios" : "No hay usuarios registrados"}
+                        description={search ? `No hay resultados para "${search}". Intenta con otro término.` : "Comienza agregando un nuevo usuario al sistema."}
+                        className="border-2 border-dashed rounded-lg"
+                        client:load
+                    >
+                        {search && (
+                            <a href="/dashboard/users/" slot="action" class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 h-9 px-4 py-2">
+                                Limpiar búsqueda
+                            </a>
+                        )}
+                    </EmptyState>
+                )}
 
                 <!-- Pagination -->
                 {pagination && pagination?.totalPages > 1 && (
@@ -153,40 +179,27 @@ const pagination = usersResult?.meta;
 
     const deleteButtons = document.querySelectorAll('.delete-btn');
     const exportBtn = document.getElementById('export-btn');
+    const searchInput = document.getElementById('search-input') as HTMLInputElement;
+    const searchForm = document.getElementById('search-form') as HTMLFormElement;
 
-    deleteButtons.forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            const target = e.currentTarget as HTMLButtonElement;
-            const userId = target.dataset.id;
-            
-            if (!userId) return;
-            
-            if (!confirm('¿Estás seguro de que quieres eliminar este usuario?')) return;
+    // Búsqueda automática (Debounce)
+    // Si el usuario deja de escribir por 500ms, se envía el formulario automáticamente
+    let timeout: any;
+    
+    if (searchInput && searchForm) {
+        // Restaurar foco si hay una búsqueda activa (para UX fluida tras recarga)
+        if (searchInput.value) {
+            searchInput.focus();
+            searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+        }
 
-            try {
-                await api.deleteUser(parseInt(userId));
-                
-                // Eliminar visualmente la fila de inmediato para feedback instantáneo
-                const row = target.closest('tr');
-                if (row) row.remove();
-
-                addToast({
-                    type: 'success',
-                    title: 'Usuario eliminado',
-                    message: 'El usuario ha sido eliminado correctamente.'
-                });
-                
-                // Actualizar el contador total visualmente (opcional pero recomendado)
-                // No recargamos la página para una experiencia más fluida
-            } catch (error: any) {
-                addToast({
-                    type: 'error',
-                    title: 'Error',
-                    message: error.message || 'No se pudo eliminar el usuario.'
-                });
-            }
+        searchInput.addEventListener('input', () => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                searchForm.submit();
+            }, 500);
         });
-    });
+    }
 
     // Exportar usuarios a CSV
     exportBtn?.addEventListener('click', async () => {

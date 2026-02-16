@@ -1,6 +1,8 @@
 ---
 import DashboardLayout from '../../components/layout/dashboard-layout.astro'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui'
+import { EmptyState } from '../../components/ui/empty-state.tsx'
+import { Skeleton } from '../../components/ui/skeleton.tsx'
 import Button from '../../components/ui/button.astro'
 import { api } from '../../lib/api'
 import { formatDate } from '../../lib/utils'
@@ -29,10 +31,22 @@ try {
   description="Registro de actividad del sistema"
   currentPath="/dashboard/audit/"
 >
-  <div id="loading-state" class="flex items-center justify-center min-h-[60vh]">
-    <div class="text-center">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-      <p class="text-muted-foreground">Cargando auditoría...</p>
+  <div id="loading-state" class="space-y-6">
+    <div class="flex items-center justify-between">
+      <div class="space-y-2">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-4 w-64" />
+      </div>
+      <div class="flex gap-2">
+        <Skeleton className="h-9 w-24" />
+        <Skeleton className="h-9 w-24" />
+      </div>
+    </div>
+    <Skeleton className="h-[120px] w-full rounded-xl" />
+    <div class="space-y-4">
+        <Skeleton className="h-24 w-full rounded-xl" />
+        <Skeleton className="h-24 w-full rounded-xl" />
+        <Skeleton className="h-24 w-full rounded-xl" />
     </div>
   </div>
 
@@ -108,7 +122,11 @@ try {
           {error ? (
             <p class="text-destructive text-center py-4">{error}</p>
           ) : auditLogs.length === 0 ? (
-            <p class="text-muted-foreground text-center py-4">No hay registros de auditoría.</p>
+            <EmptyState 
+              title="No hay registros de auditoría"
+              description="Las acciones del sistema aparecerán aquí cronológicamente."
+              client:load
+            />
           ) : (
             auditLogs.map((log) => (
               <div class="relative pl-6 pb-6 border-l border-border last:border-0 last:pb-0">
@@ -200,9 +218,14 @@ try {
     
     if (pageLogs.length === 0) {
       timelineContainer.innerHTML = `
-        <div class="text-center py-12 text-muted-foreground">
-          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-4 opacity-50"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
-          <p>No hay eventos que coincidan con los filtros</p>
+        <div class="flex flex-col items-center justify-center py-12 text-center animate-in fade-in-50">
+          <div class="flex h-20 w-20 items-center justify-center rounded-full bg-muted/50 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-10 w-10 text-muted-foreground"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><path d="M14 2v6h6"/><path d="m3 12.5 5 5"/><path d="m8 12.5-5 5"/></svg>
+          </div>
+          <h3 class="text-lg font-semibold tracking-tight">No se encontraron eventos</h3>
+          <p class="mt-2 text-sm text-muted-foreground max-w-sm text-balance">
+            No hay resultados que coincidan con los filtros seleccionados.
+          </p>
         </div>
       `;
       if (paginationContainer) paginationContainer.innerHTML = '';

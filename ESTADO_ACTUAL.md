@@ -1,10 +1,10 @@
 # 📋 Informe de Estado: Proyecto Sintonía 3026
 
 **Fecha de Corte:** 16 Feb 2026  
-**Versión Actual:** V4.1 - Estabilización Completada  
+**Versión Actual:** V4.2 - UI Polished (Ready for Testing)
 **Rama Activa:** `feature/v4-dashboard`
 
-> **Nota:** Fases 0-37 y Pulido archivadas en `HISTORIAL_FASES.md`
+> **Nota:** Fases 0-39 archivadas en `HISTORIAL_FASES.md`
 
 ---
 
@@ -22,107 +22,78 @@ El sistema cuenta con un Dashboard completamente funcional, autenticación robus
 
 ---
 
-## 🚨 Fase Activa: Corrección de Bugs y Funcionalidades Base
+## 🚨 Fase Activa: Calidad y Testing (Fase 40)
 
-**Objetivo:** Reparar funcionalidades rotas y completar acciones básicas de gestión (CRUD) antes de añadir nuevas features.
+**Objetivo:** Blindar el sistema con pruebas automatizadas de extremo a extremo (E2E) y auditorías de rendimiento antes de producción.
 
-### 📋 Lista de Bugs y Faltantes (Prioridad Máxima)
-- [x] **Buscador de Usuarios:** Arreglado (Busca por Username o Email).
-- [x] **Logout (Salir):** Página `/logout` creada para manejar cierre de sesión.
-- [x] **Link Nuevo Usuario:** Corregido (confirmado por usuario).
-- [x] **Acciones Faltantes:** Vista "Editar Usuario" implementada y conectada.
-- [x] **Campo Email:** Implementado completo (Registro, Settings, DB).
-- [x] **Rate Limiting:** Ajustado (Error 429) para soportar tráfico de desarrollo/SSR.
-
-**Estado:** ✅ COMPLETADO
+**Fecha de Inicio:** 16 Feb 2026  
+**Rama:** `feature/v4-dashboard`
 
 ---
 
-## 🚀 Funcionalidades Backend (Prioridad Alta - Fase 38)
-1.  **Exportación a CSV:**
-    *   [x] Endpoint `GET /api/v1/users/export`.
-    *   [x] Endpoint `GET /api/v1/audit-logs/export`.
-    *   [x] Conexión con botones "Exportar" en Frontend (Usuarios y Auditoría).
-2.  **Subida de Archivos (Avatares):**
-    *   [x] Soporte `multipart/form-data` en Axum (Backend).
-    *   [x] Sistema de almacenamiento (carpeta `uploads/` local o AWS S3).
-    *   [x] Endpoint `POST /api/v1/users/avatar`.
-    *   [x] Actualizar UI de Settings para mostrar imagen real en lugar de iniciales.
-3.  **Seguridad Avanzada:**
-    *   [x] **Refresh Tokens:** Implementar rotación de tokens para evitar sesiones largas inseguras (actualmente 24h fijas).
-    *   [x] **Recuperación de Contraseña:** Flujo de "Olvidé mi contraseña" (requiere envío de emails).
-    *   [x] **Verificación de Email:** Enviar correo de confirmación al registrarse para validar cuentas.
+## 🧪 Fase 40: Calidad y Testing (ACTIVA)
 
-### 🔧 Fase 38: Backend Features Premium (PENDIENTE)
-**Objetivo:** Features adicionales del backend (CSV, Uploads, Websockets).
+### Tests Automatizados
+- [ ] **Configuración E2E (Playwright):**
+  - [ ] Instalar y configurar Playwright en `frontend/`
+  - [ ] Configurar base URL y usuarios de prueba
+  
+- [ ] **Escenarios de Prueba:**
+  - [ ] Test de login completo
+  - [ ] Test de flujo de recuperación de contraseña
+  - [ ] Test de navegación del dashboard (Smoke Test)
+  - [ ] Test de CRUD de usuarios (Crear/Eliminar)
+  - [ ] Test de logout
+  
+- [ ] **Tests Unitarios:**
+  - [ ] Aumentar cobertura en Backend
+  - [ ] Tests de validaciones
+  - [ ] Tests de lógica de negocio
+  
+- [ ] **Tests de Integración:**
+  - [ ] API + Base de Datos
+  - [ ] Escenarios de error
+  
+- [ ] **Auditorías:**
+  - [ ] Lighthouse CI - Performance
+  - [ ] Accessibility audit - WCAG 2.1
+  - [ ] SEO audit
 
-- [ ] **Export CSV** - Endpoint `/api/v1/users/export`
-- [ ] **Avatar Upload** - Carga de imágenes de perfil
-- [x] **Refresh Tokens** - Rotación de JWT para mayor seguridad
-- [ ] **Stats Endpoint** - Mejorar métricas
-
-**Prioridad:** MEDIA (Siguiente en la lista)
-
----
-
-
-## 🎨 Mejoras Frontend / UI (Prioridad Media - Fase 39)
-4.  **Componentes Faltantes:**
-    *   [ ] **Command Palette (⌘K):** Búsqueda rápida global de acciones y navegación (estilo VS Code).
-    *   [ ] **Skeletons:** Reemplazar spinners de carga por "esqueletos" visuales (cajas grises pulsantes) para mejor percepción de velocidad.
-    *   [ ] **Dialogs/Modals:** Reemplazar las alertas nativas del navegador (`confirm()`, `alert()`) por modales estilizados (shadcn/ui) en acciones destructivas.
-5.  **Feedback y Estados:**
-    *   [ ] **Páginas de Error:** Diseños personalizados para 404 (No encontrado) y 500 (Error servidor).
-    *   [ ] **Empty States:** Ilustraciones o mensajes amigables cuando las tablas están vacías.
-
+**Prioridad:** ALTA
 
 ---
 
-## 🧪 Calidad y Testing (Fase 40)
-6.  **Tests Automatizados:**
-    *   [ ] **E2E (Playwright):** Tests automáticos que simulen un usuario real (Login -> Crear Usuario -> Logout).
-    *   [ ] **Unitarios:** Aumentar cobertura en Backend (lógica de negocio y validaciones).
-    *   [ ] **Integración:** Verificar que la API y la Base de Datos hablan correctamente en escenarios de error.
+## 🚀 Fase 41: Producción (Final)
 
+### Infraestructura y DevOps
+- [ ] **Docker Compose Prod:**
+  - [ ] Configuración multi-stage build
+  - [ ] Optimización de imágenes
+  - [ ] Variables de entorno de producción
+  
+- [ ] **CI/CD:**
+  - [ ] GitHub Actions pipeline
+  - [ ] Tests automáticos en PR
+  - [ ] Deploy automático
+  
+- [ ] **Monitoreo:**
+  - [ ] Integración Sentry
+  - [ ] Logs estructurados en producción
+  - [ ] Alertas de errores
+  
+- [ ] **Backups:**
+  - [ ] Script automático de respaldo
+  - [ ] Retención de backups
+  
+- [ ] **Seguridad:**
+  - [ ] SSL/HTTPS certificados
+  - [ ] Headers de seguridad
+  - [ ] Rate limiting en producción
 
-### 🧪 Fase 40: Testing (Pendiente)
-**Objetivo:** Tests automatizados
-
-- [ ] **Tests E2E con Playwright** (ya configurado)
-  - Test de login completo
-  - Test de creación de usuario
-  - Test de navegación del dashboard
-  - Test de logout
-- [ ] **Tests de integración**
-- [ ] **Lighthouse CI** - Auditoría de performance
-- [ ] **Accessibility audit** - WCAG 2.1
-
-**Prioridad:** MEDIA
-
----
-
-## ⚙️ Infraestructura y DevOps (Fase 41)
-7.  **Producción:**
-    *   [ ] **Docker Compose Prod:** Configuración optimizada (multi-stage build) para despliegue real.
-    *   [ ] **CI/CD:** Pipeline de GitHub Actions para correr tests y deploy automático.
-    *   [ ] **Backups:** Script automático de respaldo de la base de datos SQLite.
-    *   [ ] **Monitoring:** Integración con Sentry o similar para rastrear errores en tiempo real.
-
-## 📧 Comunicación (Sistema de Correos)
-8.  **Email System:**
-    *   [ ] Integrar crate `lettre` en Rust.
-    *   [ ] Configurar servidor SMTP (SendGrid, Resend, o Gmail).
-    *   [ ] Crear templates HTML para correos transaccionales (Bienvenida, Reset Password).
-
-### 🚀 Fase 41: Producción (Final)
-**Objetivo:** Preparar para producción real
-
-- [ ] **Docker Compose** - Archivo completo para dev/prod
-- [ ] **GitHub Actions** - Pipeline de CI/CD
-- [ ] **Sentry** - Error tracking en producción
-- [ ] **Backups automáticos** - Base de datos
-- [ ] **SSL/HTTPS** - Certificados
-- [ ] **Deploy** - Fly.io, Railway o Render
+### Deploy
+- [ ] **Plataforma:** Fly.io, Railway o Render
+- [ ] **Dominio:** Configurar dominio personalizado
+- [ ] **CDN:** Configurar si es necesario
 
 **Prioridad:** BAJA (última fase)
 
@@ -130,13 +101,18 @@ El sistema cuenta con un Dashboard completamente funcional, autenticación robus
 
 ## 📊 Resumen de Progreso
 
-| Fase | Descripción | Estado |
-|------|-------------|--------|
-| 36 | Páginas Dashboard | ✅ Completada |
-| 37 | Componente Table | ✅ Completada |
-| 38 | Backend Premium | ⏳ Pendiente |
-| 39 | Testing E2E | ⏳ Pendiente |
-| 40 | Producción | ⏳ Pendiente |
+| Fase | Descripción | Estado | Detalles |
+|------|-------------|--------|----------|
+| 36 | Páginas Dashboard | ✅ Completada | Users, Audit, Settings |
+| 37 | Componente Table | ✅ Completada | Sorting, filtros, paginación |
+| 38 | Backend Premium | ✅ Completada | CSV, Avatar, Refresh Tokens, Email |
+| 39 | Mejoras UI | ✅ Completada | Command Palette, Skeletons, Modals |
+| 40 | Testing E2E | 🚧 Activa | Playwright, Lighthouse |
+| 41 | Producción | ⏳ Pendiente | Docker, CI/CD, Deploy |
+
+**Documentación Fase 39:** `buscar39.md` - Guía de componentes UI
+
+---
 
 ---
 
@@ -229,23 +205,17 @@ cd backend && cargo build --release
 
 ## 📝 Notas para el Siguiente Chat
 
-1. **Foco:** Corrección de Bugs Críticos.
-2. **Prioridad:** Arreglar Logout, Email y Acciones de Usuario.
+1. **Foco:** Configuración de Playwright.
+2. **Prioridad:** Crear el primer test E2E (Login).
 
 ### Archivos Clave Recientes:
-- `frontend/src/components/ui/*` - Componentes base
-- `frontend/src/components/layout/*` - Layout profesional
-- `frontend/src/lib/api.ts` - Cliente API
-- `frontend/src/stores/auth.ts` - Estado global
-- `frontend/src/pages/dashboard.astro` - Dashboard principal
-- `frontend/src/pages/login.astro` - Login nuevo
-- `frontend/src/pages/register.astro` - Register nuevo
-- `backend/src/api/handlers/user.rs` - Fixes de login/cookies
-- `backend/src/core/models/user.rs` - JWT con user_id
+- `frontend/playwright.config.ts`
+- `frontend/tests/`
+- `frontend/src/pages/login.astro`
 
 ---
 
-**Listo para iniciar Fase 38** 🚀
+**Listo para iniciar Fase 40** 🚀
 
 **Fecha de actualización:** 16 Feb 2026
-**Versión:** V4.1 - Estabilización Auth/SSR ✅ | Fase 38 (Backend) ⏳
+**Versión:** V4.2 - UI Polished ✅ | Fase 40 (Testing) ⏳

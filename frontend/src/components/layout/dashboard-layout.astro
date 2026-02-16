@@ -3,6 +3,7 @@ import '../../styles/globals.css'
 import Sidebar from './sidebar.astro'
 import Header from './header.astro'
 import Toast from '../ui/Toast.astro'
+import { CommandMenu } from '../ui/command-menu.tsx'
 
 interface Props {
   title: string
@@ -67,5 +68,6 @@ const isAdmin = user?.role === 'Admin';
     </div>
   </div>
   <Toast />
+  <CommandMenu client:idle />
 </body>
 </html>
