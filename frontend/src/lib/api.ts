@@ -95,6 +95,14 @@ class ApiClient {
     return response as PaginatedResponse<UserDetails>;
   }
 
+  async getUser(id: number, token?: string) {
+    const headers: Record<string, string> = {};
+    if (token) {
+        headers['Cookie'] = `auth_token=${token}`;
+    }
+    return this.request<User>(`/api/v1/users/${id}`, { headers })
+  }
+
   async createUser(data: CreateUserRequest) {
     return this.request<User>('/api/v1/users', {
       method: 'POST',

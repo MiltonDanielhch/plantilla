@@ -30,9 +30,8 @@ El sistema cuenta con un Dashboard completamente funcional, autenticación robus
 - [x] **Buscador de Usuarios:** Arreglado (Busca por Username o Email).
 - [x] **Logout (Salir):** Página `/logout` creada para manejar cierre de sesión.
 - [x] **Link Nuevo Usuario:** Corregido (confirmado por usuario).
-- [ ] **Acciones Faltantes:** Faltan botones/vistas para "Ver Detalle" y "Editar Usuario".
+- [x] **Acciones Faltantes:** Vista "Editar Usuario" implementada y conectada.
 - [x] **Campo Email:** Implementado completo (Registro, Settings, DB).
-- [ ] **Export CSV:** (Pospuesto hasta arreglar lo anterior).
 
 **Estado:** 🛑 EN REPARACIÓN
 

@@ -99,9 +99,17 @@ const pagination = usersResult?.meta;
                                     <td class="p-4 align-middle">{user.role}</td>
                                     <td class="p-4 align-middle text-muted-foreground">{formatDate(user.created_at)}</td>
                                     <td class="p-4 align-middle text-right">
-                                        <button class="text-destructive hover:text-destructive/80 text-sm font-medium transition-colors delete-btn" data-id={user.id}>
-                                            Eliminar
-                                        </button>
+                                        <div class="flex items-center justify-end gap-3">
+                                            <a href={`/dashboard/users/${user.id}/details`} class="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors">
+                                                Ver
+                                            </a>
+                                            <a href={`/dashboard/users/${user.id}`} class="text-primary hover:text-primary/80 text-sm font-medium transition-colors">
+                                                Editar
+                                            </a>
+                                            <button class="text-destructive hover:text-destructive/80 text-sm font-medium transition-colors delete-btn" data-id={user.id}>
+                                                Eliminar
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

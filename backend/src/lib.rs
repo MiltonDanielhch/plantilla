@@ -61,7 +61,7 @@ pub fn create_app(pool: SqlitePool) -> Router {
                 .parse::<axum::http::HeaderValue>()
                 .unwrap(),
         )
-        .allow_methods([Method::GET, Method::POST, Method::DELETE, Method::OPTIONS])
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
         .allow_headers([header::CONTENT_TYPE])
         .allow_credentials(true);
 
