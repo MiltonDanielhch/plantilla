@@ -11,7 +11,8 @@ pub trait UserRepository {
         q: Option<String>,
         page: i64,
         limit: i64,
-    ) -> Result<Vec<User>, AppError>;
+    ) -> Result<(Vec<User>, i64), AppError>;
+    async fn get_stats(&self) -> Result<(i64, i64, i64), AppError>;
     async fn delete_user(&self, id: i64, admin_username: &str) -> Result<(), AppError>;
     async fn get_audit_logs(&self) -> Result<Vec<AuditLog>, AppError>;
 }

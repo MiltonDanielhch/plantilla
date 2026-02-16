@@ -257,3 +257,36 @@ Este documento archiva el progreso detallado de las fases ya completadas para ma
 13. `508e8fc` - docs: Actualiza ROADMAP_V4.md y ESTADO_ACTUAL.md
 
 **Total:** 13 commits, ~2,000 líneas de código nuevo
+
+---
+
+## ✅ Fases Completadas (V4.1 - Estabilización y Dashboard)
+
+### 🛡️ Fase 36 & 37: Dashboard Completo y Componentes
+**Fecha:** 16 Feb 2026
+**Estado:** Completado
+
+#### Fase 36: Páginas del Dashboard
+- [x] **/dashboard/users** - Gestión completa (Tabla, Delete, Create).
+- [x] **/dashboard/audit** - Logs visuales con timeline y filtros.
+- [x] **/dashboard/settings** - Perfil, seguridad y apariencia.
+
+#### Fase 37: Componente Table Avanzado
+- [x] Store `table.ts` (Nanostores) para lógica de tabla.
+- [x] Sorting clickeable en headers.
+- [x] Filtros por columna y búsqueda global.
+- [x] Paginación completa y selección de filas.
+
+#### 🔧 Estabilización V4.1 (Auth & SSR)
+**Correcciones Críticas:**
+- [x] **Autenticación Híbrida:** Backend devuelve JWT en body + Cookie HttpOnly. Frontend sincroniza cookie `session` para SSR.
+- [x] **SSR Fix:** `prerender = false` en dashboard para evitar bucles de redirección.
+- [x] **Protección de Datos:** Endpoints `/users` y `/audit-logs` blindados en Backend.
+- [x] **Adaptador API:** Normalización de respuestas `Vec<User>` a `{ data: [], meta: {} }`.
+- [x] **Auditoría:** Mapeo correcto de campos (`admin_username`, `timestamp`).
+
+**Estado Final V4.1:**
+- Login fluido.
+- Dashboard con datos reales.
+- Roles (Admin/User) respetados.
+- Navegación estable.

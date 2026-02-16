@@ -80,10 +80,42 @@ pub async fn get_audit_logs(
 pub async fn get_users(
     State(pool): State<SqlitePool>,
     Query(params): Query<UserSearch>,
-) -> Result<Json<Vec<User>>, AppError> {
+) -> Result<Json<serde_json::Value>, AppError> {
     let repo = SqliteRepository::new(pool);
-    let users = repo.get_all(params.q, params.page, params.limit).await?;
-    Ok(Json(users))
+    let (users, total) = repo.get_all(params.q, params.page, params.limit).await?;
+    
+    let total_pages = (total as f64 / params.limit as f64).ceil() as i64;
+
+    Ok(Json(json!({
+        "data": users,
+        "meta": {
+            "total": total,
+            "page": params.page,
+            "limit": params.limit,
+            "totalPages": total_pages
+        }
+    })))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/stats",
+    responses(
+        (status = 200, description = "Estadísticas del dashboard")
+    )
+)]
+pub async fn get_stats(
+    State(pool): State<SqlitePool>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let repo = SqliteRepository::new(pool);
+    let (total, admins, new_today) = repo.get_stats().await?;
+
+    Ok(Json(json!({
+        "total_users": total,
+        "active_users": total,
+        "admin_users": admins,
+        "new_users_today": new_today
+    })))
 }
 
 #[debug_handler]

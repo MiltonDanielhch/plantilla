@@ -57,9 +57,11 @@ impl UserRepository for SqliteRepository {
         q: Option<String>,
         page: i64,
         limit: i64,
-    ) -> Result<Vec<User>, AppError> {
+    ) -> Result<(Vec<User>, i64), AppError> {
         let offset = (page - 1) * limit;
-        let result = match q {
+        
+        // 1. Obtener usuarios (Paginados)
+        let users = match q {
             Some(ref text) if !text.is_empty() => {
                 let search = format!("%{}%", text);
                 sqlx::query_as::<_, User>("SELECT id, username, password_hash, role, created_at FROM users WHERE username LIKE $1 LIMIT $2 OFFSET $3")
@@ -71,8 +73,42 @@ impl UserRepository for SqliteRepository {
                     .bind(limit).bind(offset)
                     .fetch_all(&self.pool).await
             }
-        };
-        result.map_err(AppError::Database)
+        }.map_err(AppError::Database)?;
+
+        // 2. Obtener conteo total (Para paginación)
+        let total: i64 = match q {
+            Some(ref text) if !text.is_empty() => {
+                let search = format!("%{}%", text);
+                sqlx::query_scalar("SELECT COUNT(*) FROM users WHERE username LIKE $1")
+                    .bind(search)
+                    .fetch_one(&self.pool).await
+            },
+            _ => {
+                sqlx::query_scalar("SELECT COUNT(*) FROM users")
+                    .fetch_one(&self.pool).await
+            }
+        }.map_err(AppError::Database)?;
+
+        Ok((users, total))
+    }
+
+    async fn get_stats(&self) -> Result<(i64, i64, i64), AppError> {
+        let total_users: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM users")
+            .fetch_one(&self.pool)
+            .await
+            .map_err(AppError::Database)?;
+
+        let admin_users: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM users WHERE role = 'Admin'")
+            .fetch_one(&self.pool)
+            .await
+            .map_err(AppError::Database)?;
+
+        let new_users: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM users WHERE date(created_at) = date('now')")
+            .fetch_one(&self.pool)
+            .await
+            .map_err(AppError::Database)?;
+
+        Ok((total_users, admin_users, new_users))
     }
 
     async fn delete_user(&self, id: i64, admin_username: &str) -> Result<(), AppError> {

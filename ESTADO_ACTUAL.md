@@ -1,48 +1,17 @@
 # 📋 Informe de Estado: Proyecto Sintonía 3026
 
-**Fecha de Corte:** 15 Feb 2026  
-**Versión Actual:** V4.0 - Fases 36-37 Completadas  
+**Fecha de Corte:** 16 Feb 2026  
+**Versión Actual:** V4.1 - Estabilización Completada  
 **Rama Activa:** `feature/v4-dashboard`
 
-> **Nota:** Fases 0-35 archivadas en `HISTORIAL_FASES.md`
+> **Nota:** Fases 0-37 archivadas en `HISTORIAL_FASES.md`
 
 ---
 
 ## 🎯 Estado Actual
 
-### ✅ Correcciones Críticas y Estabilización (16 Feb 2026)
-Se ha estabilizado la arquitectura de autenticación y SSR entre Astro y Axum.
-
-**Soluciones Implementadas:**
-1. **Autenticación Híbrida Corregida:**
-   - **Backend (`user.rs`):** Ahora devuelve el JWT explícitamente en el body JSON del login, además de la cookie HttpOnly.
-   - **Frontend (`login.astro`):** Captura el token y establece una cookie `session` (Lax) accesible por Astro en SSR.
-   - **Middleware (`middleware.ts`):** Unificado para leer cookies `session` (frontend) o `auth_token` (backend), decodificando el JWT para inyectar `Astro.locals.user`.
-
-2. **SSR y Bucle de Redirección:**
-   - Se activó `export const prerender = false;` en todas las páginas del dashboard (`dashboard.astro`, `users.astro`, `audit.astro`) para forzar la ejecución del middleware y evitar bucles infinitos por caché estática.
-
-3. **Acceso a Datos Protegidos:**
-   - **Backend (`lib.rs`):** Se blindaron las rutas `/users` y `/audit-logs` con `auth_guard` y `admin_guard`.
-   - **Cliente API (`api.ts`):** Se actualizó para inyectar manualmente el token en el header `Cookie` durante las peticiones SSR (`getUsers`, `getAuditLogs`), ya que `fetch` en el servidor no propaga cookies automáticamente.
-   - **Normalización de Respuestas:** Se implementó un adaptador en `api.ts` para transformar arrays planos del backend (`Vec<User>`) en la estructura paginada que espera el frontend (`{ data: [], meta: {} }`).
-
-4. **Corrección de Auditoría:**
-   - Se ajustó el mapeo de campos en `audit.astro` y `types/index.ts` para coincidir con la base de datos:
-     - `username` -> `admin_username`
-     - `created_at` -> `timestamp`
-     - `target_id` -> `target` (string)
-
-**Demo funcional:**
-- Login fluido sin recargas forzadas.
-- Dashboard detecta rol de Admin correctamente.
-- Tabla de Usuarios carga datos reales (17 usuarios detectados).
-- Logs de Auditoría muestran fechas y usuarios correctos.
-
----
-
-### ✅ Última Fase Completada: Fases 36-37
-**Dashboard Completo (Fase 36)** + **Componentes Avanzados (Fase 37)**
+### ✅ Hito Alcanzado: Dashboard V4.1 Estable
+El sistema cuenta con un Dashboard completamente funcional, autenticación robusta (SSR/Client) y gestión de usuarios operativa.
 
 **Demo funcional en:**
 - 🌐 `http://localhost:4321/login/` - Login con nuevo diseño
@@ -53,47 +22,19 @@ Se ha estabilizado la arquitectura de autenticación y SSR entre Astro y Axum.
 
 ---
 
-## 🚀 Fases Completadas
+## 🚀 Fase Activa: Pulido y Mantenimiento (V4.1+)
 
-### ✅ Fase 37: Componente Table Avanzado
-**Objetivo:** Componente UI profesional para tablas de datos
+**Objetivo:** Resolver deuda técnica, bugs visuales y pequeñas mejoras de UX antes de añadir nuevas features complejas.
 
-**Implementado:**
-- ✅ Store `table.ts` con nanostores (sorting, filtros, paginación, selección)
-- ✅ Componente `table.astro` con diseño profesional
-- ✅ Sorting clickeable en headers
-- ✅ Filtros por columna en tiempo real
-- ✅ Paginación completa (5, 10, 25, 50 items/página)
-- ✅ Selección individual y masiva de filas
-- ✅ Estados de loading y error
+### 📋 Lista de Tareas (Bug Hunting)
+- [x] **Bug Paginación:** Backend devuelve `meta.total` y Frontend calcula páginas correctamente.
+- [ ] **UX Feedback:** Implementar "Toasts" para confirmar acciones (ej: "Usuario eliminado").
+- [ ] **UI Limpieza:** Ocultar o deshabilitar botones sin funcionalidad (ej: "Exportar").
+- [x] **Stats Dashboard:** Conectado `dashboard.astro` con endpoint `/stats` (SSR Auth funcionando).
 
-### ✅ Fase 36: Páginas del Dashboard
-**Objetivo:** Completar todas las páginas del dashboard
-
-**Implementado:**
-- ✅ **/dashboard/users** - Gestión completa de usuarios
-  - Tabla avanzada con sorting, filtros, paginación
-  - Acciones: Eliminar usuarios con confirmación
-  - Crear nuevo usuario (redirección a /register/)
-  - Exportar a CSV (placeholder listo)
-  - Búsqueda en tiempo real
-   
-- ✅ **/dashboard/audit** - Logs de auditoría
-  - Timeline visual cronológico de eventos
-  - Iconos y colores por tipo de acción
-  - Filtros por búsqueda, acción y fecha
-  - Paginación client-side
-  - Exportar logs (placeholder)
-   
-- ✅ **/dashboard/settings** - Configuración de cuenta
-  - Tab de Perfil: información de usuario, avatar
-  - Tab de Seguridad: cambiar contraseña, gestionar sesiones
-  - Tab de Apariencia: selector de tema
-  - Zona de peligro: eliminar cuenta
+**Prioridad:** ALTA
 
 ---
-
-## 🚀 Próximas Fases
 
 ### 🔧 Fase 38: Backend Features Premium (PENDIENTE)
 **Objetivo:** Features adicionales del backend
@@ -104,11 +45,9 @@ Se ha estabilizado la arquitectura de autenticación y SSR entre Astro y Axum.
 - [ ] **WebSockets/SSE** - Notificaciones en tiempo real
 - [ ] **Stats Endpoint** - `/api/v1/stats` para el dashboard
 
-**Prioridad:** MEDIA
-
 ---
 
-### 🧪 Fase 39: Testing (PENDIENTE)
+### 🧪 Fase 39: Testing (Pendiente)
 **Objetivo:** Tests automatizados
 
 - [ ] **Tests E2E con Playwright** (ya configurado)
@@ -124,7 +63,7 @@ Se ha estabilizado la arquitectura de autenticación y SSR entre Astro y Axum.
 
 ---
 
-### 🚀 Fase 40: Producción (PENDIENTE)
+### 🚀 Fase 40: Producción (Final)
 **Objetivo:** Preparar para producción real
 
 - [ ] **Docker Compose** - Archivo completo para dev/prod
@@ -138,74 +77,15 @@ Se ha estabilizado la arquitectura de autenticación y SSR entre Astro y Axum.
 
 ---
 
-## 📊 Resumen de Fases Completadas
+## 📊 Resumen de Progreso
 
 | Fase | Descripción | Estado |
 |------|-------------|--------|
-| 35 | Stack UI Profesional | ✅ Completada |
 | 36 | Páginas Dashboard | ✅ Completada |
 | 37 | Componente Table | ✅ Completada |
 | 38 | Backend Premium | ⏳ Pendiente |
 | 39 | Testing E2E | ⏳ Pendiente |
 | 40 | Producción | ⏳ Pendiente |
-
-- [ ] **Table** - Tabla con:
-  - Sorting (click en headers)
-  - Filtros por columna
-  - Paginación
-  - Selección de filas
-  
-- [ ] **Dialog/Modal** - Para confirmaciones y formularios
-- [ ] **Toast** - Notificaciones (éxito, error, info, warning)
-- [ ] **Select** - Dropdowns estilizados
-- [ ] **Skeleton** - Estados de carga
-- [ ] **Command Palette** - Búsqueda rápida (⌘K)
-
-**Prioridad:** ALTA (bloquea Fase 36)
-
----
-
-### 🔧 Fase 38: Backend Features Premium (PENDIENTE)
-**Objetivo:** Features adicionales del backend
-
-- [ ] **Refresh Tokens** - Rotación de JWT para mayor seguridad
-- [ ] **Export CSV** - Endpoint `/api/v1/users/export`
-- [ ] **Avatar Upload** - Carga de imágenes de perfil
-- [ ] **WebSockets/SSE** - Notificaciones en tiempo real
-- [ ] **Stats Endpoint** - `/api/v1/stats` para el dashboard
-
-**Prioridad:** MEDIA
-
----
-
-### 🧪 Fase 39: Testing (PENDIENTE)
-**Objetivo:** Tests automatizados
-
-- [ ] **Tests E2E con Playwright** (ya configurado)
-  - Test de login completo
-  - Test de creación de usuario
-  - Test de navegación del dashboard
-  - Test de logout
-  
-- [ ] **Tests de integración**
-- [ ] **Lighthouse CI** - Auditoría de performance
-- [ ] **Accessibility audit** - WCAG 2.1
-
-**Prioridad:** MEDIA
-
----
-
-### 🚀 Fase 40: Producción (PENDIENTE)
-**Objetivo:** Preparar para producción real
-
-- [ ] **Docker Compose** - Archivo completo para dev/prod
-- [ ] **GitHub Actions** - Pipeline de CI/CD
-- [ ] **Sentry** - Error tracking en producción
-- [ ] **Backups automáticos** - Base de datos
-- [ ] **SSL/HTTPS** - Certificados
-- [ ] **Deploy** - Fly.io, Railway o Render
-
-**Prioridad:** BAJA (última fase)
 
 ---
 
@@ -267,32 +147,15 @@ $isAuthenticated // Boolean
 
 ---
 
-## 🎨 Próximo Trabajo Sugerido
+## 🎨 Próximo Trabajo Sugerido (Pulido)
 
-### Opción 1: Componente Table (Fase 37)
-**Razón:** Es necesario para la página de usuarios (Fase 36)
+### Opción 1: Sistema de Toasts (Frontend)
+**Problema:** Al eliminar un usuario, no hay confirmación visual clara de éxito.
+**Solución:** Crear store `toast.ts` y componente `Toast.astro`.
 
-**Tareas:**
-1. Crear `src/components/ui/table.astro`
-2. Soportar sorting, filtros, paginación
-3. Integrar con API existente
-
-### Opción 2: Página Users (Fase 36)
-**Razón:** Feature crítica para admins
-
-**Tareas:**
-1. Crear `src/pages/dashboard/users.astro`
-2. Usar componentes Card + tabla básica
-3. Implementar delete user
-4. Agregar navegación en sidebar
-
-### Opción 3: Toast Notifications (Fase 37)
-**Razón:** Mejora UX inmediata
-
-**Tareas:**
-1. Crear sistema de toasts con nanostores
-2. Mostrar éxito/error en login/register
-3. Feedback al eliminar usuarios
+### Opción 2: Limpieza UI (Botón Exportar)
+**Problema:** El botón "Exportar" confunde porque no hace nada.
+**Solución:** Ocultarlo temporalmente o implementar el endpoint (Fase 38).
 
 ---
 
@@ -316,13 +179,11 @@ cd backend && cargo build --release
 
 ## 📝 Notas para el Siguiente Chat
 
-1. **Fase 35 está completamente funcional** - Dashboard carga datos reales
-2. **Rama activa:** `feature/v4-dashboard` (no mergear aún)
-3. **Backend:** Enterprise-ready, solo faltan features premium
-4. **Frontend:** Foundation lista, necesita páginas y componentes avanzados
-5. **Prioridad:** Componente Table → Página Users → Toast notifications
+1. **Cambio de Foco:** Fase 38 pausada. Prioridad en bugs y UX.
+2. **Bug Crítico:** La paginación es falsa en el frontend.
+3. **UX:** Faltan notificaciones de éxito/error.
 
-### Archivos Clave Modificados en Fase 35:
+### Archivos Clave Recientes:
 - `frontend/src/components/ui/*` - Componentes base
 - `frontend/src/components/layout/*` - Layout profesional
 - `frontend/src/lib/api.ts` - Cliente API
@@ -335,7 +196,7 @@ cd backend && cargo build --release
 
 ---
 
-**Listo para continuar en el próximo chat** 🚀
+**Listo para iniciar Fase 38** 🚀
 
-**Fecha de actualización:** 16 Feb 2026  
-**Versión:** V4.1 - Estabilización Auth/SSR ✅ | Fases 38-40 ⏳
+**Fecha de actualización:** 16 Feb 2026
+**Versión:** V4.1 - Estabilización Auth/SSR ✅ | Fase 38 (Backend) ⏳

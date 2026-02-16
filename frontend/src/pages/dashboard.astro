@@ -3,7 +3,7 @@ import DashboardLayout from '../components/layout/dashboard-layout.astro';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui';
 import { api } from '../lib/api';
 import { formatDate } from '../lib/utils';
-import type { AuditLog, UserDetails } from '../types';
+import type { AuditLog, StatsData } from '../types';
 
 export const prerender = false;
 
@@ -11,18 +11,19 @@ const { user } = Astro.locals;
 const isAdmin = user.role === 'Admin';
 
 let adminData: {
-  stats: { total_users: number };
+  stats: StatsData;
   recentLogs: AuditLog[];
 } | null = null;
 
 if (isAdmin) {
   try {
-    const [usersData, logsData] = await Promise.all([
-      api.getUsers({ limit: 1 }),
-      api.getAuditLogs({ limit: 5 })
+    const token = Astro.cookies.get('session')?.value;
+    const [statsData, logsData] = await Promise.all([
+      api.getStats(token),
+      api.getAuditLogs({ limit: 5 }, token)
     ]);
     adminData = {
-      stats: { total_users: usersData?.total ?? 0 },
+      stats: statsData,
       recentLogs: Array.isArray(logsData?.data) ? logsData.data : [],
     };
   } catch (error) {
@@ -77,9 +78,9 @@ if (isAdmin) {
                   <div class="flex items-center justify-between">
                     <div>
                       <p class="text-sm font-medium">{log.action}</p>
-                      <p class="text-xs text-muted-foreground">por {log.username || `Usuario ${log.user_id}`}</p>
+                      <p class="text-xs text-muted-foreground">por {log.admin_username || 'Sistema'}</p>
                     </div>
-                    <span class="text-xs text-muted-foreground">{formatDate(log.created_at)}</span>
+                    <span class="text-xs text-muted-foreground">{formatDate(log.timestamp)}</span>
                   </div>
                 ))
               ) : (

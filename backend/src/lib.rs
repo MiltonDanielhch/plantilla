@@ -41,6 +41,7 @@ use utoipa_swagger_ui::SwaggerUi;
         api::handlers::user::delete_user,
         api::handlers::user::get_audit_logs,
         api::handlers::user::dashboard,
+        api::handlers::user::get_stats,
     ),
     components(schemas(
         core::models::user::User,
@@ -97,6 +98,11 @@ pub fn create_app(pool: SqlitePool) -> Router {
             "/audit-logs",
             get(api::handlers::user::get_audit_logs)
                 .route_layer(middleware::from_fn(api::middleware::admin_guard)),
+        )
+        .route(
+            "/stats",
+            get(api::handlers::user::get_stats)
+                .route_layer(middleware::from_fn(api::middleware::auth_guard)),
         );
 
     Router::new()

@@ -141,14 +141,12 @@ class ApiClient {
   }
 
   // Stats (endpoint que necesitamos crear en backend)
-  async getStats() {
-    // Temporalmente retornamos datos vacíos hasta crear el endpoint
-    return {
-      total_users: 0,
-      active_users: 0,
-      admin_users: 0,
-      new_users_today: 0,
-    } as StatsData
+  async getStats(token?: string) {
+    const headers: Record<string, string> = {};
+    if (token) {
+        headers['Cookie'] = `auth_token=${token}`;
+    }
+    return this.request<StatsData>('/api/v1/stats', { headers })
   }
 }
 
