@@ -352,6 +352,19 @@ class ApiClient {
       body: JSON.stringify({ token, new_password: newPassword }),
     })
   }
+
+  // Email Verification
+  async sendVerificationEmail(): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/api/v1/send-verification-email', {
+      method: 'POST',
+    })
+  }
+
+  async verifyEmail(token: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/api/v1/verify-email?token=${token}`, {
+      method: 'GET',
+    })
+  }
 }
 
 export const api = new ApiClient()

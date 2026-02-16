@@ -1,0 +1,129 @@
+---
+import Layout from '../components/layout/layout.astro'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui'
+import Button from '../components/ui/button.astro'
+
+export const prerender = false;
+
+// Obtener token de la URL
+const token = Astro.url.searchParams.get('token')
+---
+
+<Layout title="Verificar Email - Sintonía 3026">
+  <div class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md space-y-6">
+      <!-- Logo -->
+      <div class="text-center space-y-2">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <h1 class="text-3xl font-bold tracking-tight">Sintonía 3026</h1>
+        <p class="text-muted-foreground">Verificación de Email</p>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loading-state" class={`${token ? '' : 'hidden'}`}>
+        <Card>
+          <CardContent class="pt-6 text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p class="text-muted-foreground">Verificando tu email...</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <!-- Success State -->
+      <div id="success-state" class="hidden">
+        <Card>
+          <CardContent class="pt-6 text-center">
+            <div class="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+              <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">¡Email verificado!</h3>
+            <p class="text-muted-foreground mb-4">
+              Tu email ha sido verificado correctamente. Ahora puedes acceder a todas las funcionalidades del sistema.
+            </p>
+            <a href="/login/" class="inline-block text-sm bg-primary text-primary-foreground hover:bg-primary/90 py-2 px-4 rounded-md">
+              Ir al login
+            </a>
+          </CardContent>
+        </Card>
+      </div>
+
+      <!-- Error State -->
+      <div id="error-state" class="hidden">
+        <Card>
+          <CardContent class="pt-6 text-center">
+            <div class="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+              <svg class="h-6 w-6 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Error de verificación</h3>
+            <p class="text-muted-foreground mb-4" id="error-message">
+              El enlace de verificación es inválido o ha expirado.
+            </p>
+            <div class="space-y-2">
+              <a href="/login/" class="block text-sm text-primary hover:underline">
+                Volver al login
+              </a>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <!-- Invalid Token State (no token provided) -->
+      <div id="invalid-token" class={`${token ? 'hidden' : ''}`}>
+        <Card>
+          <CardContent class="pt-6 text-center">
+            <div class="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+              <svg class="h-6 w-6 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">Token inválido</h3>
+            <p class="text-muted-foreground mb-4">
+              El enlace para verificar el email es inválido.
+            </p>
+            <a href="/login/" class="inline-block text-sm bg-primary text-primary-foreground hover:bg-primary/90 py-2 px-4 rounded-md">
+              Ir al login
+            </a>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { api } from '../lib/api'
+
+  // Obtener token de la URL
+  const urlParams = new URLSearchParams(window.location.search)
+  const token = urlParams.get('token')
+
+  const loadingState = document.getElementById('loading-state')
+  const successState = document.getElementById('success-state')
+  const errorState = document.getElementById('error-state')
+  const errorMessage = document.getElementById('error-message')
+
+  if (token) {
+    // Verificar el token automáticamente
+    api.verifyEmail(token)
+      .then(() => {
+        loadingState?.classList.add('hidden')
+        successState?.classList.remove('hidden')
+      })
+      .catch((err: any) => {
+        loadingState?.classList.add('hidden')
+        errorState?.classList.remove('hidden')
+        if (err.message) {
+          errorMessage!.textContent = err.message
+        }
+      })
+  }
+</script>

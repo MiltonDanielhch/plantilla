@@ -84,13 +84,14 @@ pub fn create_app(pool: SqlitePool) -> Router {
             .unwrap(),
     );
 
-    // 1. Rutas Públicas (Login, Registro, Logout, Refresh, Password Reset)
+    // 1. Rutas Públicas (Login, Registro, Logout, Refresh, Password Reset, Email Verification)
     let public_routes = Router::new()
         .route("/login", post(api::handlers::user::login))
         .route("/logout", post(api::handlers::user::logout))
         .route("/refresh", post(api::handlers::user::refresh_token))
         .route("/forgot-password", post(api::handlers::user::forgot_password))
         .route("/reset-password", post(api::handlers::user::reset_password))
+        .route("/verify-email", get(api::handlers::user::verify_email))
         .route("/users", post(api::handlers::user::create_user)); // Registro público
 
     // 2. Rutas Protegidas (Requieren Auth)
@@ -98,6 +99,7 @@ pub fn create_app(pool: SqlitePool) -> Router {
         .route("/users", get(api::handlers::user::get_users))
         .route("/users/:id/profile", put(api::handlers::user::update_user))
         .route("/users/avatar", post(api::handlers::user::upload_avatar))
+        .route("/send-verification-email", post(api::handlers::user::send_verification_email))
         .route("/dashboard", get(api::handlers::user::dashboard))
         .route("/stats", get(api::handlers::user::get_stats))
         .route_layer(middleware::from_fn(api::middleware::auth_guard));

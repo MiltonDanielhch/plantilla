@@ -1,9 +1,9 @@
 use crate::core::models::user::{
     AuditLog, Claims, CreateUserRequest, ForgotPasswordRequest, LoginRequest, RefreshRequest, 
-    ResetPasswordRequest, TokenResponse, User, UserSearch,
+    ResetPasswordRequest, TokenResponse, User, UserSearch, VerifyEmailRequest,
 };
 use crate::core::models::user::UpdateUserRequest;
-use crate::services::email::{create_email_service, EmailService};
+use crate::services::email::create_email_service;
 use crate::core::repository::UserRepository;
 use crate::data::user_repository::SqliteRepository;
 use crate::error::AppError;
@@ -56,6 +56,39 @@ pub async fn create_user(
 
     let repo = SqliteRepository::new(pool);
     let user = repo.create_user(&payload.username, &password_hash, payload.email.as_deref()).await?;
+    
+    // Enviar email de verificación si el usuario tiene email
+    if let Some(ref email) = payload.email {
+        // Generar token de verificación
+        let verification_token = uuid::Uuid::new_v4().to_string();
+        let expiration = Utc::now()
+            .checked_add_signed(Duration::hours(24))
+            .expect("Tiempo inválido")
+            .timestamp();
+        
+        // Guardar token en base de datos
+        let expires_at = chrono::NaiveDateTime::from_timestamp(expiration, 0)
+            .format("%Y-%m-%d %H:%M:%S")
+            .to_string();
+        
+        repo.create_email_verification_token(user.id, &verification_token, &expires_at).await?;
+        
+        // Enviar email (si el servicio está configurado)
+        if let Some(email_service) = create_email_service() {
+            if let Err(e) = email_service.send_email_verification(
+                email,
+                &verification_token,
+                &payload.username
+            ).await {
+                tracing::error!("Error enviando email de verificación: {}", e);
+            }
+        } else {
+            // En desarrollo, loguear el token
+            tracing::info!("Email verification token para {}: {}", email, verification_token);
+            tracing::info!("URL de verificación: http://localhost:4321/verify-email?token={}", verification_token);
+        }
+    }
+    
     Ok((StatusCode::CREATED, Json(user)))
 }
 
@@ -735,5 +768,109 @@ pub async fn reset_password(
     
     Ok((StatusCode::OK, Json(json!({
         "message": "Contraseña actualizada correctamente"
+    }))))
+}
+
+pub async fn send_verification_email(
+    State(pool): State<SqlitePool>,
+    cookies: Cookies,
+) -> Result<impl IntoResponse, AppError> {
+    // Obtener user_id del token
+    let cookie = cookies.get("auth_token").ok_or(AppError::AuthError("No autenticado".to_string()))?;
+    let token_data = decode::<Claims>(
+        cookie.value(),
+        &DecodingKey::from_secret("secret".as_ref()),
+        &Validation::default(),
+    ).map_err(|_| AppError::AuthError("Token inválido".to_string()))?;
+
+    let user_id = token_data.claims.user_id;
+    
+    let repo = SqliteRepository::new(pool);
+    
+    // Obtener usuario
+    let user = repo.get_by_id(user_id).await?
+        .ok_or(AppError::NotFound("Usuario no encontrado".to_string()))?;
+    
+    // Verificar que tenga email
+    let email = user.email.ok_or(AppError::Validation("El usuario no tiene email".to_string()))?;
+    
+    // Verificar si ya está verificado
+    if user.email_verified {
+        return Ok((StatusCode::OK, Json(json!({
+            "message": "El email ya está verificado"
+        }))));
+    }
+    
+    // Generar token de verificación
+    let verification_token = uuid::Uuid::new_v4().to_string();
+    let expiration = Utc::now()
+        .checked_add_signed(Duration::hours(24))
+        .expect("Tiempo inválido")
+        .timestamp();
+    
+    // Guardar token en base de datos
+    let expires_at = chrono::NaiveDateTime::from_timestamp(expiration, 0)
+        .format("%Y-%m-%d %H:%M:%S")
+        .to_string();
+    
+    repo.create_email_verification_token(user_id, &verification_token, &expires_at).await?;
+    
+    // Enviar email (si el servicio está configurado)
+    if let Some(email_service) = create_email_service() {
+        if let Err(e) = email_service.send_email_verification(
+            &email,
+            &verification_token,
+            &user.username
+        ).await {
+            tracing::error!("Error enviando email de verificación: {}", e);
+        }
+    } else {
+        // En desarrollo, loguear el token
+        tracing::info!("Email verification token para {}: {}", email, verification_token);
+        tracing::info!("URL de verificación: http://localhost:4321/verify-email?token={}", verification_token);
+    }
+    
+    Ok((StatusCode::OK, Json(json!({
+        "message": "Email de verificación enviado"
+    }))))
+}
+
+pub async fn verify_email(
+    State(pool): State<SqlitePool>,
+    Query(params): Query<std::collections::HashMap<String, String>>,
+) -> Result<impl IntoResponse, AppError> {
+    let token = params.get("token")
+        .ok_or(AppError::Validation("Token no proporcionado".to_string()))?;
+    
+    let repo = SqliteRepository::new(pool);
+    
+    // Buscar el token
+    let stored_token = match repo.get_email_verification_token(token).await? {
+        Some(t) => t,
+        None => return Err(AppError::AuthError("Token inválido".to_string())),
+    };
+    
+    // Verificar que no haya sido usado
+    if stored_token.used {
+        return Err(AppError::AuthError("Token ya fue utilizado".to_string()));
+    }
+    
+    // Verificar que no haya expirado
+    let expires_at = chrono::NaiveDateTime::parse_from_str(&stored_token.expires_at, "%Y-%m-%d %H:%M:%S")
+        .map_err(|_| AppError::AuthError("Error parseando fecha de expiración".to_string()))?;
+    
+    let now = chrono::Local::now().naive_local();
+    if now > expires_at {
+        return Err(AppError::AuthError("Token expirado".to_string()));
+    }
+    
+    // Verificar el email del usuario
+    repo.verify_email(stored_token.user_id).await?;
+    
+    // Marcar token como usado
+    repo.mark_email_verification_token_used(stored_token.id).await?;
+    
+    Ok((StatusCode::OK, Json(json!({
+        "message": "Email verificado correctamente"
     }))))
 }

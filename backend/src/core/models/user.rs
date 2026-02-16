@@ -23,6 +23,8 @@ pub struct User {
     pub role: Role,
     #[sqlx(default)]
     pub avatar_url: Option<String>,
+    #[sqlx(default)]
+    pub email_verified: bool,
     // Usamos String por simplicidad inicial (SQLite devuelve texto)
     pub created_at: String,
 }
@@ -125,6 +127,21 @@ pub struct ForgotPasswordRequest {
 pub struct ResetPasswordRequest {
     pub token: String,
     pub new_password: String,
+}
+
+#[derive(Debug, Serialize, FromRow)]
+pub struct EmailVerificationToken {
+    pub id: i64,
+    pub user_id: i64,
+    pub token: String,
+    pub expires_at: String,
+    pub created_at: String,
+    pub used: bool,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct VerifyEmailRequest {
+    pub token: String,
 }
 
 #[cfg(test)]

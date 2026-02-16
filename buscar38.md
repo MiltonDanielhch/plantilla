@@ -1,0 +1,1 @@
+cuando quiero modificar algo dime todo lo que haz hecho aqui y su ubicacion exacta para que no me cueste pillar y como probar cada cosa y en que lugar y que hace para que y como y que necesito eso y mas

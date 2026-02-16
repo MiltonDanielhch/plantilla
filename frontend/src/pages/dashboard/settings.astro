@@ -107,13 +107,23 @@ export const prerender = false;
                 </div>
                 
                 <div class="space-y-2">
-                  <label class="text-sm font-medium">Email</label>
+                  <div class="flex items-center justify-between">
+                    <label class="text-sm font-medium">Email</label>
+                    <span id="email-verification-status" class="hidden">
+                      <!-- El estado se mostrará aquí -->
+                    </span>
+                  </div>
                   <input 
                     type="email" 
                     id="email-input"
                     placeholder="tu@email.com"
                     class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                   />
+                  <div id="verification-actions" class="hidden">
+                    <button id="resend-verification-btn" class="text-xs text-primary hover:underline">
+                      Reenviar email de verificación
+                    </button>
+                  </div>
                 </div>
                 
                 <div class="space-y-2">
@@ -351,6 +361,8 @@ export const prerender = false;
     const emailInput = document.getElementById('email-input') as HTMLInputElement
     const roleInput = document.getElementById('role-input') as HTMLInputElement
     const idInput = document.getElementById('id-input') as HTMLInputElement
+    const emailStatus = document.getElementById('email-verification-status')
+    const verificationActions = document.getElementById('verification-actions')
     
     // Manejar avatar
     const avatarUrl = (user as any).avatar_url
@@ -377,6 +389,37 @@ export const prerender = false;
     }
     if (idInput) {
       idInput.value = user.id.toString()
+    }
+    
+    // Mostrar estado de verificación de email
+    if (emailStatus && (user as any).email) {
+      const emailVerified = (user as any).email_verified
+      emailStatus.classList.remove('hidden')
+      
+      if (emailVerified) {
+        emailStatus.innerHTML = `
+          <span class="inline-flex items-center text-xs text-green-600">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            Verificado
+          </span>
+        `
+        verificationActions?.classList.add('hidden')
+      } else {
+        emailStatus.innerHTML = `
+          <span class="inline-flex items-center text-xs text-amber-600">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" x2="12" y1="8" y2="12"/>
+              <line x1="12" x2="12.01" y1="16" y2="16"/>
+            </svg>
+            No verificado
+          </span>
+        `
+        verificationActions?.classList.remove('hidden')
+      }
     }
   }
 
@@ -592,6 +635,24 @@ export const prerender = false;
     // Remove avatar (solo UI por ahora, no hay endpoint DELETE)
     document.getElementById('remove-avatar-btn')?.addEventListener('click', () => {
       showToast('Eliminación de avatar no implementada', 'info')
+    })
+    
+    // Reenviar email de verificación
+    document.getElementById('resend-verification-btn')?.addEventListener('click', async () => {
+      const btn = document.getElementById('resend-verification-btn') as HTMLButtonElement
+      try {
+        btn.disabled = true
+        btn.textContent = 'Enviando...'
+        
+        await api.sendVerificationEmail()
+        
+        showToast('Email de verificación enviado. Revisa tu bandeja de entrada.', 'success')
+        btn.textContent = 'Email enviado'
+      } catch (err: any) {
+        showToast(err.message || 'Error al enviar email', 'error')
+        btn.disabled = false
+        btn.textContent = 'Reenviar email de verificación'
+      }
     })
   }
 

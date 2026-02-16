@@ -92,6 +92,73 @@ impl EmailService {
             }
         }
     }
+
+    pub async fn send_email_verification(&self, to_email: &str, verification_token: &str, username: &str) -> Result<(), String> {
+        let verify_url = format!("http://localhost:4321/verify-email?token={}", verification_token);
+        
+        let subject = "Verifica tu Email - Sintonía 3026";
+        
+        let body = format!(
+            r#"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }}
+        .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }}
+        .button {{ display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }}
+        .footer {{ text-align: center; color: #666; margin-top: 20px; font-size: 12px; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Sintonía 3026</h1>
+            <p>Verificación de Email</p>
+        </div>
+        <div class="content">
+            <h2>Bienvenido, {}!</h2>
+            <p>Gracias por registrarte. Para completar tu registro, por favor verifica tu dirección de email haciendo clic en el siguiente enlace:</p>
+            <center>
+                <a href="{}" class="button">Verificar Email</a>
+            </center>
+            <p>O copia y pega este enlace en tu navegador:</p>
+            <p style="background: #eee; padding: 10px; border-radius: 4px; word-break: break-all;">{}</p>
+            <p><strong>Este enlace expirará en 24 horas.</strong></p>
+            <p>Si no creaste esta cuenta, puedes ignorar este correo.</p>
+        </div>
+        <div class="footer">
+            <p>Este es un correo automático de Sintonía 3026. No respondas a este mensaje.</p>
+        </div>
+    </div>
+</body>
+</html>
+            "#,
+            username, verify_url, verify_url
+        );
+        
+        let email = Message::builder()
+            .from(self.from_email.parse().map_err(|e| format!("Invalid from email: {}", e))?)
+            .to(to_email.parse().map_err(|e| format!("Invalid to email: {}", e))?)
+            .subject(subject)
+            .header(ContentType::TEXT_HTML)
+            .body(body)
+            .map_err(|e| format!("Error building email: {}", e))?;
+        
+        match self.mailer.send(email).await {
+            Ok(_) => {
+                tracing::info!("Email verification sent to {}", to_email);
+                Ok(())
+            }
+            Err(e) => {
+                tracing::error!("Failed to send verification email to {}: {}", to_email, e);
+                Err(format!("Failed to send email: {}", e))
+            }
+        }
+    }
 }
 
 // Factory function para crear el servicio desde variables de entorno

@@ -1,4 +1,4 @@
-use crate::core::models::user::{AuditLog, PasswordResetToken, RefreshToken, User};
+use crate::core::models::user::{AuditLog, EmailVerificationToken, PasswordResetToken, RefreshToken, User};
 use crate::error::AppError;
 use async_trait::async_trait;
 
@@ -20,6 +20,7 @@ pub trait UserRepository {
     async fn update_user(&self, id: i64, email: Option<&str>) -> Result<User, AppError>;
     async fn update_avatar(&self, id: i64, avatar_url: &str) -> Result<User, AppError>;
     async fn update_password(&self, id: i64, password_hash: &str) -> Result<(), AppError>;
+    async fn verify_email(&self, user_id: i64) -> Result<(), AppError>;
     
     // Refresh Tokens
     async fn create_refresh_token(&self, user_id: i64, token: &str, expires_at: &str) -> Result<RefreshToken, AppError>;
@@ -31,4 +32,9 @@ pub trait UserRepository {
     async fn create_password_reset_token(&self, user_id: i64, token: &str, expires_at: &str) -> Result<PasswordResetToken, AppError>;
     async fn get_password_reset_token(&self, token: &str) -> Result<Option<PasswordResetToken>, AppError>;
     async fn mark_password_reset_token_used(&self, token_id: i64) -> Result<(), AppError>;
+    
+    // Email Verification Tokens
+    async fn create_email_verification_token(&self, user_id: i64, token: &str, expires_at: &str) -> Result<EmailVerificationToken, AppError>;
+    async fn get_email_verification_token(&self, token: &str) -> Result<Option<EmailVerificationToken>, AppError>;
+    async fn mark_email_verification_token_used(&self, token_id: i64) -> Result<(), AppError>;
 }
