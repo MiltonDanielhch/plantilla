@@ -331,6 +331,7 @@ export const prerender = false;
   function loadUserData(user: User) {
     const avatarEl = document.getElementById('profile-avatar')
     const usernameInput = document.getElementById('username-input') as HTMLInputElement
+    const emailInput = document.getElementById('email-input') as HTMLInputElement
     const roleInput = document.getElementById('role-input') as HTMLInputElement
     const idInput = document.getElementById('id-input') as HTMLInputElement
     
@@ -339,6 +340,9 @@ export const prerender = false;
     }
     if (usernameInput) {
       usernameInput.value = user.username
+    }
+    if (emailInput && user.email) {
+      emailInput.value = user.email
     }
     if (roleInput) {
       roleInput.value = user.role
@@ -420,8 +424,18 @@ export const prerender = false;
   // Event listeners
   function initEventListeners() {
     // Guardar perfil
-    document.getElementById('save-profile-btn')?.addEventListener('click', () => {
-      showToast('Perfil actualizado correctamente', 'success')
+    document.getElementById('save-profile-btn')?.addEventListener('click', async () => {
+      const email = (document.getElementById('email-input') as HTMLInputElement).value
+      const id = (document.getElementById('id-input') as HTMLInputElement).value
+      
+      try {
+        // Llamada real a la API
+        await api.updateUser(parseInt(id), { email })
+        showToast('Perfil actualizado correctamente', 'success')
+      } catch (err: any) {
+        console.error(err)
+        showToast(err.message || 'Error al actualizar perfil', 'error')
+      }
     })
     
     // Cambiar contraseña

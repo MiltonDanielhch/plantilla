@@ -1,6 +1,7 @@
 use crate::core::models::user::{
     AuditLog, Claims, CreateUserRequest, LoginRequest, User, UserSearch,
 };
+use crate::core::models::user::UpdateUserRequest;
 use crate::core::repository::UserRepository;
 use crate::data::user_repository::SqliteRepository;
 use crate::error::AppError;
@@ -50,7 +51,7 @@ pub async fn create_user(
         .to_string();
 
     let repo = SqliteRepository::new(pool);
-    let user = repo.create_user(&payload.username, &password_hash).await?;
+    let user = repo.create_user(&payload.username, &password_hash, payload.email.as_deref()).await?;
     Ok((StatusCode::CREATED, Json(user)))
 }
 
@@ -277,4 +278,66 @@ pub async fn delete_user(
     repo.delete_user(id, &admin_username).await?;
 
     Ok((StatusCode::OK, Json(json!({"message": "Usuario eliminado y auditado"}))))
+}
+
+#[utoipa::path(
+    put,
+    path = "/api/v1/users/{id}",
+    params(("id" = i64, Path, description = "ID del usuario a actualizar")),
+    request_body = UpdateUserRequest,
+    responses(
+        (status = 200, description = "Usuario actualizado", body = User),
+        (status = 403, description = "No tienes permiso para editar este usuario"),
+        (status = 404, description = "Usuario no encontrado")
+    )
+)]
+pub async fn update_user(
+    State(pool): State<SqlitePool>,
+    cookies: Cookies,
+    Path(id): Path<i64>,
+    Json(payload): Json<UpdateUserRequest>,
+) -> Result<Json<User>, AppError> {
+    // 1. Validar inputs
+    if let Err(e) = payload.validate() {
+        return Err(AppError::Validation(format!("Datos inválidos: {}", e)));
+    }
+
+    // 2. Verificar permisos (Solo el propio usuario o un Admin pueden editar)
+    let cookie = cookies.get("auth_token").ok_or(AppError::AuthError("No autenticado".to_string()))?;
+    let token_data = decode::<Claims>(
+        cookie.value(),
+        &DecodingKey::from_secret("secret".as_ref()),
+        &Validation::default(),
+    ).map_err(|_| AppError::AuthError("Token inválido".to_string()))?;
+
+    let requester_id = token_data.claims.user_id;
+    let requester_role = token_data.claims.role;
+
+    // Si no es Admin Y no es el dueño de la cuenta -> Prohibido
+    if requester_role != crate::core::models::user::Role::Admin && requester_id != id {
+        return Err(AppError::Forbidden("No puedes editar otros usuarios".to_string()));
+    }
+
+    let repo = SqliteRepository::new(pool);
+    let updated_user = repo.update_user(id, payload.email.as_deref()).await?;
+    
+    Ok(Json(updated_user))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/users/{id}",
+    params(("id" = i64, Path, description = "ID del usuario")),
+    responses(
+        (status = 200, description = "Detalle del usuario", body = User),
+        (status = 404, description = "Usuario no encontrado")
+    )
+)]
+pub async fn get_user_by_id(
+    State(pool): State<SqlitePool>,
+    Path(id): Path<i64>,
+) -> Result<Json<User>, AppError> {
+    let repo = SqliteRepository::new(pool);
+    let user = repo.get_by_id(id).await?.ok_or(AppError::NotFound("Usuario no encontrado".to_string()))?;
+    Ok(Json(user))
 }

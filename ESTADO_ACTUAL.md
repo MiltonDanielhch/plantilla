@@ -27,11 +27,11 @@ El sistema cuenta con un Dashboard completamente funcional, autenticación robus
 **Objetivo:** Reparar funcionalidades rotas y completar acciones básicas de gestión (CRUD) antes de añadir nuevas features.
 
 ### 📋 Lista de Bugs y Faltantes (Prioridad Máxima)
-- [ ] **Buscador de Usuarios:** Backend solo busca por `username`, falta soporte para email.
+- [x] **Buscador de Usuarios:** Arreglado (Busca por Username o Email).
 - [x] **Logout (Salir):** Página `/logout` creada para manejar cierre de sesión.
 - [x] **Link Nuevo Usuario:** Corregido (confirmado por usuario).
 - [ ] **Acciones Faltantes:** Faltan botones/vistas para "Ver Detalle" y "Editar Usuario".
-- [ ] **Campo Email:** 🔄 En Progreso (Migración DB creada).
+- [x] **Campo Email:** Implementado completo (Registro, Settings, DB).
 - [ ] **Export CSV:** (Pospuesto hasta arreglar lo anterior).
 
 **Estado:** 🛑 EN REPARACIÓN

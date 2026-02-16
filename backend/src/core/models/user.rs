@@ -15,6 +15,8 @@ pub enum Role {
 pub struct User {
     pub id: i64,
     pub username: String,
+    #[sqlx(default)]
+    pub email: Option<String>,
     #[serde(skip)]
     pub password_hash: String,
     #[sqlx(default)] // Maneja casos donde la columna no existía antes (migración suave)
@@ -27,8 +29,17 @@ pub struct User {
 pub struct CreateUserRequest {
     #[validate(length(min = 3, message = "El usuario debe tener al menos 3 caracteres"))]
     pub username: String,
+    #[validate(email(message = "Formato de email inválido"))]
+    pub email: Option<String>,
     #[validate(length(min = 8, message = "La contraseña debe tener al menos 8 caracteres"))]
     pub password: String,
+}
+
+#[derive(Debug, Deserialize, Validate, ToSchema)]
+pub struct UpdateUserRequest {
+    #[validate(email(message = "Formato de email inválido"))]
+    pub email: Option<String>,
+    // Aquí podríamos agregar password o avatar en el futuro
 }
 
 fn default_page() -> i64 {
@@ -85,6 +96,7 @@ mod tests {
         // Caso 1: Datos válidos
         let req = CreateUserRequest {
             username: "usuario_valido".to_string(),
+            email: Some("test@example.com".to_string()),
             password: "passwordSeguro123".to_string(),
         };
         assert!(req.validate().is_ok());
@@ -92,6 +104,7 @@ mod tests {
         // Caso 2: Usuario muy corto
         let req_bad_user = CreateUserRequest {
             username: "yo".to_string(),
+            email: None,
             password: "passwordSeguro123".to_string(),
         };
         assert!(req_bad_user.validate().is_err());
@@ -99,6 +112,7 @@ mod tests {
         // Caso 3: Password muy corto
         let req_bad_pass = CreateUserRequest {
             username: "usuario_valido".to_string(),
+            email: None,
             password: "123".to_string(),
         };
         assert!(req_bad_pass.validate().is_err());

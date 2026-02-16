@@ -9,7 +9,7 @@ use axum::{
     http::{header, Method, Request, StatusCode},
     middleware,
     response::IntoResponse,
-    routing::{delete, get, post},
+    routing::{delete, get, post, put},
     Router,
 };
 use sqlx::SqlitePool;
@@ -75,35 +75,32 @@ pub fn create_app(pool: SqlitePool) -> Router {
             .unwrap(),
     );
 
-    let api_v1 = Router::new()
-        .route(
-            "/users",
-            post(api::handlers::user::create_user)
-                .get(api::handlers::user::get_users)
-                .route_layer(middleware::from_fn(api::middleware::auth_guard)),
-        )
+    // 1. Rutas Públicas (Login, Registro, Logout)
+    let public_routes = Router::new()
         .route("/login", post(api::handlers::user::login))
         .route("/logout", post(api::handlers::user::logout))
-        .route(
-            "/users/:id",
+        .route("/users", post(api::handlers::user::create_user)); // Registro público
+
+    // 2. Rutas Protegidas (Requieren Auth)
+    let protected_routes = Router::new()
+        .route("/users", get(api::handlers::user::get_users))
+        .route("/users/:id/profile", put(api::handlers::user::update_user))
+        .route("/dashboard", get(api::handlers::user::dashboard))
+        .route("/stats", get(api::handlers::user::get_stats))
+        .route_layer(middleware::from_fn(api::middleware::auth_guard));
+
+    // 3. Rutas Admin (Requieren Rol Admin)
+    let admin_routes = Router::new()
+        .route("/users/:id", 
             delete(api::handlers::user::delete_user)
-                .route_layer(middleware::from_fn(api::middleware::admin_guard)),
-        )
-        .route(
-            "/dashboard",
-            get(api::handlers::user::dashboard)
-                .route_layer(middleware::from_fn(api::middleware::auth_guard)),
-        )
-        .route(
-            "/audit-logs",
-            get(api::handlers::user::get_audit_logs)
-                .route_layer(middleware::from_fn(api::middleware::admin_guard)),
-        )
-        .route(
-            "/stats",
-            get(api::handlers::user::get_stats)
-                .route_layer(middleware::from_fn(api::middleware::auth_guard)),
-        );
+            .get(api::handlers::user::get_user_by_id)) // Agregamos GET para ver detalle/editar
+        .route("/audit-logs", get(api::handlers::user::get_audit_logs))
+        .route_layer(middleware::from_fn(api::middleware::admin_guard));
+
+    let api_v1 = Router::new()
+        .merge(public_routes)
+        .merge(protected_routes)
+        .merge(admin_routes);
 
     Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))

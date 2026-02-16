@@ -113,6 +113,18 @@ class ApiClient {
     })
   }
 
+  async updateUser(id: number, data: { email?: string }, token?: string) {
+    const headers: Record<string, string> = {};
+    if (token) {
+        headers['Cookie'] = `auth_token=${token}`;
+    }
+    return this.request<User>(`/api/v1/users/${id}/profile`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(data)
+    })
+  }
+
   // Audit
   async getAuditLogs(params?: { page?: number; limit?: number }, token?: string) {
     const query = new URLSearchParams()
