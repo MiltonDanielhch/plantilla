@@ -3,6 +3,23 @@ import DashboardLayout from '../../components/layout/dashboard-layout.astro'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui'
 import Button from '../../components/ui/button.astro'
 import type { AuditLog } from '../../types'
+
+export const prerender = false;
+
+let auditLogs: AuditLog[] = [];
+let error = null;
+
+try {
+  const token = Astro.cookies.get("session")?.value || Astro.cookies.get("token")?.value;
+  if (!token) throw new Error("No token found");
+  
+  const result = await api.getAuditLogs({ limit: 50 }, token);
+  auditLogs = result.data;
+  console.log("[Audit Page] First log sample:", JSON.stringify(auditLogs[0], null, 2));
+} catch (e: any) {
+  console.error("Error fetching audit logs:", e);
+  error = e.message;
+}
 ---
 
 <DashboardLayout 
@@ -87,7 +104,31 @@ import type { AuditLog } from '../../types'
       </CardHeader>
       <CardContent>
         <div id="audit-timeline" class="space-y-0">
-          <!-- El timeline se renderizará aquí -->
+          {error ? (
+            <p class="text-destructive text-center py-4">{error}</p>
+          ) : auditLogs.length === 0 ? (
+            <p class="text-muted-foreground text-center py-4">No hay registros de auditoría.</p>
+          ) : (
+            auditLogs.map((log) => (
+              <div class="relative pl-6 pb-6 border-l border-border last:border-0 last:pb-0">
+                <div class="absolute left-[-5px] top-0 h-2.5 w-2.5 rounded-full bg-primary ring-4 ring-background" />
+                <div class="flex flex-col gap-1">
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium">{log.action}</span>
+                    <span class="text-xs text-muted-foreground">{formatDate(log.created_at || log.timestamp || "")}</span>
+                  </div>
+                  <p class="text-sm text-muted-foreground">
+                    Usuario: <span class="font-medium text-foreground">{log.username || log.admin_username || "Sistema"}</span>
+                  </p>
+                  {(log.details || log.target) && (
+                    <p class="text-xs text-muted-foreground mt-1 bg-muted p-2 rounded-md">
+                      {log.details || `Objetivo: ${log.target}`}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
         </div>
         
         <!-- Controles de paginación -->
@@ -114,48 +155,47 @@ import type { AuditLog } from '../../types'
 </DashboardLayout>
 
 <script>
-  import { api } from '../../lib/api'
-  import { formatDate } from '../../lib/utils'
-  import type { AuditLog } from '../../types'
+  import { api } from '../../lib/api';
+  import { formatDate } from '../../lib/utils';
+  import type { AuditLog } from '../../types';
 
-  // Estado local
-  let logs: AuditLog[] = []
-  let filteredLogs: AuditLog[] = []
-  let currentPage = 1
-  const itemsPerPage = 20
-  
-  // Referencias DOM
-  const loadingState = document.getElementById('loading-state')
-  const auditContent = document.getElementById('audit-content')
-  const errorState = document.getElementById('error-state')
-  const timelineContainer = document.getElementById('audit-timeline')
-  const paginationContainer = document.getElementById('pagination-controls')
-  const totalLogsEl = document.getElementById('total-logs')
+  // DOM Elements
+  const loadingState = document.getElementById('loading-state');
+  const auditContent = document.getElementById('audit-content');
+  const errorState = document.getElementById('error-state');
+  const timelineContainer = document.getElementById('audit-timeline');
+  const paginationContainer = document.getElementById('pagination-controls');
+  const totalLogsEl = document.getElementById('total-logs');
 
-  // Iconos para cada tipo de acción
+  // State
+  let logs: AuditLog[] = [];
+  let filteredLogs: AuditLog[] = [];
+  let currentPage = 1;
+  const itemsPerPage = 10;
+
+  // Constants
+  const actionColors: Record<string, string> = {
+    'LOGIN': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    'LOGOUT': 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
+    'CREATE_USER': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    'DELETE_USER': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    'UPDATE_USER': 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+  };
+
   const actionIcons: Record<string, string> = {
     'LOGIN': '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>',
     'LOGOUT': '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>',
-    'CREATE_USER': '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>',
-    'DELETE_USER': '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" x2="22" y1="8" y2="13"/><line x1="22" x2="17" y1="8" y2="13"/></svg>',
-    'UPDATE_USER': '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m21 7-4-4"/><path d="m21 7-4 4"/><path d="m21 7h-6"/></svg>',
-  }
+    'CREATE_USER': '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" x2="20" y1="8" y2="14"/><line x1="23" x2="17" y1="11" y2="11"/></svg>',
+    'DELETE_USER': '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="18" x2="23" y1="11" y2="11"/></svg>',
+    'UPDATE_USER': '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M17 8l5-5"/><path d="M22 8L17 3"/></svg>',
+  };
 
-  const actionColors: Record<string, string> = {
-    'LOGIN': 'bg-blue-500/10 text-blue-600',
-    'LOGOUT': 'bg-gray-500/10 text-gray-600',
-    'CREATE_USER': 'bg-green-500/10 text-green-600',
-    'DELETE_USER': 'bg-red-500/10 text-red-600',
-    'UPDATE_USER': 'bg-yellow-500/10 text-yellow-600',
-  }
-
-  // Función para renderizar el timeline
   function renderTimeline() {
-    if (!timelineContainer) return
+    if (!timelineContainer) return;
     
-    const start = (currentPage - 1) * itemsPerPage
-    const end = start + itemsPerPage
-    const pageLogs = filteredLogs.slice(start, end)
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const pageLogs = filteredLogs.slice(start, end);
     
     if (pageLogs.length === 0) {
       timelineContainer.innerHTML = `
@@ -163,23 +203,27 @@ import type { AuditLog } from '../../types'
           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-4 opacity-50"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
           <p>No hay eventos que coincidan con los filtros</p>
         </div>
-      `
-      paginationContainer!.innerHTML = ''
-      return
+      `;
+      if (paginationContainer) paginationContainer.innerHTML = '';
+      return;
     }
     
     // Agrupar por fecha
     const grouped = pageLogs.reduce((acc, log) => {
-      const date = new Date(log.created_at).toLocaleDateString('es-ES', { 
+      // Usar formatDate helper o lógica robusta
+      const dateStr = log.created_at || log.timestamp || "";
+      const d = dateStr.includes(' ') ? new Date(dateStr.replace(' ', 'T')) : new Date(dateStr);
+      
+      const date = d.toLocaleDateString('es-ES', { 
         weekday: 'long', 
         year: 'numeric', 
         month: 'long', 
         day: 'numeric' 
-      })
-      if (!acc[date]) acc[date] = []
-      acc[date].push(log)
-      return acc
-    }, {} as Record<string, AuditLog[]>)
+      });
+      if (!acc[date]) acc[date] = [];
+      acc[date].push(log);
+      return acc;
+    }, {} as Record<string, AuditLog[]>);
     
     timelineContainer.innerHTML = Object.entries(grouped).map(([date, dayLogs]) => `
       <div class="relative pl-8 pb-8 last:pb-0">
@@ -214,13 +258,17 @@ import type { AuditLog } from '../../types'
                     <div>
                       <p class="font-medium text-sm">${log.action.replace(/_/g, ' ')}</p>
                       <p class="text-xs text-muted-foreground mt-0.5">
-                        Por: <span class="font-medium text-foreground">${log.username || `Usuario ${log.user_id}`}</span>
+                        Por: <span class="font-medium text-foreground">${log.username || log.admin_username || "Sistema"}</span>
                       </p>
-                      ${log.details ? `<p class="text-xs text-muted-foreground mt-1">${log.details}</p>` : ''}
+                      ${(log.details || log.target) ? `
+                        <p class="text-xs text-muted-foreground mt-1">
+                          ${log.details || `Objetivo: ${log.target}`}
+                        </p>
+                      ` : ''}
                     </div>
                   </div>
                   <time class="text-xs text-muted-foreground shrink-0">
-                    ${new Date(log.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                    ${formatDate(log.created_at || log.timestamp || "")}
                   </time>
                 </div>
               </div>
@@ -228,10 +276,10 @@ import type { AuditLog } from '../../types'
           `).join('')}
         </div>
       </div>
-    `).join('')
+    `).join('');
     
     // Renderizar paginación
-    const totalPages = Math.ceil(filteredLogs.length / itemsPerPage)
+    const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
     if (totalPages > 1) {
       paginationContainer!.innerHTML = `
         <div class="text-sm text-muted-foreground">
@@ -243,9 +291,9 @@ import type { AuditLog } from '../../types'
           </button>
           
           ${Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-            const pageNum = i + 1
-            const isActive = pageNum === currentPage
-            return `<button class="page-btn inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium transition-colors ${isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-accent hover:text-accent-foreground'}" data-page="${pageNum}">${pageNum}</button>`
+            const pageNum = i + 1;
+            const isActive = pageNum === currentPage;
+            return `<button class="page-btn inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium transition-colors ${isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-accent hover:text-accent-foreground'}" data-page="${pageNum}">${pageNum}</button>`;
           }).join('')}
           
           ${totalPages > 5 ? '<span class="px-2 text-muted-foreground">...</span>' : ''}
@@ -254,169 +302,169 @@ import type { AuditLog } from '../../types'
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
           </button>
         </div>
-      `
+      `;
       
       // Event listeners para paginación
       document.getElementById('prev-page')?.addEventListener('click', () => {
         if (currentPage > 1) {
-          currentPage--
-          renderTimeline()
+          currentPage--;
+          renderTimeline();
         }
-      })
+      });
       
       document.getElementById('next-page')?.addEventListener('click', () => {
         if (currentPage < totalPages) {
-          currentPage++
-          renderTimeline()
+          currentPage++;
+          renderTimeline();
         }
-      })
+      });
       
       document.querySelectorAll('.page-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-          currentPage = parseInt((e.currentTarget as HTMLElement).dataset.page!)
-          renderTimeline()
-        })
-      })
+          currentPage = parseInt((e.currentTarget as HTMLElement).dataset.page!);
+          renderTimeline();
+        });
+      });
     } else {
       paginationContainer!.innerHTML = `
         <div class="text-sm text-muted-foreground">
           Mostrando ${filteredLogs.length} eventos
         </div>
         <div></div>
-      `
+      `;
     }
   }
 
   // Aplicar filtros
   function applyFilters() {
-    const searchTerm = (document.getElementById('search-input') as HTMLInputElement)?.value.toLowerCase() || ''
-    const actionFilter = (document.getElementById('action-filter') as HTMLSelectElement)?.value || ''
-    const dateFilter = (document.getElementById('date-filter') as HTMLSelectElement)?.value || ''
+    const searchTerm = (document.getElementById('search-input') as HTMLInputElement)?.value.toLowerCase() || '';
+    const actionFilter = (document.getElementById('action-filter') as HTMLSelectElement)?.value || '';
+    const dateFilter = (document.getElementById('date-filter') as HTMLSelectElement)?.value || '';
     
     filteredLogs = logs.filter(log => {
       // Filtro de búsqueda
       if (searchTerm) {
-        const searchString = `${log.action} ${log.username} ${log.details}`.toLowerCase()
-        if (!searchString.includes(searchTerm)) return false
+        const searchString = `${log.action} ${log.username} ${log.details}`.toLowerCase();
+        if (!searchString.includes(searchTerm)) return false;
       }
       
       // Filtro de acción
-      if (actionFilter && log.action !== actionFilter) return false
+      if (actionFilter && log.action !== actionFilter) return false;
       
       // Filtro de fecha
       if (dateFilter) {
-        const logDate = new Date(log.created_at)
-        const now = new Date()
+        const logDate = new Date(log.created_at);
+        const now = new Date();
         
         if (dateFilter === 'today') {
-          if (logDate.toDateString() !== now.toDateString()) return false
+          if (logDate.toDateString() !== now.toDateString()) return false;
         } else if (dateFilter === 'week') {
-          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-          if (logDate < weekAgo) return false
+          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          if (logDate < weekAgo) return false;
         } else if (dateFilter === 'month') {
-          if (logDate.getMonth() !== now.getMonth() || logDate.getFullYear() !== now.getFullYear()) return false
+          if (logDate.getMonth() !== now.getMonth() || logDate.getFullYear() !== now.getFullYear()) return false;
         }
       }
       
-      return true
-    })
+      return true;
+    });
     
-    currentPage = 1
-    renderTimeline()
+    currentPage = 1;
+    renderTimeline();
   }
 
   // Cargar logs
   async function loadLogs() {
     try {
-      const response = await api.getAuditLogs({ limit: 100 }) // Cargar más para filtrado local
+      const response = await api.getAuditLogs({ limit: 100 }); // Cargar más para filtrado local
       // Asegurar que response.data sea un array
-      logs = Array.isArray(response?.data) ? response.data : []
-      filteredLogs = [...logs]
+      logs = Array.isArray(response?.data) ? response.data : [];
+      filteredLogs = [...logs];
       
       if (totalLogsEl) {
-        totalLogsEl.textContent = logs.length.toString()
+        totalLogsEl.textContent = logs.length.toString();
       }
       
-      renderTimeline()
+      renderTimeline();
     } catch (err: any) {
-      console.error('Error loading audit logs:', err)
-      throw err
+      console.error('Error loading audit logs:', err);
+      throw err;
     }
   }
 
   // Toast notifications
   function showToast(message: string, type: 'success' | 'error' | 'info' = 'info') {
-    const toast = document.createElement('div')
+    const toast = document.createElement('div');
     const colors = {
       success: 'bg-green-500',
       error: 'bg-destructive',
       info: 'bg-primary',
-    }
+    };
     
-    toast.className = `fixed bottom-4 right-4 ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg z-50 transition-all duration-300`
-    toast.innerHTML = `<div class="flex items-center gap-2"><span>${message}</span></div>`
+    toast.className = `fixed bottom-4 right-4 ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg z-50 transition-all duration-300`;
+    toast.innerHTML = `<div class="flex items-center gap-2"><span>${message}</span></div>`;
     
-    document.body.appendChild(toast)
+    document.body.appendChild(toast);
     
     setTimeout(() => {
-      toast.style.opacity = '0'
-      toast.style.transform = 'translateY(20px)'
-      setTimeout(() => toast.remove(), 300)
-    }, 3000)
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(20px)';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
   }
 
   // Inicializar
   async function init() {
     try {
       // Verificar autenticación
-      await api.getDashboard()
+      await api.getDashboard();
       
       // Mostrar contenido
-      loadingState?.classList.add('hidden')
-      auditContent?.classList.remove('hidden')
+      loadingState?.classList.add('hidden');
+      auditContent?.classList.remove('hidden');
       
       // Cargar datos
-      await loadLogs()
+      await loadLogs();
       
       // Event listeners
       document.getElementById('refresh-btn')?.addEventListener('click', async () => {
-        await loadLogs()
-        showToast('Auditoría actualizada', 'success')
-      })
+        await loadLogs();
+        showToast('Auditoría actualizada', 'success');
+      });
       
       document.getElementById('retry-btn')?.addEventListener('click', async () => {
-        errorState?.classList.add('hidden')
-        loadingState?.classList.remove('hidden')
-        await init()
-      })
+        errorState?.classList.add('hidden');
+        loadingState?.classList.remove('hidden');
+        await init();
+      });
       
       document.getElementById('export-btn')?.addEventListener('click', () => {
-        showToast('Exportación en desarrollo', 'info')
-      })
+        showToast('Exportación en desarrollo', 'info');
+      });
       
       // Filtros
-      document.getElementById('search-input')?.addEventListener('input', applyFilters)
-      document.getElementById('action-filter')?.addEventListener('change', applyFilters)
-      document.getElementById('date-filter')?.addEventListener('change', applyFilters)
+      document.getElementById('search-input')?.addEventListener('input', applyFilters);
+      document.getElementById('action-filter')?.addEventListener('change', applyFilters);
+      document.getElementById('date-filter')?.addEventListener('change', applyFilters);
       
     } catch (err: any) {
-      console.error('Init error:', err)
+      console.error('Init error:', err);
       
       if (err.status === 401) {
-        window.location.href = '/login/'
-        return
+        window.location.href = '/login/';
+        return;
       }
       
-      loadingState?.classList.add('hidden')
-      errorState?.classList.remove('hidden')
-      document.getElementById('error-message')!.textContent = err.message || 'Error al cargar la auditoría'
+      loadingState?.classList.add('hidden');
+      errorState?.classList.remove('hidden');
+      document.getElementById('error-message')!.textContent = err.message || 'Error al cargar la auditoría';
     }
   }
 
   // Ejecutar
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init)
+    document.addEventListener('DOMContentLoaded', init);
   } else {
-    init()
+    init();
   }
 </script>

@@ -2,14 +2,11 @@
 import Layout from '../layouts/Layout.astro'
 import { Button, Input, Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui'
 
-// Si ya está autenticado, redirigir al dashboard
-const API_BASE_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000'
-const checkResponse = await fetch(`${API_BASE_URL}/api/v1/dashboard`, {
-  credentials: 'include',
-}).catch(() => null)
+export const prerender = false;
 
-if (checkResponse?.ok) {
-  return Astro.redirect('/dashboard/')
+// Si ya está autenticado, redirigir al dashboard inmediatamente
+if (Astro.locals.user?.isAuthenticated) {
+  return Astro.redirect('/dashboard');
 }
 ---
 
@@ -87,43 +84,48 @@ if (checkResponse?.ok) {
 </Layout>
 
 <script>
-  import { api } from '../lib/api'
-  
-  const form = document.getElementById('login-form') as HTMLFormElement
-  const errorDiv = document.getElementById('error-message') as HTMLDivElement
-  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement
-  const btnText = document.getElementById('btn-text') as HTMLSpanElement
-  const btnLoading = document.getElementById('btn-loading') as HTMLSpanElement
+  import { api } from '../lib/api';
+
+  const form = document.getElementById('login-form') as HTMLFormElement;
+  const errorDiv = document.getElementById('error-message') as HTMLDivElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const btnText = document.getElementById('btn-text') as HTMLSpanElement;
+  const btnLoading = document.getElementById('btn-loading') as HTMLSpanElement;
 
   form?.addEventListener('submit', async (e) => {
-    e.preventDefault()
-    
-    // Reset error
-    errorDiv.classList.add('hidden')
-    
-    // Loading state
-    submitBtn.disabled = true
-    btnText.classList.add('hidden')
-    btnLoading.classList.remove('hidden')
-    
-    const formData = new FormData(form)
+    e.preventDefault();
+
+    errorDiv.classList.add('hidden');
+    submitBtn.disabled = true;
+    btnText.classList.add('hidden');
+    btnLoading.classList.remove('hidden');
+
+    const formData = new FormData(form);
     const credentials = {
       username: formData.get('username') as string,
       password: formData.get('password') as string,
-    }
-    
+    };
+
     try {
-      await api.login(credentials)
-      window.location.href = '/dashboard/'
-    } catch (err: any) {
-      // Show error
-      errorDiv.textContent = err.message || 'Usuario o contraseña incorrectos'
-      errorDiv.classList.remove('hidden')
+      // 1. Obtener token del API
+      const response = await api.login(credentials);
       
-      // Reset button
-      submitBtn.disabled = false
-      btnText.classList.remove('hidden')
-      btnLoading.classList.add('hidden')
+      // 2. Guardar token en cookie para SSR (Lax para que viaje en navegaciones)
+      // Usamos 'session' como nombre estándar para el frontend
+      if (response.token) {
+        document.cookie = `session=${response.token}; path=/; max-age=86400; SameSite=Lax`;
+      }
+
+      // 3. Redirigir al dashboard
+      window.location.href = '/dashboard/';
+
+    } catch (err: any) {
+      errorDiv.textContent = err.message || 'Usuario o contraseña incorrectos';
+      errorDiv.classList.remove('hidden');
+
+      submitBtn.disabled = false;
+      btnText.classList.remove('hidden');
+      btnLoading.classList.add('hidden');
     }
-  })
+  });
 </script>

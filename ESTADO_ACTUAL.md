@@ -10,6 +10,37 @@
 
 ## 🎯 Estado Actual
 
+### ✅ Correcciones Críticas y Estabilización (16 Feb 2026)
+Se ha estabilizado la arquitectura de autenticación y SSR entre Astro y Axum.
+
+**Soluciones Implementadas:**
+1. **Autenticación Híbrida Corregida:**
+   - **Backend (`user.rs`):** Ahora devuelve el JWT explícitamente en el body JSON del login, además de la cookie HttpOnly.
+   - **Frontend (`login.astro`):** Captura el token y establece una cookie `session` (Lax) accesible por Astro en SSR.
+   - **Middleware (`middleware.ts`):** Unificado para leer cookies `session` (frontend) o `auth_token` (backend), decodificando el JWT para inyectar `Astro.locals.user`.
+
+2. **SSR y Bucle de Redirección:**
+   - Se activó `export const prerender = false;` en todas las páginas del dashboard (`dashboard.astro`, `users.astro`, `audit.astro`) para forzar la ejecución del middleware y evitar bucles infinitos por caché estática.
+
+3. **Acceso a Datos Protegidos:**
+   - **Backend (`lib.rs`):** Se blindaron las rutas `/users` y `/audit-logs` con `auth_guard` y `admin_guard`.
+   - **Cliente API (`api.ts`):** Se actualizó para inyectar manualmente el token en el header `Cookie` durante las peticiones SSR (`getUsers`, `getAuditLogs`), ya que `fetch` en el servidor no propaga cookies automáticamente.
+   - **Normalización de Respuestas:** Se implementó un adaptador en `api.ts` para transformar arrays planos del backend (`Vec<User>`) en la estructura paginada que espera el frontend (`{ data: [], meta: {} }`).
+
+4. **Corrección de Auditoría:**
+   - Se ajustó el mapeo de campos en `audit.astro` y `types/index.ts` para coincidir con la base de datos:
+     - `username` -> `admin_username`
+     - `created_at` -> `timestamp`
+     - `target_id` -> `target` (string)
+
+**Demo funcional:**
+- Login fluido sin recargas forzadas.
+- Dashboard detecta rol de Admin correctamente.
+- Tabla de Usuarios carga datos reales (17 usuarios detectados).
+- Logs de Auditoría muestran fechas y usuarios correctos.
+
+---
+
 ### ✅ Última Fase Completada: Fases 36-37
 **Dashboard Completo (Fase 36)** + **Componentes Avanzados (Fase 37)**
 
@@ -306,5 +337,5 @@ cd backend && cargo build --release
 
 **Listo para continuar en el próximo chat** 🚀
 
-**Fecha de actualización:** 15 Feb 2026  
-**Versión:** V4.0 - Fase 35 ✅ | Fases 36-40 ⏳
+**Fecha de actualización:** 16 Feb 2026  
+**Versión:** V4.1 - Estabilización Auth/SSR ✅ | Fases 38-40 ⏳

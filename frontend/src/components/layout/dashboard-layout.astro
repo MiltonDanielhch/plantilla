@@ -7,10 +7,18 @@ interface Props {
   title: string
   description?: string
   currentPath: string
-  isAdmin?: boolean
 }
 
-const { title, description, currentPath, isAdmin = false } = Astro.props
+const { title, description, currentPath } = Astro.props
+
+const user = Astro.locals.user;
+
+// Redirección de seguridad por si el middleware fallara o para rutas no protegidas explícitamente
+if (!user || !user.isAuthenticated) {
+  return Astro.redirect('/login');
+}
+
+const isAdmin = user?.role === 'Admin';
 ---
 
 <!DOCTYPE html>
@@ -49,5 +57,6 @@ const { title, description, currentPath, isAdmin = false } = Astro.props
       </main>
     </div>
   </div>
+
 </body>
 </html>

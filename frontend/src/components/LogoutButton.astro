@@ -5,12 +5,12 @@
 </button>
 
 <script>
-    import { API_BASE_URL } from '../config';
+    import { api } from '../lib/api';
+    
     const btn = document.getElementById('logout-btn') as HTMLButtonElement;
     
     if (btn) {
         btn.addEventListener('click', async () => {
-            // Feedback visual inmediato
             const originalText = btn.innerText;
             btn.innerText = "Cerrando...";
             btn.style.opacity = "0.7";
@@ -18,25 +18,20 @@
             btn.disabled = true;
 
             try {
-                // Llamamos al backend para que invalide la cookie
-                const response = await fetch(`${API_BASE_URL}/logout`, {
-                    method: 'POST',
-                    credentials: 'include' // CRÍTICO: Permite enviar/recibir cookies
-                });
-
-                if (response.ok) {
-                    // Si el backend confirma, redirigimos al login
-                    window.location.href = '/login/';
-                } else {
-                    throw new Error('Fallo en el logout');
-                }
+                // Use the centralized api client
+                await api.logout();
+                
+                // On success, redirect to the login page
+                window.location.href = '/login/';
             } catch (e) {
-                console.error("Error de conexión al cerrar sesión:", e);
-                // Restaurar estado si falla
+                console.error("Error during logout:", e);
+                // In case of an error, revert the button to its original state
                 btn.innerText = originalText;
                 btn.style.opacity = "1";
                 btn.style.cursor = "pointer";
                 btn.disabled = false;
+                // Optionally, show an error message to the user
+                alert('No se pudo cerrar la sesión. Inténtalo de nuevo.');
             }
         });
     }

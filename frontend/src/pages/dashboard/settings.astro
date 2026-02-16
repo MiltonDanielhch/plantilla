@@ -3,6 +3,8 @@ import DashboardLayout from '../../components/layout/dashboard-layout.astro'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui'
 import Button from '../../components/ui/button.astro'
 import type { User } from '../../types'
+
+export const prerender = false;
 ---
 
 <DashboardLayout 
@@ -115,7 +117,7 @@ import type { User } from '../../types'
                   <input 
                     type="text" 
                     id="id-input"
-                    class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm font-mono text-xs"
+                    class="h-10 w-full rounded-md border border-input bg-background px-3 font-mono text-xs"
                     disabled
                   />
                 </div>
@@ -269,7 +271,7 @@ import type { User } from '../../types'
                 </button>
                 
                 <button class="theme-btn relative rounded-lg border-2 p-4 text-left transition-colors hover:bg-accent" data-theme="system">
-                  <div class="mb-3 h-24 rounded-md bg-gradient-to-br from-slate-100 to-slate-900 border flex items-center justify-center">
+                  <div class="mb-3 h-24 rounded-md bg-linear-to-br from-slate-100 to-slate-900 border flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-600"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
                   </div>
                   <p class="font-medium">Sistema</p>
@@ -302,7 +304,7 @@ import type { User } from '../../types'
   </div>
 
   <!-- Error State -->
-  <div id="error-state" class="hidden flex items-center justify-center min-h-[60vh]">
+  <div id="error-state" class="hidden items-center justify-center min-h-[60vh]">
     <div class="text-center max-w-md">
       <div class="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
         <svg class="h-6 w-6 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -318,7 +320,6 @@ import type { User } from '../../types'
 
 <script>
   import { api } from '../../lib/api'
-  import { $user } from '../../stores/auth'
   import type { User } from '../../types'
 
   // Referencias DOM
@@ -480,9 +481,6 @@ import type { User } from '../../types'
       const dashboardData = await api.getDashboard()
       const user = dashboardData.user
       
-      // Actualizar store
-      $user.set(user)
-      
       // Mostrar contenido
       loadingState?.classList.add('hidden')
       settingsContent?.classList.remove('hidden')
@@ -505,6 +503,7 @@ import type { User } from '../../types'
       
       loadingState?.classList.add('hidden')
       errorState?.classList.remove('hidden')
+      errorState?.classList.add('flex')
       document.getElementById('error-message')!.textContent = err.message || 'Error al cargar la configuración'
     }
   }

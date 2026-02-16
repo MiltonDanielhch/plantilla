@@ -1,293 +1,110 @@
 ---
-import DashboardLayout from '../components/layout/dashboard-layout.astro'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui'
+import DashboardLayout from '../components/layout/dashboard-layout.astro';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui';
+import { api } from '../lib/api';
+import { formatDate } from '../lib/utils';
+import type { AuditLog, UserDetails } from '../types';
+
+export const prerender = false;
+
+const { user } = Astro.locals;
+const isAdmin = user.role === 'Admin';
+
+let adminData: {
+  stats: { total_users: number };
+  recentLogs: AuditLog[];
+} | null = null;
+
+if (isAdmin) {
+  try {
+    const [usersData, logsData] = await Promise.all([
+      api.getUsers({ limit: 1 }),
+      api.getAuditLogs({ limit: 5 })
+    ]);
+    adminData = {
+      stats: { total_users: usersData?.total ?? 0 },
+      recentLogs: Array.isArray(logsData?.data) ? logsData.data : [],
+    };
+  } catch (error) {
+    console.error("Error fetching admin data:", error);
+    // Data will be null and the view will show an error state
+  }
+}
 ---
 
 <DashboardLayout 
   title="Dashboard" 
-  description="Cargando..."
+  description={`Bienvenido de nuevo, ${user.username || 'usuario'}.`}
   currentPath="/dashboard/"
-  isAdmin={false}
 >
-  <!-- Loading State -->
-  <div id="loading-state" class="flex items-center justify-center min-h-[60vh]">
-    <div class="text-center">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-      <p class="text-muted-foreground">Verificando sesión...</p>
-    </div>
-  </div>
-
-  <!-- Content (hidden initially) -->
-  <div id="dashboard-content" class="hidden">
-    <!-- Admin View -->
-    <div id="admin-view" class="hidden">
-      <!-- Stats Cards -->
+  {isAdmin ? (
+    // Admin View
+    <div id="admin-view">
       <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
         <Card>
           <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle class="text-sm font-medium text-muted-foreground">
-              Total Usuarios
-            </CardTitle>
-            <svg class="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-            </svg>
+            <CardTitle class="text-sm font-medium text-muted-foreground">Total Usuarios</CardTitle>
+            {/* Icon */}
           </CardHeader>
           <CardContent>
-            <div class="text-2xl font-bold" id="stat-total-users">-</div>
+            <div class="text-2xl font-bold">{adminData?.stats.total_users ?? '-'}</div>
             <p class="text-xs text-muted-foreground">Usuarios registrados</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle class="text-sm font-medium text-muted-foreground">
-              Tu Rol
-            </CardTitle>
-            <svg class="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.031-.057-2.062-.168-3.063A11.99 11.99 0 0020.401 6 11.959 11.959 0 0012 2.25z" />
-            </svg>
+            <CardTitle class="text-sm font-medium text-muted-foreground">Tu Rol</CardTitle>
+            {/* Icon */}
           </CardHeader>
           <CardContent>
-            <div class="text-2xl font-bold" id="stat-role">-</div>
+            <div class="text-2xl font-bold">{user.role}</div>
             <p class="text-xs text-muted-foreground">Nivel de acceso</p>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle class="text-sm font-medium text-muted-foreground">
-              Tu ID
-            </CardTitle>
-            <svg class="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
-            </svg>
-          </CardHeader>
-          <CardContent>
-            <div class="text-2xl font-bold" id="stat-user-id">-</div>
-            <p class="text-xs text-muted-foreground">Identificador único</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle class="text-sm font-medium text-muted-foreground">
-              Estado
-            </CardTitle>
-            <svg class="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </CardHeader>
-          <CardContent>
-            <div class="text-2xl font-bold text-green-600">Activo</div>
-            <p class="text-xs text-muted-foreground">Sesión válida</p>
-          </CardContent>
-        </Card>
+        {/* Other stats cards can be added here */}
       </div>
 
       <div class="grid gap-6 md:grid-cols-2">
-        <!-- Actividad Reciente -->
         <Card>
           <CardHeader>
             <CardTitle>Actividad Reciente</CardTitle>
             <CardDescription>Últimas acciones en el sistema</CardDescription>
           </CardHeader>
           <CardContent>
-            <div id="recent-activity" class="space-y-4">
-              <p class="text-sm text-muted-foreground">Cargando...</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <!-- Estado del Sistema -->
-        <Card>
-          <CardHeader>
-            <CardTitle>Estado del Sistema</CardTitle>
-            <CardDescription>Información del servidor</CardDescription>
-          </CardHeader>
-          <CardContent>
             <div class="space-y-4">
-              <div class="flex items-center justify-between">
-                <span class="text-sm">Estado del Servidor</span>
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
-                  <span class="h-1.5 w-1.5 rounded-full bg-green-600"></span>
-                  Operativo
-                </span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-sm">Base de Datos</span>
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
-                  <span class="h-1.5 w-1.5 rounded-full bg-green-600"></span>
-                  Conectada
-                </span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-sm">Versión</span>
-                <span class="text-sm font-mono text-muted-foreground">v3.0.0 Enterprise</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-sm">API</span>
-                <span class="text-sm font-mono text-muted-foreground">/api/v1</span>
-              </div>
+              {adminData && adminData.recentLogs.length > 0 ? (
+                adminData.recentLogs.map(log => (
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-sm font-medium">{log.action}</p>
+                      <p class="text-xs text-muted-foreground">por {log.username || `Usuario ${log.user_id}`}</p>
+                    </div>
+                    <span class="text-xs text-muted-foreground">{formatDate(log.created_at)}</span>
+                  </div>
+                ))
+              ) : (
+                <p class="text-sm text-muted-foreground">No hay actividad reciente o hubo un error al cargarla.</p>
+              )}
             </div>
           </CardContent>
         </Card>
+        {/* Other cards can be added here */}
       </div>
     </div>
-
-    <!-- User View -->
-    <div id="user-view" class="hidden max-w-2xl mx-auto text-center py-12">
-      <div class="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
-        <svg class="h-10 w-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-        </svg>
-      </div>
-      <h2 class="text-2xl font-bold mb-2" id="welcome-message">¡Bienvenido!</h2>
+  ) : (
+    // User View
+    <div id="user-view" class="max-w-2xl mx-auto text-center py-12">
+      <h2 class="text-2xl font-bold mb-2">¡Bienvenido!</h2>
       <p class="text-muted-foreground mb-6">
         Has iniciado sesión correctamente en el sistema Sintonía 3026.
       </p>
-      <div class="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Tu Perfil</CardTitle>
-          </CardHeader>
-          <CardContent id="user-profile">
-            <p class="text-sm text-muted-foreground">Cargando...</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Acceso</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p class="text-sm text-muted-foreground">
-              Tienes acceso al dashboard básico. Contacta a un administrador si necesitas permisos adicionales.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardHeader><CardTitle>Tu Perfil</CardTitle></CardHeader>
+        <CardContent>
+          <p class="text-sm text-muted-foreground">Usuario: {user.username}</p>
+          <p class="text-sm text-muted-foreground">Rol: {user.role}</p>
+        </CardContent>
+      </Card>
     </div>
-  </div>
-
-  <!-- Error State -->
-  <div id="error-state" class="hidden flex items-center justify-center min-h-[60vh]">
-    <div class="text-center max-w-md">
-      <div class="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-        <svg class="h-6 w-6 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-        </svg>
-      </div>
-      <h3 class="text-lg font-semibold mb-2">Error de autenticación</h3>
-      <p class="text-muted-foreground mb-4" id="error-message">No se pudo verificar tu sesión</p>
-      <a href="/login/" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
-        Ir al login
-      </a>
-    </div>
-  </div>
+  )}
 </DashboardLayout>
-
-<script>
-  import { api } from '../lib/api'
-  import { formatDate } from '../lib/utils'
-
-  async function initDashboard() {
-    const loadingState = document.getElementById('loading-state')
-    const dashboardContent = document.getElementById('dashboard-content')
-    const errorState = document.getElementById('error-state')
-    const adminView = document.getElementById('admin-view')
-    const userView = document.getElementById('user-view')
-
-    try {
-      // Verificar autenticación
-      const dashboardData = await api.getDashboard()
-      const user = dashboardData.user
-      const isAdmin = user.role === 'Admin'
-
-      // Ocultar loading, mostrar contenido
-      loadingState?.classList.add('hidden')
-      dashboardContent?.classList.remove('hidden')
-
-      // Actualizar descripción
-      const descriptionEl = document.getElementById('page-description')
-      if (descriptionEl) {
-        descriptionEl.textContent = `Bienvenido, ${user.username}`
-      }
-
-      if (isAdmin) {
-        // Mostrar vista de admin
-        adminView?.classList.remove('hidden')
-        
-        // Actualizar stats
-        document.getElementById('stat-role')!.textContent = user.role
-        document.getElementById('stat-user-id')!.textContent = `#${user.id}`
-
-        // Obtener usuarios
-        try {
-          const usersData = await api.getUsers({ limit: 1 })
-          const totalUsers = usersData?.total ?? 0
-          document.getElementById('stat-total-users')!.textContent = totalUsers.toString()
-        } catch (e) {
-          document.getElementById('stat-total-users')!.textContent = '-'
-        }
-
-        // Obtener logs
-        try {
-          const logsData = await api.getAuditLogs({ limit: 5 })
-          const activityContainer = document.getElementById('recent-activity')
-          const logs = Array.isArray(logsData?.data) ? logsData.data : []
-          
-          if (logs.length > 0) {
-            activityContainer!.innerHTML = logs.map(log => `
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span class="text-xs font-medium">${(log.username || 'U')[0].toUpperCase()}</span>
-                  </div>
-                  <div>
-                    <p class="text-sm font-medium">${log.action}</p>
-                    <p class="text-xs text-muted-foreground">por ${log.username || `Usuario ${log.user_id}`}</p>
-                  </div>
-                </div>
-                <span class="text-xs text-muted-foreground">${formatDate(log.created_at)}</span>
-              </div>
-            `).join('')
-          } else {
-            activityContainer!.innerHTML = '<p class="text-sm text-muted-foreground">No hay actividad reciente</p>'
-          }
-        } catch (e) {
-          document.getElementById('recent-activity')!.innerHTML = '<p class="text-sm text-muted-foreground">Error al cargar actividad</p>'
-        }
-
-      } else {
-        // Mostrar vista de usuario normal
-        userView?.classList.remove('hidden')
-        document.getElementById('welcome-message')!.textContent = `¡Bienvenido, ${user.username}!`
-        document.getElementById('user-profile')!.innerHTML = `
-          <p class="text-sm text-muted-foreground">Usuario: ${user.username}</p>
-          <p class="text-sm text-muted-foreground">Rol: ${user.role}</p>
-          <p class="text-sm text-muted-foreground">ID: #${user.id}</p>
-        `
-      }
-
-    } catch (err: any) {
-      console.error('Dashboard error:', err)
-      
-      // Si es 401, redirigir al login
-      if (err.status === 401) {
-        window.location.href = '/login/'
-        return
-      }
-
-      // Mostrar error
-      loadingState?.classList.add('hidden')
-      errorState?.classList.remove('hidden')
-      document.getElementById('error-message')!.textContent = err.message || 'Error al cargar el dashboard'
-    }
-  }
-
-  // Ejecutar cuando el DOM esté listo
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initDashboard)
-  } else {
-    initDashboard()
-  }
-</script>

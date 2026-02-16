@@ -140,7 +140,7 @@ pub async fn login(
         )
         .map_err(|_| AppError::AuthError("Error generando token".to_string()))?;
 
-        let mut cookie = Cookie::new("auth_token", token);
+        let mut cookie = Cookie::new("auth_token", token.clone());
         cookie.set_http_only(true);
         cookie.set_same_site(tower_cookies::cookie::SameSite::Lax);
         cookie.set_path("/");
@@ -151,6 +151,7 @@ pub async fn login(
                 "username": username,
                 "role": role
             },
+            "token": token,
             "message": "Login exitoso"
         }))))
     } else {

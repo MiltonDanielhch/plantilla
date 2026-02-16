@@ -3,17 +3,21 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="Sistema Semilla 3026">
-    <main style="text-align: center; margin-top: 5rem; color: white; font-family: system-ui;">
-        <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Bienvenido al Sistema Semilla</h1>
-        <p style="color: #9ca3af; margin-bottom: 3rem;">La arquitectura base está operativa.</p>
-        
-        <div style="display: flex; justify-content: center; gap: 2rem;">
-            <a href="/login/" style="background-color: #6366f1; color: white; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 0.5rem; font-weight: bold; transition: background-color 0.2s;">
-                Iniciar Sesión
-            </a>
-            <a href="/register/" style="background-color: #10b981; color: white; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 0.5rem; font-weight: bold; transition: background-color 0.2s;">
-                Registrarse
-            </a>
-        </div>
-    </main>
+  <main class="flex flex-col items-center justify-center min-h-[80vh] text-center px-4">
+    <h1 class="text-4xl font-bold tracking-tight mb-4 text-foreground">
+      Bienvenido al Sistema Semilla
+    </h1>
+    <p class="text-muted-foreground text-lg mb-8 max-w-lg">
+      La arquitectura base está operativa.
+    </p>
+    
+    <div class="flex gap-4">
+      <a href="/login/" class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 py-2 transition-colors">
+        Iniciar Sesión
+      </a>
+      <a href="/register/" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-6 py-2 transition-colors">
+        Registrarse
+      </a>
+    </div>
+  </main>
 </Layout>

@@ -1,484 +1,130 @@
 ---
-import DashboardLayout from '../../components/layout/dashboard-layout.astro'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui'
-import Table from '../../components/ui/table.astro'
-import Button from '../../components/ui/button.astro'
-import Badge from '../../components/ui/badge.astro'
-import type { Column } from '../../components/ui/table.astro'
-import type { UserDetails } from '../../types'
+import DashboardLayout from '../../components/layout/dashboard-layout.astro';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button } from '../../components/ui';
+import { api } from '../../lib/api';
+import { formatDate } from '../../lib/utils';
+import type { UserDetails } from '../../types';
 
-const columns: Column<UserDetails>[] = [
-  { key: 'id', header: 'ID', sortable: true, width: '80px', align: 'center' },
-  { key: 'username', header: 'Usuario', sortable: true, filterable: true },
-  { key: 'email', header: 'Email', sortable: true, filterable: true },
-  { key: 'role', header: 'Rol', sortable: true, width: '120px' },
-  { key: 'created_at', header: 'Creado', sortable: true, width: '180px' },
-  { key: 'actions', header: 'Acciones', width: '120px', align: 'center' },
-]
+export const prerender = false;
+
+// 1. Get query params for server-side filtering/pagination
+const page = parseInt(Astro.url.searchParams.get("page") || "1", 10);
+const limit = parseInt(Astro.url.searchParams.get("limit") || "10", 10);
+const search = Astro.url.searchParams.get("search") || undefined;
+
+// 2. Fetch data on the server before rendering
+let usersResult: any = null;
+let error = null;
+
+try {
+    // Importante: Pasar el token en SSR para que el backend reconozca la sesión
+    const token = Astro.cookies.get("session")?.value || Astro.cookies.get("token")?.value;
+    console.log("[Users Page] Token found:", token ? "Yes (length " + token.length + ")" : "No");
+    
+    if (!token) throw new Error("No token found");
+    
+    usersResult = await api.getUsers({ page, limit, search }, token);
+    console.log("[Users Page] API Result:", JSON.stringify(usersResult));
+} catch (e: any) {
+    console.error("[Users Page] Error fetching users:", e);
+    error = e.message || "Failed to fetch users";
+}
+
+const users = usersResult?.data ?? [];
+const pagination = usersResult?.meta;
 ---
 
 <DashboardLayout 
   title="Gestión de Usuarios" 
   description="Administra los usuarios del sistema"
   currentPath="/dashboard/users/"
-  isAdmin={true}
 >
-  <div id="loading-state" class="flex items-center justify-center min-h-[60vh]">
-    <div class="text-center">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-      <p class="text-muted-foreground">Cargando usuarios...</p>
-    </div>
-  </div>
-
-  <div id="users-content" class="hidden space-y-6">
-    <!-- Header con acciones -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight">Usuarios</h1>
-        <p class="text-muted-foreground">
-          Total: <span id="total-users">0</span> usuarios registrados
-        </p>
-      </div>
-      
-      <div class="flex items-center gap-2">
-        <Button id="refresh-btn" variant="outline" size="sm">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
-          Actualizar
-        </Button>
-        <Button id="export-btn" variant="outline" size="sm">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-          Exportar CSV
-        </Button>
-        <Button id="create-user-btn" size="sm">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-          Nuevo Usuario
-        </Button>
-      </div>
-    </div>
-
-    <!-- Tabla de usuarios -->
-    <Card>
-      <CardHeader>
-        <CardTitle>Lista de Usuarios</CardTitle>
-        <CardDescription>
-          Gestiona los usuarios del sistema. Puedes editar, eliminar o desactivar cuentas.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div id="users-table-container">
-          <!-- La tabla se renderizará aquí -->
+    {error && (
+        <div class="bg-destructive/10 text-destructive p-4 rounded-md">
+            <p><strong>Error:</strong> {error}</p>
         </div>
-      </CardContent>
-    </Card>
-  </div>
+    )}
 
-  <!-- Error State -->
-  <div id="error-state" class="hidden flex items-center justify-center min-h-[60vh]">
-    <div class="text-center max-w-md">
-      <div class="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-        <svg class="h-6 w-6 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-        </svg>
-      </div>
-      <h3 class="text-lg font-semibold mb-2">Error al cargar usuarios</h3>
-      <p class="text-muted-foreground mb-4" id="error-message">No se pudieron cargar los usuarios</p>
-      <Button id="retry-btn">Reintentar</Button>
-    </div>
-  </div>
-</DashboardLayout>
-
-<script>
-  import { api } from '../../lib/api'
-  import { formatDate } from '../../lib/utils'
-  import { createTableStore } from '../../stores/table'
-  import type { UserDetails } from '../../types'
-
-  // Crear store para la tabla de usuarios
-  const tableStore = createTableStore<UserDetails>()
-  
-  // Referencias a elementos DOM
-  const loadingState = document.getElementById('loading-state')
-  const usersContent = document.getElementById('users-content')
-  const errorState = document.getElementById('error-state')
-  const tableContainer = document.getElementById('users-table-container')
-  const totalUsersEl = document.getElementById('total-users')
-
-  // Función para renderizar la tabla
-  function renderTable() {
-    const state = tableStore.$state.get()
-    
-    // Asegurar que state.data sea un array
-    const data = Array.isArray(state.data) ? state.data : []
-    
-    // Generar HTML de la tabla
-    const tableHTML = `
-      <div class="relative w-full overflow-auto rounded-md border">
-        <table class="w-full caption-bottom text-sm">
-          <thead class="[&_tr]:border-b">
-            <tr class="border-b bg-muted/50">
-              <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-[50px]">
-                <input type="checkbox" id="select-all" class="h-4 w-4 rounded border-primary"
-                  ${data.length > 0 && data.every(row => state.selectedRows.has(row.id)) ? 'checked' : ''}>
-              </th>
-              ${[
-                { key: 'id', header: 'ID', width: '80px', align: 'center' },
-                { key: 'username', header: 'Usuario' },
-                { key: 'email', header: 'Email' },
-                { key: 'role', header: 'Rol', width: '120px' },
-                { key: 'created_at', header: 'Creado', width: '180px' },
-                { key: 'actions', header: 'Acciones', width: '120px', align: 'center' },
-              ].map(col => `
-                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground ${col.width ? `w-[${col.width}]` : ''}" 
-                    style="${col.align ? `text-align: ${col.align}` : ''}">
-                  <div class="flex items-center gap-2">
-                    <button class="flex items-center hover:text-foreground" data-sort="${col.key}">
-                      ${col.header}
-                      ${state.sorting.column === col.key 
-                        ? (state.sorting.direction === 'asc' 
-                          ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ml-2 h-4 w-4"><path d="m18 15-6-6-6 6"/></svg>'
-                          : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ml-2 h-4 w-4"><path d="m6 9 6 6 6-6"/></svg>')
-                        : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ml-2 h-4 w-4 text-muted-foreground"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>'
-                      }
-                    </button>
-                  </div>
-                </th>
-              `).join('')}
-            </tr>
-            <tr class="border-b bg-muted/30">
-              <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground"></th>
-              ${[
-                { key: 'id', filterable: false },
-                { key: 'username', filterable: true, placeholder: 'Filtrar usuario...' },
-                { key: 'email', filterable: true, placeholder: 'Filtrar email...' },
-                { key: 'role', filterable: false },
-                { key: 'created_at', filterable: false },
-                { key: 'actions', filterable: false },
-              ].map(col => `
-                <th class="h-12 px-4 py-2 text-left align-middle font-medium text-muted-foreground">
-                  ${col.filterable ? `
-                    <input type="text" placeholder="${col.placeholder}" 
-                      class="h-8 w-full rounded-md border border-input bg-transparent px-3 text-xs"
-                      data-filter="${col.key}" value="${state.filters[col.key] || ''}">
-                  ` : ''}
-                </th>
-              `).join('')}
-            </tr>
-          </thead>
-          <tbody class="[&_tr:last-child]:border-0">
-            ${state.loading ? `
-              <tr>
-                <td colspan="7" class="p-8 text-center">
-                  <div class="flex items-center justify-center gap-2 text-muted-foreground">
-                    <svg class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>Cargando...</span>
-                  </div>
-                </td>
-              </tr>
-            ` : state.error ? `
-              <tr>
-                <td colspan="7" class="p-8 text-center">
-                  <div class="text-destructive">
-                    <p class="font-medium">Error al cargar datos</p>
-                    <p class="text-sm text-muted-foreground">${state.error}</p>
-                  </div>
-                </td>
-              </tr>
-            ` : data.length === 0 ? `
-              <tr>
-                <td colspan="7" class="p-8 text-center text-muted-foreground">
-                  No hay usuarios disponibles
-                </td>
-              </tr>
-            ` : data.map(row => `
-              <tr class="border-b transition-colors hover:bg-muted/50" data-row-id="${row.id}">
-                <td class="p-4 align-middle w-[50px]">
-                  <input type="checkbox" class="row-checkbox h-4 w-4 rounded border-primary" 
-                    data-id="${row.id}" ${state.selectedRows.has(row.id) ? 'checked' : ''}>
-                </td>
-                <td class="p-4 align-middle text-center w-[80px]">${row.id}</td>
-                <td class="p-4 align-middle">
-                  <div class="flex items-center gap-2">
-                    <div class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span class="text-xs font-medium">${row.username.charAt(0).toUpperCase()}</span>
-                    </div>
-                    <span class="font-medium">${row.username}</span>
-                  </div>
-                </td>
-                <td class="p-4 align-middle text-muted-foreground">${row.email || '-'}</td>
-                <td class="p-4 align-middle w-[120px]">
-                  <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                    row.role === 'Admin' 
-                      ? 'bg-primary/10 text-primary' 
-                      : 'bg-secondary text-secondary-foreground'
-                  }">
-                    ${row.role}
-                  </span>
-                </td>
-                <td class="p-4 align-middle text-muted-foreground w-[180px]">${row.created_at ? formatDate(row.created_at) : '-'}</td>
-                <td class="p-4 align-middle w-[120px]">
-                  <div class="flex items-center justify-center gap-1">
-                    <button class="edit-btn inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-accent" data-id="${row.id}" title="Editar">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-                    </button>
-                    <button class="delete-btn inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-destructive/10 hover:text-destructive" data-id="${row.id}" data-username="${row.username}" title="Eliminar">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-      
-      ${!state.loading && !state.error && data.length > 0 ? `
-        <div class="flex items-center justify-between py-4">
-          <div class="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>
-              Mostrando ${(state.pagination.page - 1) * state.pagination.limit + 1} a 
-              ${Math.min(state.pagination.page * state.pagination.limit, state.pagination.total)} 
-              de ${state.pagination.total} resultados
-            </span>
-            ${state.selectedRows.size > 0 ? `
-              <span class="rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-                ${state.selectedRows.size} seleccionados
-              </span>
-            ` : ''}
-          </div>
-          
-          <div class="flex items-center gap-4">
+    {!error && (
+    <div class="space-y-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight">Usuarios</h1>
+                <p class="text-muted-foreground">
+                    Total: {pagination?.total ?? 0} usuarios registrados
+                </p>
+            </div>
             <div class="flex items-center gap-2">
-              <span class="text-sm text-muted-foreground">Filas por página:</span>
-              <select id="limit-select" class="h-8 rounded-md border border-input bg-background px-2 text-sm">
-                <option value="5" ${state.pagination.limit === 5 ? 'selected' : ''}>5</option>
-                <option value="10" ${state.pagination.limit === 10 ? 'selected' : ''}>10</option>
-                <option value="25" ${state.pagination.limit === 25 ? 'selected' : ''}>25</option>
-                <option value="50" ${state.pagination.limit === 50 ? 'selected' : ''}>50</option>
-              </select>
+                <a href="/register" class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2">
+                    Nuevo Usuario
+                </a>
             </div>
-            
-            <div class="flex items-center gap-1">
-              <button id="prev-page" class="inline-flex h-8 w-8 items-center justify-center rounded-md border text-sm font-medium transition-colors ${state.pagination.page === 1 ? 'pointer-events-none opacity-50' : 'hover:bg-accent hover:text-accent-foreground'}">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
-              </button>
-              
-              ${Array.from({ length: Math.min(5, state.pagination.totalPages) }, (_, i) => {
-                const pageNum = i + 1
-                const isActive = pageNum === state.pagination.page
-                return `<button class="page-btn inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium transition-colors ${isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-accent hover:text-accent-foreground'}" data-page="${pageNum}">${pageNum}</button>`
-              }).join('')}
-              
-              ${state.pagination.totalPages > 5 ? '<span class="px-2 text-muted-foreground">...</span>' : ''}
-              
-              <button id="next-page" class="inline-flex h-8 w-8 items-center justify-center rounded-md border text-sm font-medium transition-colors ${state.pagination.page === state.pagination.totalPages ? 'pointer-events-none opacity-50' : 'hover:bg-accent hover:text-accent-foreground'}">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-              </button>
-            </div>
-          </div>
         </div>
-      ` : ''}
-    `
-    
-    if (tableContainer) {
-      tableContainer.innerHTML = tableHTML
-      attachTableEvents()
-    }
-    
-    if (totalUsersEl) {
-      totalUsersEl.textContent = state.pagination.total.toString()
-    }
-  }
 
-  // Adjuntar event listeners a la tabla
-  function attachTableEvents() {
-    // Sorting
-    document.querySelectorAll('[data-sort]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const column = (e.currentTarget as HTMLElement).dataset.sort!
-        tableStore.setSorting(column)
-        loadUsers()
-      })
-    })
-    
-    // Filtering
-    document.querySelectorAll('[data-filter]').forEach(input => {
-      input.addEventListener('input', (e) => {
-        const target = e.currentTarget as HTMLInputElement
-        const column = target.dataset.filter!
-        tableStore.setFilter(column, target.value)
-        loadUsers()
-      })
-    })
-    
-    // Pagination
-    document.querySelectorAll('.page-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const page = parseInt((e.currentTarget as HTMLElement).dataset.page!)
-        tableStore.setPage(page)
-        loadUsers()
-      })
-    })
-    
-    document.getElementById('prev-page')?.addEventListener('click', () => {
-      const state = tableStore.$state.get()
-      if (state.pagination.page > 1) {
-        tableStore.setPage(state.pagination.page - 1)
-        loadUsers()
-      }
-    })
-    
-    document.getElementById('next-page')?.addEventListener('click', () => {
-      const state = tableStore.$state.get()
-      if (state.pagination.page < state.pagination.totalPages) {
-        tableStore.setPage(state.pagination.page + 1)
-        loadUsers()
-      }
-    })
-    
-    document.getElementById('limit-select')?.addEventListener('change', (e) => {
-      const limit = parseInt((e.target as HTMLSelectElement).value)
-      tableStore.setLimit(limit)
-      loadUsers()
-    })
-    
-    // Selection
-    document.getElementById('select-all')?.addEventListener('change', () => {
-      tableStore.toggleAllSelection()
-      renderTable()
-    })
-    
-    document.querySelectorAll('.row-checkbox').forEach(checkbox => {
-      checkbox.addEventListener('change', (e) => {
-        const id = parseInt((e.target as HTMLElement).dataset.id!)
-        tableStore.toggleSelection(id)
-        renderTable()
-      })
-    })
-    
-    // Actions
-    document.querySelectorAll('.edit-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const id = (e.currentTarget as HTMLElement).dataset.id
-        showToast('Función de edición en desarrollo', 'info')
-      })
-    })
-    
-    document.querySelectorAll('.delete-btn').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        const target = e.currentTarget as HTMLElement
-        const id = parseInt(target.dataset.id!)
-        const username = target.dataset.username!
-        
-        if (confirm(`¿Estás seguro de eliminar al usuario "${username}"?`)) {
-          await deleteUser(id)
-        }
-      })
-    })
-  }
+        <Card>
+            <CardHeader>
+                <CardTitle>Lista de Usuarios</CardTitle>
+                <CardDescription>
+                    Aquí puedes ver y gestionar todos los usuarios del sistema.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <!-- Search Form -->
+                <form method="get" class="mb-4">
+                    <div class="flex gap-2">
+                        <input type="search" name="search" placeholder="Buscar por usuario o email..." value={search} class="w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                        <Button type="submit">Buscar</Button>
+                    </div>
+                </form>
 
-  // Cargar usuarios desde la API
-  async function loadUsers() {
-    tableStore.setLoading(true)
-    renderTable()
-    
-    try {
-      const state = tableStore.$state.get()
-      const response = await api.getUsers({
-        page: state.pagination.page,
-        limit: state.pagination.limit,
-        search: state.filters.username || state.filters.email || undefined,
-      })
-      
-      tableStore.setData(response)
-    } catch (err: any) {
-      console.error('Error loading users:', err)
-      tableStore.setError(err.message || 'Error al cargar usuarios')
-    }
-    
-    renderTable()
-  }
+                <!-- Users Table -->
+                <div class="relative w-full overflow-auto rounded-md border">
+                    <table class="w-full caption-bottom text-sm">
+                        <thead class="[&_tr]:border-b">
+                            <tr class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">ID</th>
+                                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Usuario</th>
+                                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Email</th>
+                                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Rol</th>
+                                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Creado</th>
+                            </tr>
+                        </thead>
+                        <tbody class="[&_tr:last-child]:border-0">
+                            {users.map((user: any) => (
+                                <tr class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                                    <td class="p-4 align-middle">{user.id}</td>
+                                    <td class="p-4 align-middle font-medium">{user.username}</td>
+                                    <td class="p-4 align-middle text-muted-foreground">{user.email}</td>
+                                    <td class="p-4 align-middle">{user.role}</td>
+                                    <td class="p-4 align-middle text-muted-foreground">{formatDate(user.created_at)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
 
-  // Eliminar usuario
-  async function deleteUser(id: number) {
-    try {
-      await api.deleteUser(id)
-      showToast('Usuario eliminado correctamente', 'success')
-      await loadUsers()
-    } catch (err: any) {
-      console.error('Error deleting user:', err)
-      showToast(err.message || 'Error al eliminar usuario', 'error')
-    }
-  }
-
-  // Sistema de toasts simple
-  function showToast(message: string, type: 'success' | 'error' | 'info' = 'info') {
-    const toast = document.createElement('div')
-    const colors = {
-      success: 'bg-green-500',
-      error: 'bg-destructive',
-      info: 'bg-primary',
-    }
-    
-    toast.className = `fixed bottom-4 right-4 ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 transform translate-y-0 opacity-100`
-    toast.innerHTML = `
-      <div class="flex items-center gap-2">
-        <span>${message}</span>
-      </div>
-    `
-    
-    document.body.appendChild(toast)
-    
-    setTimeout(() => {
-      toast.style.opacity = '0'
-      toast.style.transform = 'translateY(20px)'
-      setTimeout(() => toast.remove(), 300)
-    }, 3000)
-  }
-
-  // Inicializar página
-  async function init() {
-    try {
-      // Verificar autenticación
-      await api.getDashboard()
-      
-      // Mostrar contenido
-      loadingState?.classList.add('hidden')
-      usersContent?.classList.remove('hidden')
-      
-      // Cargar usuarios
-      await loadUsers()
-      
-      // Event listeners para botones de acción
-      document.getElementById('refresh-btn')?.addEventListener('click', loadUsers)
-      document.getElementById('retry-btn')?.addEventListener('click', loadUsers)
-      document.getElementById('export-btn')?.addEventListener('click', () => {
-        showToast('Exportación en desarrollo', 'info')
-      })
-      document.getElementById('create-user-btn')?.addEventListener('click', () => {
-        window.location.href = '/register/'
-      })
-      
-    } catch (err: any) {
-      console.error('Init error:', err)
-      
-      if (err.status === 401) {
-        window.location.href = '/login/'
-        return
-      }
-      
-      loadingState?.classList.add('hidden')
-      errorState?.classList.remove('hidden')
-      document.getElementById('error-message')!.textContent = err.message || 'Error al cargar la página'
-    }
-  }
-
-  // Ejecutar inicialización
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init)
-  } else {
-    init()
-  }
-</script>
+                <!-- Pagination -->
+                {pagination && pagination?.totalPages > 1 && (
+                    <div class="flex items-center justify-between py-4">
+                        <div class="text-sm text-muted-foreground">
+                            Página {pagination?.page ?? 1} de {pagination?.totalPages ?? 1}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <a href={`?page=${(pagination?.page ?? 1) - 1}&limit=${limit}${search ? `&search=${search}` : ''}`}
+                               class:list={["inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2", { "pointer-events-none opacity-50": (pagination?.page ?? 1) <= 1 }]}
+                               aria-disabled={(pagination?.page ?? 1) <= 1}>
+                                Anterior
+                            </a>
+                            <a href={`?page=${(pagination?.page ?? 1) + 1}&limit=${limit}${search ? `&search=${search}` : ''}`}
+                               class:list={["inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2", { "pointer-events-none opacity-50": (pagination?.page ?? 1) >= (pagination?.totalPages ?? 1) }]}
+                               aria-disabled={(pagination?.page ?? 1) >= (pagination?.totalPages ?? 1)}>
+                                Siguiente
+                            </a>
+                        </div>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    </div>
+    )}
+</DashboardLayout>

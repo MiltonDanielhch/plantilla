@@ -77,7 +77,9 @@ pub fn create_app(pool: SqlitePool) -> Router {
     let api_v1 = Router::new()
         .route(
             "/users",
-            post(api::handlers::user::create_user).get(api::handlers::user::get_users),
+            post(api::handlers::user::create_user)
+                .get(api::handlers::user::get_users)
+                .route_layer(middleware::from_fn(api::middleware::auth_guard)),
         )
         .route("/login", post(api::handlers::user::login))
         .route("/logout", post(api::handlers::user::logout))

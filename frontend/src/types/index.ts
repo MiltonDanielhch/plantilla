@@ -14,10 +14,15 @@ export interface UserDetails extends User {
 export interface AuditLog {
   id: number
   action: string
-  user_id: number
+  // Backend fields
+  admin_username?: string
+  target?: string
+  timestamp?: string
+  // Frontend mappings (legacy support)
+  user_id?: number
   target_id?: number
   details?: string
-  created_at: string
+  created_at?: string
   username?: string
 }
 
