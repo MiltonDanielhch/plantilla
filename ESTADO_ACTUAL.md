@@ -44,10 +44,10 @@ El sistema cuenta con un Dashboard completamente funcional, autenticación robus
     *   [x] Endpoint `GET /api/v1/audit-logs/export`.
     *   [x] Conexión con botones "Exportar" en Frontend (Usuarios y Auditoría).
 2.  **Subida de Archivos (Avatares):**
-    *   [ ] Soporte `multipart/form-data` en Axum (Backend).
-    *   [ ] Sistema de almacenamiento (carpeta `uploads/` local o AWS S3).
-    *   [ ] Endpoint `POST /api/v1/users/avatar`.
-    *   [ ] Actualizar UI de Settings para mostrar imagen real en lugar de iniciales.
+    *   [x] Soporte `multipart/form-data` en Axum (Backend).
+    *   [x] Sistema de almacenamiento (carpeta `uploads/` local o AWS S3).
+    *   [x] Endpoint `POST /api/v1/users/avatar`.
+    *   [x] Actualizar UI de Settings para mostrar imagen real en lugar de iniciales.
 3.  **Seguridad Avanzada:**
     *   [ ] **Refresh Tokens:** Implementar rotación de tokens para evitar sesiones largas inseguras (actualmente 24h fijas).
     *   [ ] **Recuperación de Contraseña:** Flujo de "Olvidé mi contraseña" (requiere envío de emails).

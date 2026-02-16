@@ -226,6 +226,30 @@ class ApiClient {
     document.body.removeChild(a)
     window.URL.revokeObjectURL(downloadUrl)
   }
+
+  // Avatar Upload
+  async uploadAvatar(file: File): Promise<User> {
+    const url = `${API_BASE_URL}/api/v1/users/avatar`
+    const formData = new FormData()
+    formData.append('avatar', file)
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+      // No agregar Content-Type, el browser lo agrega automáticamente con boundary
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new ApiError(
+        errorData.message || `Error ${response.status}`,
+        response.status
+      )
+    }
+    
+    return response.json()
+  }
 }
 
 export const api = new ApiClient()

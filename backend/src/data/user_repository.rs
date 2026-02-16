@@ -20,7 +20,7 @@ impl SqliteRepository {
 impl UserRepository for SqliteRepository {
     async fn create_user(&self, username: &str, password_hash: &str, email: Option<&str>) -> Result<User, AppError> {
         let result = sqlx::query_as::<_, User>(
-            "INSERT INTO users (username, password_hash, email) VALUES ($1, $2, $3) RETURNING id, username, email, password_hash, role, created_at"
+            "INSERT INTO users (username, password_hash, email) VALUES ($1, $2, $3) RETURNING id, username, email, password_hash, role, avatar_url, created_at"
         )
         .bind(username)
         .bind(password_hash)
@@ -45,7 +45,7 @@ impl UserRepository for SqliteRepository {
 
     async fn get_by_username(&self, username: &str) -> Result<Option<User>, AppError> {
         sqlx::query_as::<_, User>(
-            "SELECT id, username, email, password_hash, role, created_at FROM users WHERE username = $1",
+            "SELECT id, username, email, password_hash, role, avatar_url, created_at FROM users WHERE username = $1",
         )
         .bind(username)
         .fetch_optional(&self.pool)
@@ -55,7 +55,7 @@ impl UserRepository for SqliteRepository {
 
     async fn get_by_id(&self, id: i64) -> Result<Option<User>, AppError> {
         sqlx::query_as::<_, User>(
-            "SELECT id, username, email, password_hash, role, created_at FROM users WHERE id = $1",
+            "SELECT id, username, email, password_hash, role, avatar_url, created_at FROM users WHERE id = $1",
         )
         .bind(id)
         .fetch_optional(&self.pool)
@@ -75,12 +75,12 @@ impl UserRepository for SqliteRepository {
         let users = match q {
             Some(ref text) if !text.is_empty() => {
                 let search = format!("%{}%", text);
-                sqlx::query_as::<_, User>("SELECT id, username, email, password_hash, role, created_at FROM users WHERE username LIKE $1 OR email LIKE $1 LIMIT $2 OFFSET $3")
+                sqlx::query_as::<_, User>("SELECT id, username, email, password_hash, role, avatar_url, created_at FROM users WHERE username LIKE $1 OR email LIKE $1 LIMIT $2 OFFSET $3")
                     .bind(search).bind(limit).bind(offset)
                     .fetch_all(&self.pool).await
             },
             _ => {
-                sqlx::query_as::<_, User>("SELECT id, username, email, password_hash, role, created_at FROM users LIMIT $1 OFFSET $2")
+                sqlx::query_as::<_, User>("SELECT id, username, email, password_hash, role, avatar_url, created_at FROM users LIMIT $1 OFFSET $2")
                     .bind(limit).bind(offset)
                     .fetch_all(&self.pool).await
             }
@@ -150,9 +150,20 @@ impl UserRepository for SqliteRepository {
         // Actualizamos solo el email por ahora. 
         // COALESCE asegura que si pasamos NULL, no se borre (aunque aquí controlamos la lógica antes).
         sqlx::query_as::<_, User>(
-            "UPDATE users SET email = $1 WHERE id = $2 RETURNING id, username, email, password_hash, role, created_at"
+            "UPDATE users SET email = $1 WHERE id = $2 RETURNING id, username, email, password_hash, role, avatar_url, created_at"
         )
         .bind(email)
+        .bind(id)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(AppError::Database)
+    }
+
+    async fn update_avatar(&self, id: i64, avatar_url: &str) -> Result<User, AppError> {
+        sqlx::query_as::<_, User>(
+            "UPDATE users SET avatar_url = $1 WHERE id = $2 RETURNING id, username, email, password_hash, role, avatar_url, created_at"
+        )
+        .bind(avatar_url)
         .bind(id)
         .fetch_one(&self.pool)
         .await

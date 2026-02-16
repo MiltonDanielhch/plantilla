@@ -65,15 +65,30 @@ export const prerender = false;
             <CardContent class="space-y-6">
               <!-- Avatar -->
               <div class="flex items-center gap-6">
-                <div class="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary" id="profile-avatar">
-                  U
+                <div class="relative">
+                  <img 
+                    id="profile-avatar-img"
+                    src="" 
+                    alt="Avatar" 
+                    class="h-20 w-20 rounded-full object-cover border-2 border-border hidden"
+                  />
+                  <div id="profile-avatar-fallback" class="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
+                    U
+                  </div>
+                  <div id="avatar-loading" class="absolute inset-0 hidden items-center justify-center bg-background/80 rounded-full">
+                    <div class="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
+                  </div>
                 </div>
                 <div class="space-y-2">
+                  <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/gif" class="hidden" />
                   <Button variant="outline" size="sm" id="upload-avatar-btn">
                     Cambiar avatar
                   </Button>
+                  <Button variant="ghost" size="sm" id="remove-avatar-btn" class="hidden text-destructive hover:text-destructive">
+                    Eliminar avatar
+                  </Button>
                   <p class="text-xs text-muted-foreground">
-                    JPG, GIF o PNG. Máximo 1MB.
+                    JPG, PNG o GIF. Máximo 2MB.
                   </p>
                 </div>
               </div>
@@ -329,19 +344,31 @@ export const prerender = false;
 
   // Cargar datos del usuario
   function loadUserData(user: User) {
-    const avatarEl = document.getElementById('profile-avatar')
+    const avatarImg = document.getElementById('profile-avatar-img') as HTMLImageElement
+    const avatarFallback = document.getElementById('profile-avatar-fallback')
+    const removeAvatarBtn = document.getElementById('remove-avatar-btn')
     const usernameInput = document.getElementById('username-input') as HTMLInputElement
     const emailInput = document.getElementById('email-input') as HTMLInputElement
     const roleInput = document.getElementById('role-input') as HTMLInputElement
     const idInput = document.getElementById('id-input') as HTMLInputElement
     
-    if (avatarEl) {
-      avatarEl.textContent = user.username.charAt(0).toUpperCase()
+    // Manejar avatar
+    const avatarUrl = (user as any).avatar_url
+    if (avatarUrl && avatarImg && avatarFallback) {
+      avatarImg.src = avatarUrl.startsWith('http') ? avatarUrl : `${API_BASE_URL}${avatarUrl}`
+      avatarImg.classList.remove('hidden')
+      avatarFallback.classList.add('hidden')
+      removeAvatarBtn?.classList.remove('hidden')
+    } else if (avatarFallback) {
+      avatarFallback.textContent = user.username.charAt(0).toUpperCase()
+      avatarImg?.classList.add('hidden')
+      avatarFallback.classList.remove('hidden')
+      removeAvatarBtn?.classList.add('hidden')
     }
+    
     if (usernameInput) {
       usernameInput.value = user.username
     }
-    // Como no tengo el archivo de tipos (types/index.ts) en el contexto para actualizarlo correctamente, usaré as any en settings.astro como solución rápida para que compile, tal como solicitaste.
     if (emailInput && (user as any).email) {
       emailInput.value = (user as any).email
     }
@@ -519,8 +546,52 @@ export const prerender = false;
     })
     
     // Upload avatar
-    document.getElementById('upload-avatar-btn')?.addEventListener('click', () => {
-      showToast('Función de avatar en desarrollo', 'info')
+    const avatarInput = document.getElementById('avatar-input') as HTMLInputElement
+    const uploadAvatarBtn = document.getElementById('upload-avatar-btn')
+    const avatarLoading = document.getElementById('avatar-loading')
+    
+    uploadAvatarBtn?.addEventListener('click', () => {
+      avatarInput?.click()
+    })
+    
+    avatarInput?.addEventListener('change', async () => {
+      const file = avatarInput.files?.[0]
+      if (!file) return
+      
+      // Validar tipo
+      if (!file.type.startsWith('image/')) {
+        showToast('El archivo debe ser una imagen', 'error')
+        return
+      }
+      
+      // Validar tamaño (2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        showToast('El archivo es demasiado grande (máximo 2MB)', 'error')
+        return
+      }
+      
+      try {
+        avatarLoading?.classList.remove('hidden')
+        avatarLoading?.classList.add('flex')
+        
+        const updatedUser = await api.uploadAvatar(file)
+        
+        // Actualizar UI
+        loadUserData(updatedUser)
+        
+        showToast('Avatar actualizado correctamente', 'success')
+      } catch (err: any) {
+        showToast(err.message || 'Error al subir avatar', 'error')
+      } finally {
+        avatarLoading?.classList.add('hidden')
+        avatarLoading?.classList.remove('flex')
+        avatarInput.value = '' // Reset input
+      }
+    })
+    
+    // Remove avatar (solo UI por ahora, no hay endpoint DELETE)
+    document.getElementById('remove-avatar-btn')?.addEventListener('click', () => {
+      showToast('Eliminación de avatar no implementada', 'info')
     })
   }
 

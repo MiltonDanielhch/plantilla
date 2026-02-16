@@ -21,6 +21,8 @@ pub struct User {
     pub password_hash: String,
     #[sqlx(default)] // Maneja casos donde la columna no existía antes (migración suave)
     pub role: Role,
+    #[sqlx(default)]
+    pub avatar_url: Option<String>,
     // Usamos String por simplicidad inicial (SQLite devuelve texto)
     pub created_at: String,
 }

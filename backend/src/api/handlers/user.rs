@@ -12,7 +12,7 @@ use argon2::{
 use axum::{
     debug_handler,
     body::Body,
-    extract::{Path, Query, State},
+    extract::{Multipart, Path, Query, State},
     http::{header, StatusCode},
     response::{IntoResponse, Response},
     Json,
@@ -434,4 +434,80 @@ pub async fn export_audit_logs(
         .map_err(|e| AppError::Database(sqlx::Error::Io(std::io::Error::new(std::io::ErrorKind::Other, e))))?;
     
     Ok(response)
+}
+
+pub async fn upload_avatar(
+    State(pool): State<SqlitePool>,
+    cookies: Cookies,
+    mut multipart: Multipart,
+) -> Result<Json<User>, AppError> {
+    // 1. Obtener user_id del token
+    let cookie = cookies.get("auth_token").ok_or(AppError::AuthError("No autenticado".to_string()))?;
+    let token_data = decode::<Claims>(
+        cookie.value(),
+        &DecodingKey::from_secret("secret".as_ref()),
+        &Validation::default(),
+    ).map_err(|_| AppError::AuthError("Token inválido".to_string()))?;
+
+    let user_id = token_data.claims.user_id;
+
+    // 2. Procesar el archivo
+    let mut file_data: Option<(String, Vec<u8>, String)> = None;
+    
+    while let Some(mut field) = multipart.next_field().await
+        .map_err(|e| AppError::Validation(format!("Error leyendo formulario: {}", e)))? 
+    {
+        let name = field.name().unwrap_or("").to_string();
+        
+        if name == "avatar" {
+            let filename = field.file_name().unwrap_or("avatar.jpg").to_string();
+            let content_type = field.content_type().unwrap_or("image/jpeg").to_string();
+            
+            // Validar que sea una imagen
+            if !content_type.starts_with("image/") {
+                return Err(AppError::Validation("El archivo debe ser una imagen".to_string()));
+            }
+            
+            let data = field.bytes().await
+                .map_err(|e| AppError::Validation(format!("Error leyendo archivo: {}", e)))?;
+            
+            // Validar tamaño (máximo 2MB)
+            if data.len() > 2 * 1024 * 1024 {
+                return Err(AppError::Validation("El archivo es demasiado grande (máximo 2MB)".to_string()));
+            }
+            
+            file_data = Some((filename, data.to_vec(), content_type));
+        }
+    }
+    
+    let (filename, data, _content_type) = file_data.ok_or(
+        AppError::Validation("No se proporcionó archivo de avatar".to_string())
+    )?;
+    
+    // 3. Crear directorio uploads si no existe
+    let upload_dir = std::path::Path::new("uploads");
+    if !upload_dir.exists() {
+        std::fs::create_dir_all(upload_dir)
+            .map_err(|e| AppError::Database(sqlx::Error::Io(e)))?;
+    }
+    
+    // 4. Generar nombre único para el archivo
+    let timestamp = Utc::now().timestamp();
+    let extension = std::path::Path::new(&filename)
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap_or("jpg");
+    let new_filename = format!("{}_{}.{}", user_id, timestamp, extension);
+    let file_path = upload_dir.join(&new_filename);
+    
+    // 5. Guardar archivo
+    std::fs::write(&file_path, &data)
+        .map_err(|e| AppError::Database(sqlx::Error::Io(e)))?;
+    
+    // 6. Actualizar URL en la base de datos
+    let avatar_url = format!("/uploads/{}", new_filename);
+    let repo = SqliteRepository::new(pool);
+    let user = repo.update_avatar(user_id, &avatar_url).await?;
+    
+    Ok(Json(user))
 }

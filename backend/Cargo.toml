@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 # Core Web (El Cerebro)
-axum = { version = "0.7", features = ["macros"] }
+axum = { version = "0.7", features = ["macros", "multipart"] }
 tokio = { version = "1", features = ["full"] }
 
 # Datos y Serialización (El Lenguaje)
@@ -21,7 +21,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 
 # Utilidades (Herramientas)
 dotenv = "0.15"
-tower-http = { version = "0.5", features = ["cors", "request-id", "trace", "util"] }
+tower-http = { version = "0.5", features = ["cors", "request-id", "trace", "util", "fs"] }
 argon2 = "0.5.3"
 tower-cookies = "0.10"
 rand = { version = "0.8.5", features = ["std", "std_rng"] }

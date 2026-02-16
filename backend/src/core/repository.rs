@@ -17,4 +17,5 @@ pub trait UserRepository {
     async fn delete_user(&self, id: i64, admin_username: &str) -> Result<(), AppError>;
     async fn get_audit_logs(&self) -> Result<Vec<AuditLog>, AppError>;
     async fn update_user(&self, id: i64, email: Option<&str>) -> Result<User, AppError>;
+    async fn update_avatar(&self, id: i64, avatar_url: &str) -> Result<User, AppError>;
 }

@@ -22,6 +22,7 @@ use tower_http::cors::CorsLayer;
 use tower_http::{
     request_id::{MakeRequestUuid, SetRequestIdLayer},
     trace::TraceLayer,
+    services::ServeDir,
 };
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -33,18 +34,18 @@ use utoipa_swagger_ui::SwaggerUi;
             version = "1.0.0",
             description = "Documentación viva del sistema Sintonía 3026"
         ),
-        paths(
-            api::handlers::user::create_user,
-            api::handlers::user::get_users,
-            api::handlers::user::login,
-            api::handlers::user::logout,
-            api::handlers::user::delete_user,
-            api::handlers::user::get_audit_logs,
-            api::handlers::user::dashboard,
-            api::handlers::user::get_stats,
-            api::handlers::user::export_users,
-            api::handlers::user::export_audit_logs,
-        ),
+    paths(
+        api::handlers::user::create_user,
+        api::handlers::user::get_users,
+        api::handlers::user::login,
+        api::handlers::user::logout,
+        api::handlers::user::delete_user,
+        api::handlers::user::get_audit_logs,
+        api::handlers::user::dashboard,
+        api::handlers::user::get_stats,
+        api::handlers::user::export_users,
+        api::handlers::user::export_audit_logs,
+    ),
         components(schemas(
             core::models::user::User,
             core::models::user::CreateUserRequest,
@@ -92,6 +93,7 @@ pub fn create_app(pool: SqlitePool) -> Router {
     let protected_routes = Router::new()
         .route("/users", get(api::handlers::user::get_users))
         .route("/users/:id/profile", put(api::handlers::user::update_user))
+        .route("/users/avatar", post(api::handlers::user::upload_avatar))
         .route("/dashboard", get(api::handlers::user::dashboard))
         .route("/stats", get(api::handlers::user::get_stats))
         .route_layer(middleware::from_fn(api::middleware::auth_guard));
@@ -116,6 +118,7 @@ pub fn create_app(pool: SqlitePool) -> Router {
         .route("/", get(root))
         .route("/health", get(health_check))
         .nest("/api/v1", api_v1)
+        .nest_service("/uploads", ServeDir::new("uploads"))
         .layer(CookieManagerLayer::new())
         .layer(GovernorLayer { config: governor_conf })
         .layer(cors) // CORS debe ser el último (externo) para manejar errores del Governor
