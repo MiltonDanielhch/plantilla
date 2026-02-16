@@ -7,6 +7,7 @@ interface Props {
 }
 
 const { currentPath, isAdmin = false } = Astro.props
+const { user } = Astro.locals
 
 const navItems = [
   { href: '/dashboard/', label: 'Dashboard', icon: 'home' },
@@ -63,15 +64,15 @@ const icons: Record<string, string> = {
     
     <!-- Footer -->
     <div class="border-t p-4">
-      <div class="flex items-center gap-3 rounded-lg bg-muted px-3 py-2">
+      <a href="/dashboard/settings/" class="flex items-center gap-3 rounded-lg bg-muted px-3 py-2 hover:bg-accent transition-colors">
         <div class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-          <span class="text-sm font-medium">U</span>
+          <span class="text-sm font-medium">{user?.username?.charAt(0).toUpperCase() || 'U'}</span>
         </div>
         <div class="flex-1 min-w-0">
-          <p class="text-sm font-medium truncate">Usuario</p>
+          <p class="text-sm font-medium truncate">{user?.username || 'Usuario'}</p>
           <p class="text-xs text-muted-foreground truncate">Ver perfil</p>
         </div>
-      </div>
+      </a>
     </div>
   </div>
 </aside>

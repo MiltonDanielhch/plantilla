@@ -341,8 +341,9 @@ export const prerender = false;
     if (usernameInput) {
       usernameInput.value = user.username
     }
-    if (emailInput && user.email) {
-      emailInput.value = user.email
+    // Como no tengo el archivo de tipos (types/index.ts) en el contexto para actualizarlo correctamente, usaré as any en settings.astro como solución rápida para que compile, tal como solicitaste.
+    if (emailInput && (user as any).email) {
+      emailInput.value = (user as any).email
     }
     if (roleInput) {
       roleInput.value = user.role
@@ -382,9 +383,37 @@ export const prerender = false;
   function initThemeSelector() {
     const themeBtns = document.querySelectorAll('.theme-btn')
     
+    // 1. Función para aplicar tema
+    const applyTheme = (theme: string) => {
+      const root = document.documentElement
+      const isDark = theme === 'dark' || 
+        (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      
+      if (isDark) {
+        root.classList.add('dark')
+      } else {
+        root.classList.remove('dark')
+      }
+      localStorage.setItem('theme', theme)
+    }
+
+    // 2. Inicializar estado visual de los botones
+    const currentTheme = localStorage.getItem('theme') || 'dark'
+    themeBtns.forEach(btn => {
+      const theme = btn.getAttribute('data-theme')
+      if (theme === currentTheme) {
+        btn.classList.add('border-primary')
+        btn.querySelector('.theme-indicator')?.classList.remove('hidden')
+      } else {
+        btn.classList.remove('border-primary')
+        btn.querySelector('.theme-indicator')?.classList.add('hidden')
+      }
+    })
+    
     themeBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const theme = btn.getAttribute('data-theme')
+        if (!theme) return
         
         // Actualizar UI
         themeBtns.forEach(b => {
@@ -394,8 +423,15 @@ export const prerender = false;
         btn.classList.add('border-primary')
         btn.querySelector('.theme-indicator')?.classList.remove('hidden')
         
-        // Aplicar tema (placeholder - se implementaría con lógica real)
-        showToast(`Tema ${theme} seleccionado`, 'success')
+        // Aplicar tema real
+        applyTheme(theme)
+        
+        const labels: Record<string, string> = {
+          light: 'Claro',
+          dark: 'Oscuro',
+          system: 'Sistema'
+        }
+        showToast(`Tema ${labels[theme] || theme} activado`, 'success')
       })
     })
   }

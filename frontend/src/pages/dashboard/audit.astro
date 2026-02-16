@@ -12,7 +12,7 @@ let auditLogs: AuditLog[] = [];
 let error = null;
 
 try {
-  const token = Astro.cookies.get("session")?.value || Astro.cookies.get("token")?.value;
+  const token = Astro.cookies.get("auth_token")?.value || Astro.cookies.get("session")?.value;
   if (!token) throw new Error("No token found");
   
   const result = await api.getAuditLogs({ limit: 50 }, token);
@@ -28,7 +28,6 @@ try {
   title="Auditoría" 
   description="Registro de actividad del sistema"
   currentPath="/dashboard/audit/"
-  isAdmin={true}
 >
   <div id="loading-state" class="flex items-center justify-center min-h-[60vh]">
     <div class="text-center">
@@ -113,7 +112,7 @@ try {
           ) : (
             auditLogs.map((log) => (
               <div class="relative pl-6 pb-6 border-l border-border last:border-0 last:pb-0">
-                <div class="absolute left-[-5px] top-0 h-2.5 w-2.5 rounded-full bg-primary ring-4 ring-background" />
+                <div class="absolute left-5px top-0 h-2.5 w-2.5 rounded-full bg-primary ring-4 ring-background" />
                 <div class="flex flex-col gap-1">
                   <div class="flex items-center justify-between">
                     <span class="text-sm font-medium">{log.action}</span>
@@ -142,7 +141,7 @@ try {
   </div>
 
   <!-- Error State -->
-  <div id="error-state" class="hidden flex items-center justify-center min-h-[60vh]">
+  <div id="error-state" class="hidden items-center justify-center min-h-[60vh]">
     <div class="text-center max-w-md">
       <div class="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
         <svg class="h-6 w-6 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -355,7 +354,8 @@ try {
       
       // Filtro de fecha
       if (dateFilter) {
-        const logDate = new Date(log.created_at);
+        const dateStr = log.created_at || log.timestamp || "";
+        const logDate = new Date(dateStr);
         const now = new Date();
         
         if (dateFilter === 'today') {
@@ -459,6 +459,7 @@ try {
       
       loadingState?.classList.add('hidden');
       errorState?.classList.remove('hidden');
+      errorState?.classList.add('flex');
       document.getElementById('error-message')!.textContent = err.message || 'Error al cargar la auditoría';
     }
   }

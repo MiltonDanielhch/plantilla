@@ -65,11 +65,15 @@ pub fn create_app(pool: SqlitePool) -> Router {
         .allow_headers([header::CONTENT_TYPE])
         .allow_credentials(true);
 
-    // Configuración de Rate Limiting: 10 peticiones por segundo, ráfaga de 20
+    // Configuración de Rate Limiting
     let governor_conf = Arc::new(
         GovernorConfigBuilder::default()
-            .per_second(10)
-            .burst_size(20)
+            // --- PRODUCCIÓN (Descomentar al desplegar) ---
+            // .per_second(20)  // Límite razonable para usuarios reales
+            // .burst_size(50)  // Margen para ráfagas cortas
+            // --- DESARROLLO (Actual: Alto para evitar bloqueos en SSR local) ---
+            .per_second(200)
+            .burst_size(500)
             .key_extractor(SmartIpKeyExtractor)
             .finish()
             .unwrap(),

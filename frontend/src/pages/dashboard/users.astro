@@ -18,7 +18,7 @@ let error = null;
 
 try {
     // Importante: Pasar el token en SSR para que el backend reconozca la sesión
-    const token = Astro.cookies.get("session")?.value || Astro.cookies.get("token")?.value;
+    const token = Astro.cookies.get("auth_token")?.value || Astro.cookies.get("session")?.value;
     console.log("[Users Page] Token found:", token ? "Yes (length " + token.length + ")" : "No");
     
     if (!token) throw new Error("No token found");

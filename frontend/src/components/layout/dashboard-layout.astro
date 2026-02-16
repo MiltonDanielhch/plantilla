@@ -30,6 +30,14 @@ const isAdmin = user?.role === 'Admin';
   <title>{title} | Sintonía 3026</title>
   <meta name="description" content={description} />
   
+  <script is:inline>
+    // Inicializar tema antes de renderizar para evitar flash
+    const theme = localStorage.getItem('theme');
+    if (theme === 'light' || (theme === 'system' && !window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.remove('dark');
+    }
+  </script>
+  
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

@@ -14,7 +14,7 @@ let user: User | null = null;
 let error = null;
 
 try {
-    const token = Astro.cookies.get("session")?.value || Astro.cookies.get("token")?.value;
+    const token = Astro.cookies.get("auth_token")?.value || Astro.cookies.get("session")?.value;
     if (!token) throw new Error("No token found");
     
     user = await api.getUser(userId, token);
@@ -73,7 +73,7 @@ if (error || !user) {
                     </div>
                     <div class="space-y-1">
                         <p class="text-sm font-medium text-muted-foreground">Email</p>
-                        <p class="font-medium">{user.email || 'No registrado'}</p>
+                        <p class="font-medium">{(user as any).email || 'No registrado'}</p>
                     </div>
                     <div class="space-y-1">
                         <p class="text-sm font-medium text-muted-foreground">Fecha de Registro</p>

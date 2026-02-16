@@ -3,12 +3,13 @@
 export interface User {
   id: number
   username: string
+  email?: string
   role: 'Admin' | 'User'
+  created_at?: string
 }
 
 export interface UserDetails extends User {
-  email?: string
-  created_at?: string
+  // Hereda todas las propiedades de User
 }
 
 export interface AuditLog {
@@ -28,6 +29,7 @@ export interface AuditLog {
 
 export interface CreateUserRequest {
   username: string
+  email?: string
   password: string
   role?: 'Admin' | 'User'
 }

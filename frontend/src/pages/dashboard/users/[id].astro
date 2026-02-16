@@ -14,7 +14,7 @@ let user: User | null = null;
 let error = null;
 
 try {
-    const token = Astro.cookies.get("session")?.value || Astro.cookies.get("token")?.value;
+    const token = Astro.cookies.get("auth_token")?.value || Astro.cookies.get("session")?.value;
     if (!token) throw new Error("No token found");
     
     // Obtener datos del usuario
@@ -90,7 +90,7 @@ if (error) {
                                 type="email" 
                                 id="email" 
                                 name="email" 
-                                value={user.email || ''} 
+                                value={(user as any).email || ''} 
                                 placeholder="usuario@ejemplo.com"
                                 class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                             />

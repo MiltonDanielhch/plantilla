@@ -8,7 +8,7 @@ interface Props {
 const { title } = Astro.props
 ---
 
-<header class="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+<header class="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 px-6 backdrop-blur supports-backdrop-filter:bg-background/60">
   <!-- Mobile menu button -->
   <button 
     type="button"
@@ -26,16 +26,17 @@ const { title } = Astro.props
   <!-- Right side actions -->
   <div class="ml-auto flex items-center gap-4">
     <!-- Search -->
-    <div class="hidden md:flex items-center">
-      <svg class="absolute ml-3 h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <form action="/dashboard/users" method="GET" class="hidden md:flex items-center relative">
+      <svg class="absolute left-3 h-4 w-4 text-muted-foreground pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
       </svg>
       <input 
         type="search" 
-        placeholder="Buscar..."
+        name="search"
+        placeholder="Buscar usuarios..."
         class="h-9 w-64 rounded-md border border-input bg-transparent pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
       />
-    </div>
+    </form>
     
     <!-- Notifications -->
     <button type="button" class="relative inline-flex h-10 w-10 items-center justify-center rounded-md border hover:bg-accent">

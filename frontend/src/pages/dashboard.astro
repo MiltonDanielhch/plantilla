@@ -1,6 +1,6 @@
 ---
 import DashboardLayout from '../components/layout/dashboard-layout.astro';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button } from '../components/ui';
 import { api } from '../lib/api';
 import { formatDate } from '../lib/utils';
 import type { AuditLog, StatsData } from '../types';
@@ -17,7 +17,7 @@ let adminData: {
 
 if (isAdmin) {
   try {
-    const token = Astro.cookies.get('session')?.value;
+    const token = Astro.cookies.get('auth_token')?.value || Astro.cookies.get('session')?.value;
     const [statsData, logsData] = await Promise.all([
       api.getStats(token),
       api.getAuditLogs({ limit: 5 }, token)
@@ -60,6 +60,11 @@ if (isAdmin) {
           <CardContent>
             <div class="text-2xl font-bold">{user.role}</div>
             <p class="text-xs text-muted-foreground">Nivel de acceso</p>
+            <div class="mt-4">
+              <Button href="/dashboard/settings" variant="outline" size="sm" class="w-full">
+                Ver Perfil
+              </Button>
+            </div>
           </CardContent>
         </Card>
         {/* Other stats cards can be added here */}
@@ -104,6 +109,11 @@ if (isAdmin) {
         <CardContent>
           <p class="text-sm text-muted-foreground">Usuario: {user.username}</p>
           <p class="text-sm text-muted-foreground">Rol: {user.role}</p>
+          <div class="mt-4">
+            <Button href="/dashboard/settings" variant="outline" class="w-full">
+              Ver Perfil
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

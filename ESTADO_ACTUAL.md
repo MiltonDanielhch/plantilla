@@ -32,8 +32,9 @@ El sistema cuenta con un Dashboard completamente funcional, autenticación robus
 - [x] **Link Nuevo Usuario:** Corregido (confirmado por usuario).
 - [x] **Acciones Faltantes:** Vista "Editar Usuario" implementada y conectada.
 - [x] **Campo Email:** Implementado completo (Registro, Settings, DB).
+- [x] **Rate Limiting:** Ajustado (Error 429) para soportar tráfico de desarrollo/SSR.
 
-**Estado:** 🛑 EN REPARACIÓN
+**Estado:** ✅ COMPLETADO
 
 ---
 
