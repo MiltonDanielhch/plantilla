@@ -2,6 +2,7 @@
 import '../../styles/globals.css'
 import Sidebar from './sidebar.astro'
 import Header from './header.astro'
+import Toast from '../ui/Toast.astro'
 
 interface Props {
   title: string
@@ -57,6 +58,6 @@ const isAdmin = user?.role === 'Admin';
       </main>
     </div>
   </div>
-
+  <Toast />
 </body>
 </html>

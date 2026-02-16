@@ -290,3 +290,12 @@ Este documento archiva el progreso detallado de las fases ya completadas para ma
 - Dashboard con datos reales.
 - Roles (Admin/User) respetados.
 - Navegación estable.
+
+#### ✨ Pulido y Mantenimiento V4.1
+**Fecha:** 16 Feb 2026
+**Estado:** Completado
+
+- [x] **Bug Paginación:** Backend ahora devuelve `meta.total` y Frontend calcula páginas correctamente.
+- [x] **Stats Reales:** Endpoint `/api/v1/stats` implementado y conectado al Dashboard.
+- [x] **UX Feedback:** Sistema de Toasts (Notificaciones) integrado para confirmar acciones.
+- [x] **UI Limpieza:** Ajustes visuales en tablas y ocultamiento de botones sin función.

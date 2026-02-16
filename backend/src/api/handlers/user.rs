@@ -200,7 +200,7 @@ pub async fn login(
 )]
 pub async fn logout(cookies: Cookies) -> impl IntoResponse {
     cookies.remove(Cookie::new("auth_token", ""));
-    (StatusCode::OK, "Sesión cerrada correctamente").into_response()
+    (StatusCode::OK, Json(json!({"message": "Sesión cerrada correctamente"}))).into_response()
 }
 
 #[utoipa::path(
@@ -274,5 +274,5 @@ pub async fn delete_user(
     let repo = SqliteRepository::new(pool);
     repo.delete_user(id, &admin_username).await?;
 
-    Ok((StatusCode::OK, "Usuario eliminado y auditado"))
+    Ok((StatusCode::OK, Json(json!({"message": "Usuario eliminado y auditado"}))))
 }

@@ -4,7 +4,7 @@
 **Versión Actual:** V4.1 - Estabilización Completada  
 **Rama Activa:** `feature/v4-dashboard`
 
-> **Nota:** Fases 0-37 archivadas en `HISTORIAL_FASES.md`
+> **Nota:** Fases 0-37 y Pulido archivadas en `HISTORIAL_FASES.md`
 
 ---
 
@@ -22,28 +22,18 @@ El sistema cuenta con un Dashboard completamente funcional, autenticación robus
 
 ---
 
-## 🚀 Fase Activa: Pulido y Mantenimiento (V4.1+)
+## 🚀 Fase Activa: Fase 38 (Backend Features Premium)
 
-**Objetivo:** Resolver deuda técnica, bugs visuales y pequeñas mejoras de UX antes de añadir nuevas features complejas.
+**Objetivo:** Implementar funcionalidades "Enterprise" en el Backend para cerrar las features visuales del Dashboard.
 
-### 📋 Lista de Tareas (Bug Hunting)
-- [x] **Bug Paginación:** Backend devuelve `meta.total` y Frontend calcula páginas correctamente.
-- [ ] **UX Feedback:** Implementar "Toasts" para confirmar acciones (ej: "Usuario eliminado").
-- [ ] **UI Limpieza:** Ocultar o deshabilitar botones sin funcionalidad (ej: "Exportar").
-- [x] **Stats Dashboard:** Conectado `dashboard.astro` con endpoint `/stats` (SSR Auth funcionando).
+### 📋 Tareas Pendientes
+- [ ] **Export CSV:** Endpoint `/api/v1/users/export` (Prioridad Alta).
+- [ ] **Avatar Upload:** Soporte `multipart/form-data` en Axum.
+- [ ] **Refresh Tokens:** Rotación de JWT para mayor seguridad.
 
 **Prioridad:** ALTA
 
 ---
-
-### 🔧 Fase 38: Backend Features Premium (PENDIENTE)
-**Objetivo:** Features adicionales del backend
-
-- [ ] **Refresh Tokens** - Rotación de JWT para mayor seguridad
-- [ ] **Export CSV** - Endpoint `/api/v1/users/export`
-- [ ] **Avatar Upload** - Carga de imágenes de perfil
-- [ ] **WebSockets/SSE** - Notificaciones en tiempo real
-- [ ] **Stats Endpoint** - `/api/v1/stats` para el dashboard
 
 ---
 
@@ -149,13 +139,12 @@ $isAuthenticated // Boolean
 
 ## 🎨 Próximo Trabajo Sugerido (Pulido)
 
-### Opción 1: Sistema de Toasts (Frontend)
-**Problema:** Al eliminar un usuario, no hay confirmación visual clara de éxito.
-**Solución:** Crear store `toast.ts` y componente `Toast.astro`.
-
-### Opción 2: Limpieza UI (Botón Exportar)
-**Problema:** El botón "Exportar" confunde porque no hace nada.
-**Solución:** Ocultarlo temporalmente o implementar el endpoint (Fase 38).
+### Opción 1: Exportar CSV (Backend)
+**Objetivo:** Permitir descargar la lista de usuarios.
+**Pasos:**
+1. Agregar crate `csv`.
+2. Crear endpoint `GET /api/v1/users/export`.
+3. Reactivar botón en Frontend.
 
 ---
 
@@ -179,9 +168,8 @@ cd backend && cargo build --release
 
 ## 📝 Notas para el Siguiente Chat
 
-1. **Cambio de Foco:** Fase 38 pausada. Prioridad en bugs y UX.
-2. **Bug Crítico:** La paginación es falsa en el frontend.
-3. **UX:** Faltan notificaciones de éxito/error.
+1. **Foco:** Fase 38 iniciada.
+2. **Prioridad:** Implementar Exportación CSV.
 
 ### Archivos Clave Recientes:
 - `frontend/src/components/ui/*` - Componentes base
