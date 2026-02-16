@@ -1,4 +1,4 @@
-use crate::core::models::user::{AuditLog, User};
+use crate::core::models::user::{AuditLog, RefreshToken, User};
 use crate::error::AppError;
 use async_trait::async_trait;
 
@@ -18,4 +18,10 @@ pub trait UserRepository {
     async fn get_audit_logs(&self) -> Result<Vec<AuditLog>, AppError>;
     async fn update_user(&self, id: i64, email: Option<&str>) -> Result<User, AppError>;
     async fn update_avatar(&self, id: i64, avatar_url: &str) -> Result<User, AppError>;
+    
+    // Refresh Tokens
+    async fn create_refresh_token(&self, user_id: i64, token: &str, expires_at: &str) -> Result<RefreshToken, AppError>;
+    async fn get_refresh_token(&self, token: &str) -> Result<Option<RefreshToken>, AppError>;
+    async fn mark_refresh_token_used(&self, token_id: i64) -> Result<(), AppError>;
+    async fn revoke_user_refresh_tokens(&self, user_id: i64) -> Result<(), AppError>;
 }

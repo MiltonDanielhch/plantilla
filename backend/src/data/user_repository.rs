@@ -1,5 +1,5 @@
 use crate::core::{
-    models::user::{AuditLog, User},
+    models::user::{AuditLog, RefreshToken, User},
     repository::UserRepository,
 };
 use crate::error::AppError;
@@ -168,5 +168,46 @@ impl UserRepository for SqliteRepository {
         .fetch_one(&self.pool)
         .await
         .map_err(AppError::Database)
+    }
+
+    // Refresh Tokens
+    async fn create_refresh_token(&self, user_id: i64, token: &str, expires_at: &str) -> Result<RefreshToken, AppError> {
+        sqlx::query_as::<_, RefreshToken>(
+            "INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3) RETURNING id, user_id, token, expires_at, created_at, used"
+        )
+        .bind(user_id)
+        .bind(token)
+        .bind(expires_at)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(AppError::Database)
+    }
+
+    async fn get_refresh_token(&self, token: &str) -> Result<Option<RefreshToken>, AppError> {
+        sqlx::query_as::<_, RefreshToken>(
+            "SELECT id, user_id, token, expires_at, created_at, used FROM refresh_tokens WHERE token = $1"
+        )
+        .bind(token)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(AppError::Database)
+    }
+
+    async fn mark_refresh_token_used(&self, token_id: i64) -> Result<(), AppError> {
+        sqlx::query("UPDATE refresh_tokens SET used = TRUE WHERE id = $1")
+            .bind(token_id)
+            .execute(&self.pool)
+            .await
+            .map_err(AppError::Database)?;
+        Ok(())
+    }
+
+    async fn revoke_user_refresh_tokens(&self, user_id: i64) -> Result<(), AppError> {
+        sqlx::query("DELETE FROM refresh_tokens WHERE user_id = $1")
+            .bind(user_id)
+            .execute(&self.pool)
+            .await
+            .map_err(AppError::Database)?;
+        Ok(())
     }
 }

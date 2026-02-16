@@ -83,6 +83,29 @@ pub struct AuditLog {
     pub timestamp: String,
 }
 
+#[derive(Debug, Serialize, FromRow)]
+pub struct RefreshToken {
+    pub id: i64,
+    pub user_id: i64,
+    pub token: String,
+    pub expires_at: String,
+    pub created_at: String,
+    pub used: bool,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct RefreshRequest {
+    pub refresh_token: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct TokenResponse {
+    pub access_token: String,
+    pub refresh_token: String,
+    pub expires_in: i64, // segundos
+    pub token_type: String,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

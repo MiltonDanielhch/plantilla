@@ -1,5 +1,5 @@
 use crate::core::models::user::{
-    AuditLog, Claims, CreateUserRequest, LoginRequest, User, UserSearch,
+    AuditLog, Claims, CreateUserRequest, LoginRequest, RefreshRequest, TokenResponse, User, UserSearch,
 };
 use crate::core::models::user::UpdateUserRequest;
 use crate::core::repository::UserRepository;
@@ -156,37 +156,58 @@ pub async fn login(
         let username = user.username.clone();
         let role = user.role.clone();
         
-        // GENERAR JWT
-        let expiration = Utc::now()
-            .checked_add_signed(Duration::hours(24))
+        // GENERAR ACCESS TOKEN (15 minutos)
+        let access_expiration = Utc::now()
+            .checked_add_signed(Duration::minutes(15))
             .expect("Tiempo inválido")
             .timestamp();
-        let claims = Claims {
+        let access_claims = Claims {
             sub: username.clone(),
             role: role.clone(),
-            exp: expiration as usize,
+            exp: access_expiration as usize,
             user_id: user_id,
         };
-        // NOTA: En producción, "secret" debe venir de variables de entorno (.env)
-        let token = encode(
+        
+        let access_token = encode(
             &Header::default(),
-            &claims,
+            &access_claims,
             &EncodingKey::from_secret("secret".as_ref()),
         )
-        .map_err(|_| AppError::AuthError("Error generando token".to_string()))?;
+        .map_err(|_| AppError::AuthError("Error generando access token".to_string()))?;
 
-        let mut cookie = Cookie::new("auth_token", token.clone());
+        // GENERAR REFRESH TOKEN (7 días)
+        let refresh_token_str = uuid::Uuid::new_v4().to_string();
+        let refresh_expiration = Utc::now()
+            .checked_add_signed(Duration::days(7))
+            .expect("Tiempo inválido")
+            .timestamp();
+        
+        // Guardar refresh token en base de datos
+        repo.create_refresh_token(
+            user_id,
+            &refresh_token_str,
+            &chrono::NaiveDateTime::from_timestamp(refresh_expiration, 0)
+                .format("%Y-%m-%d %H:%M:%S")
+                .to_string()
+        ).await?;
+
+        // Establecer cookie con access token
+        let mut cookie = Cookie::new("auth_token", access_token.clone());
         cookie.set_http_only(true);
         cookie.set_same_site(tower_cookies::cookie::SameSite::Lax);
         cookie.set_path("/");
         cookies.add(cookie);
+        
         Ok((StatusCode::OK, Json(json!({
             "user": {
                 "id": user_id,
                 "username": username,
                 "role": role
             },
-            "token": token,
+            "access_token": access_token,
+            "refresh_token": refresh_token_str,
+            "expires_in": 15 * 60,
+            "token_type": "Bearer",
             "message": "Login exitoso"
         }))))
     } else {
@@ -510,4 +531,90 @@ pub async fn upload_avatar(
     let user = repo.update_avatar(user_id, &avatar_url).await?;
     
     Ok(Json(user))
+}
+
+pub async fn refresh_token(
+    State(pool): State<SqlitePool>,
+    cookies: Cookies,
+    Json(payload): Json<RefreshRequest>,
+) -> Result<Json<TokenResponse>, AppError> {
+    let repo = SqliteRepository::new(pool);
+    
+    // 1. Buscar el refresh token en la base de datos
+    let stored_token = repo.get_refresh_token(&payload.refresh_token).await?;
+    
+    let stored_token = stored_token.ok_or(AppError::AuthError("Refresh token inválido".to_string()))?;
+    
+    // 2. Verificar que no haya sido usado
+    if stored_token.used {
+        return Err(AppError::AuthError("Refresh token ya fue utilizado".to_string()));
+    }
+    
+    // 3. Verificar que no haya expirado
+    let expires_at = chrono::NaiveDateTime::parse_from_str(&stored_token.expires_at, "%Y-%m-%d %H:%M:%S")
+        .map_err(|_| AppError::AuthError("Error parseando fecha de expiración".to_string()))?;
+    
+    let now = chrono::Local::now().naive_local();
+    if now > expires_at {
+        return Err(AppError::AuthError("Refresh token expirado".to_string()));
+    }
+    
+    // 4. Obtener el usuario
+    let user = repo.get_by_id(stored_token.user_id).await?
+        .ok_or(AppError::AuthError("Usuario no encontrado".to_string()))?;
+    
+    // 5. Marcar el refresh token como usado (rotación)
+    repo.mark_refresh_token_used(stored_token.id).await?;
+    
+    // 6. Generar nuevos tokens
+    // Access token: 15 minutos
+    let access_expiration = Utc::now()
+        .checked_add_signed(Duration::minutes(15))
+        .expect("Tiempo inválido")
+        .timestamp();
+    
+    let access_claims = Claims {
+        sub: user.username.clone(),
+        role: user.role.clone(),
+        exp: access_expiration as usize,
+        user_id: user.id,
+    };
+    
+    let access_token = encode(
+        &Header::default(),
+        &access_claims,
+        &EncodingKey::from_secret("secret".as_ref()),
+    )
+    .map_err(|_| AppError::AuthError("Error generando access token".to_string()))?;
+    
+    // Refresh token: 7 días
+    let refresh_token_str = uuid::Uuid::new_v4().to_string();
+    let refresh_expiration = Utc::now()
+        .checked_add_signed(Duration::days(7))
+        .expect("Tiempo inválido")
+        .timestamp();
+    
+    // Guardar el nuevo refresh token
+    let new_refresh = repo.create_refresh_token(
+        user.id, 
+        &refresh_token_str,
+        &chrono::NaiveDateTime::from_timestamp(refresh_expiration, 0)
+            .format("%Y-%m-%d %H:%M:%S")
+            .to_string()
+    ).await?;
+    
+    // 7. Actualizar cookies
+    let mut cookie = Cookie::new("auth_token", access_token.clone());
+    cookie.set_http_only(true);
+    cookie.set_same_site(tower_cookies::cookie::SameSite::Lax);
+    cookie.set_path("/");
+    cookies.add(cookie);
+    
+    // 8. Devolver respuesta
+    Ok(Json(TokenResponse {
+        access_token,
+        refresh_token: new_refresh.token,
+        expires_in: 15 * 60, // 15 minutos en segundos
+        token_type: "Bearer".to_string(),
+    }))
 }

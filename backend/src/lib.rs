@@ -83,10 +83,11 @@ pub fn create_app(pool: SqlitePool) -> Router {
             .unwrap(),
     );
 
-    // 1. Rutas Públicas (Login, Registro, Logout)
+    // 1. Rutas Públicas (Login, Registro, Logout, Refresh)
     let public_routes = Router::new()
         .route("/login", post(api::handlers::user::login))
         .route("/logout", post(api::handlers::user::logout))
+        .route("/refresh", post(api::handlers::user::refresh_token))
         .route("/users", post(api::handlers::user::create_user)); // Registro público
 
     // 2. Rutas Protegidas (Requieren Auth)

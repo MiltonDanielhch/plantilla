@@ -49,7 +49,7 @@ El sistema cuenta con un Dashboard completamente funcional, autenticación robus
     *   [x] Endpoint `POST /api/v1/users/avatar`.
     *   [x] Actualizar UI de Settings para mostrar imagen real en lugar de iniciales.
 3.  **Seguridad Avanzada:**
-    *   [ ] **Refresh Tokens:** Implementar rotación de tokens para evitar sesiones largas inseguras (actualmente 24h fijas).
+    *   [x] **Refresh Tokens:** Implementar rotación de tokens para evitar sesiones largas inseguras (actualmente 24h fijas).
     *   [ ] **Recuperación de Contraseña:** Flujo de "Olvidé mi contraseña" (requiere envío de emails).
     *   [ ] **Verificación de Email:** Enviar correo de confirmación al registrarse para validar cuentas.
 
@@ -58,7 +58,7 @@ El sistema cuenta con un Dashboard completamente funcional, autenticación robus
 
 - [ ] **Export CSV** - Endpoint `/api/v1/users/export`
 - [ ] **Avatar Upload** - Carga de imágenes de perfil
-- [ ] **Refresh Tokens** - Rotación de JWT para mayor seguridad
+- [x] **Refresh Tokens** - Rotación de JWT para mayor seguridad
 - [ ] **Stats Endpoint** - Mejorar métricas
 
 **Prioridad:** MEDIA (Siguiente en la lista)

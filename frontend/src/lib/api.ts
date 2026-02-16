@@ -18,18 +18,99 @@ class ApiError extends Error {
   }
 }
 
+interface TokenResponse {
+  user: User
+  access_token: string
+  refresh_token: string
+  expires_in: number
+  token_type: string
+}
+
 class ApiClient {
+  private refreshPromise: Promise<void> | null = null
+
+  private getRefreshToken(): string | null {
+    return localStorage.getItem('refresh_token')
+  }
+
+  private setRefreshToken(token: string | null) {
+    if (token) {
+      localStorage.setItem('refresh_token', token)
+    } else {
+      localStorage.removeItem('refresh_token')
+    }
+  }
+
+  private async doRefresh(): Promise<void> {
+    const refreshToken = this.getRefreshToken()
+    if (!refreshToken) {
+      throw new ApiError('No refresh token available', 401)
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      })
+
+      if (!response.ok) {
+        // Refresh failed, clear tokens
+        this.setRefreshToken(null)
+        throw new ApiError('Session expired', 401)
+      }
+
+      const data = await response.json()
+      this.setRefreshToken(data.refresh_token)
+    } catch (error) {
+      this.setRefreshToken(null)
+      throw error
+    }
+  }
+
+  private async refreshAccessToken(): Promise<void> {
+    // If already refreshing, wait for that promise
+    if (this.refreshPromise) {
+      return this.refreshPromise
+    }
+
+    // Create new refresh promise
+    this.refreshPromise = this.doRefresh().finally(() => {
+      this.refreshPromise = null
+    })
+
+    return this.refreshPromise
+  }
+
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`
     
-    const response = await fetch(url, {
-      ...options,
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-    })
+    const makeRequest = async (): Promise<Response> => {
+      return fetch(url, {
+        ...options,
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...options?.headers,
+        },
+      })
+    }
+
+    let response = await makeRequest()
+    
+    // If unauthorized, try to refresh token
+    if (response.status === 401) {
+      try {
+        await this.refreshAccessToken()
+        // Retry request with new token
+        response = await makeRequest()
+      } catch (refreshError) {
+        // Refresh failed, redirect to login
+        window.location.href = '/login/'
+        throw new ApiError('Session expired', 401)
+      }
+    }
     
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
@@ -43,16 +124,22 @@ class ApiClient {
   }
 
   // Auth
-  async login(credentials: LoginRequest) {
-    return this.request<{ user: User; token: string }>('/api/v1/login', {
+  async login(credentials: LoginRequest): Promise<TokenResponse> {
+    const response = await this.request<TokenResponse>('/api/v1/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     })
+    
+    // Guardar refresh token
+    this.setRefreshToken(response.refresh_token)
+    
+    return response
   }
 
   async logout() {
     await this.request<void>('/api/v1/logout', { method: 'POST' })
-    // Limpiar cookie de sesión (Frontend/SSR) y redirigir
+    // Limpiar refresh token y cookies
+    this.setRefreshToken(null)
     document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     window.location.href = '/login';
   }
