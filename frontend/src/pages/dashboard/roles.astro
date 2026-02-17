@@ -1,0 +1,43 @@
+---
+import DashboardLayout from '../../components/layout/dashboard-layout.astro';
+import { RolesMatrix } from '../../components/dashboard/roles/roles-matrix';
+import { api } from '../../lib/api';
+
+export const prerender = false;
+
+let roles = [];
+let permissions = [];
+let rolePermissions = [];
+let error = null;
+
+try {
+  const token = Astro.cookies.get("auth_token")?.value || Astro.cookies.get("session")?.value;
+  if (!token) throw new Error("No token");
+
+  [roles, permissions, rolePermissions] = await Promise.all([
+    api.getRoles(token),
+    api.getPermissions(token),
+    api.getRolePermissions(token)
+  ]);
+} catch (e: any) {
+  console.error("Error fetching roles data:", e);
+  error = "No se pudieron cargar los datos de roles.";
+}
+---
+
+<DashboardLayout 
+  title="Roles y Permisos" 
+  description="Gestión dinámica de roles y matriz de acceso."
+  currentPath="/dashboard/roles/"
+>
+  {error ? (
+    <div class="p-4 text-destructive bg-destructive/10 rounded-md">{error}</div>
+  ) : (
+    <RolesMatrix 
+      client:load 
+      initialRoles={roles} 
+      initialPermissions={permissions} 
+      initialRolePermissions={rolePermissions} 
+    />
+  )}
+</DashboardLayout>

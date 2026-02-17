@@ -46,6 +46,13 @@ use utoipa_swagger_ui::SwaggerUi;
         api::handlers::user::get_stats,
         api::handlers::user::export_users,
         api::handlers::user::export_audit_logs,
+        api::handlers::user::change_password,
+        api::handlers::user::get_roles,
+        api::handlers::user::get_permissions,
+        api::handlers::user::get_role_permissions,
+        api::handlers::user::create_role,
+        api::handlers::user::update_role,
+        api::handlers::user::update_permission,
     ),
         components(schemas(
             core::models::user::User,
@@ -55,6 +62,13 @@ use utoipa_swagger_ui::SwaggerUi;
             core::models::user::Role,
             core::models::user::AuditLog,
             core::models::user::UserSearch,
+            core::models::user::ChangePasswordRequest,
+            core::models::user::DbRole,
+            core::models::user::Permission,
+            core::models::user::RolePermission,
+            core::models::user::CreateRoleRequest,
+            core::models::user::UpdateRoleRequest,
+            core::models::user::UpdatePermissionRequest,
         ))
     )]
 pub struct ApiDoc;
@@ -98,9 +112,13 @@ pub fn create_app(pool: SqlitePool) -> Router {
     let protected_routes = Router::new()
         .route("/users", get(api::handlers::user::get_users))
         .route("/users/:id/profile", put(api::handlers::user::update_user))
+        .route("/users/password", put(api::handlers::user::change_password))
         .route("/users/avatar", post(api::handlers::user::upload_avatar))
         .route("/send-verification-email", post(api::handlers::user::send_verification_email))
         .route("/dashboard", get(api::handlers::user::dashboard))
+        .route("/roles", get(api::handlers::user::get_roles))
+        .route("/permissions", get(api::handlers::user::get_permissions))
+        .route("/roles/permissions", get(api::handlers::user::get_role_permissions))
         .route("/stats", get(api::handlers::user::get_stats))
         .route_layer(middleware::from_fn(api::middleware::auth_guard));
 
@@ -110,6 +128,9 @@ pub fn create_app(pool: SqlitePool) -> Router {
             delete(api::handlers::user::delete_user)
             .get(api::handlers::user::get_user_by_id)) // Agregamos GET para ver detalle/editar
         .route("/users/export", get(api::handlers::user::export_users))
+        .route("/roles", post(api::handlers::user::create_role))
+        .route("/roles/:id", put(api::handlers::user::update_role).delete(api::handlers::user::delete_role))
+        .route("/permissions/:id", put(api::handlers::user::update_permission))
         .route("/audit-logs", get(api::handlers::user::get_audit_logs))
         .route("/audit-logs/export", get(api::handlers::user::export_audit_logs))
         .route_layer(middleware::from_fn(api::middleware::admin_guard));

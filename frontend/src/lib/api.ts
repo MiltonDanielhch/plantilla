@@ -6,7 +6,9 @@ import type {
   LoginRequest,
   UserSearch,
   PaginatedResponse,
-  StatsData 
+  StatsData,
+  Role, // Asumiendo que tienes tipos para esto, si no, usa any o crea la interfaz
+  Permission
 } from '../types'
 
 const API_BASE_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000'
@@ -208,7 +210,7 @@ class ApiClient {
     })
   }
 
-  async updateUser(id: number, data: { email?: string }, token?: string) {
+  async updateUser(id: number, data: { email?: string; role?: string }, token?: string) {
     const headers: Record<string, string> = {};
     if (token) {
         headers['Cookie'] = `auth_token=${token}`;
@@ -217,6 +219,70 @@ class ApiClient {
       method: 'PUT',
       headers,
       body: JSON.stringify(data)
+    })
+  }
+
+  async changePassword(data: { current_password: string; new_password: string }, token?: string) {
+    const headers: Record<string, string> = {};
+    if (token) {
+        headers['Cookie'] = `auth_token=${token}`;
+    }
+    return this.request<{ message: string }>('/api/v1/users/password', {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(data)
+    })
+  }
+
+  // RBAC
+  async getRoles(token?: string) {
+    const headers: Record<string, string> = {};
+    if (token) {
+        headers['Cookie'] = `auth_token=${token}`;
+    }
+    return this.request<any[]>('/api/v1/roles', { headers })
+  }
+
+  async getRolePermissions(token?: string) {
+    const headers: Record<string, string> = {};
+    if (token) {
+        headers['Cookie'] = `auth_token=${token}`;
+    }
+    return this.request<any[]>('/api/v1/roles/permissions', { headers })
+  }
+
+  async createRole(data: { name: string; description?: string; permissions: number[] }) {
+    return this.request<any>('/api/v1/roles', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    })
+  }
+
+  async updateRole(id: number, data: { name?: string; description?: string; permissions?: number[] }) {
+    return this.request<any>(`/api/v1/roles/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    })
+  }
+
+  async deleteRole(id: number) {
+    return this.request<void>(`/api/v1/roles/${id}`, {
+      method: 'DELETE'
+    })
+  }
+
+  async getPermissions(token?: string) {
+    const headers: Record<string, string> = {};
+    if (token) {
+        headers['Cookie'] = `auth_token=${token}`;
+    }
+    return this.request<any[]>('/api/v1/permissions', { headers })
+  }
+
+  async updatePermission(id: number, description: string) {
+    return this.request<any>(`/api/v1/permissions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ description })
     })
   }
 

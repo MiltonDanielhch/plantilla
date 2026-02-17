@@ -1,6 +1,6 @@
 use crate::core::models::user::{
-    AuditLog, Claims, CreateUserRequest, ForgotPasswordRequest, LoginRequest, RefreshRequest, 
-    ResetPasswordRequest, TokenResponse, User, UserSearch, VerifyEmailRequest,
+    AuditLog, ChangePasswordRequest, Claims, CreateRoleRequest, CreateUserRequest, DbRole, ForgotPasswordRequest, 
+    LoginRequest, Permission, RefreshRequest, ResetPasswordRequest, RolePermission, TokenResponse, UpdatePermissionRequest, UpdateRoleRequest, User, UserSearch, VerifyEmailRequest,
 };
 use crate::core::models::user::UpdateUserRequest;
 use crate::services::email::create_email_service;
@@ -376,8 +376,13 @@ pub async fn update_user(
         return Err(AppError::Forbidden("No puedes editar otros usuarios".to_string()));
     }
 
+    // Seguridad: Solo los administradores pueden cambiar el rol
+    if payload.role.is_some() && requester_role != crate::core::models::user::Role::Admin {
+        return Err(AppError::Forbidden("Solo los administradores pueden asignar roles".to_string()));
+    }
+
     let repo = SqliteRepository::new(pool);
-    let updated_user = repo.update_user(id, payload.email.as_deref()).await?;
+    let updated_user = repo.update_user(id, payload.email.as_deref(), payload.role).await?;
     
     Ok(Json(updated_user))
 }
@@ -873,4 +878,167 @@ pub async fn verify_email(
     Ok((StatusCode::OK, Json(json!({
         "message": "Email verificado correctamente"
     }))))
+}
+
+#[utoipa::path(
+    put,
+    path = "/api/v1/users/password",
+    request_body = ChangePasswordRequest,
+    responses(
+        (status = 200, description = "Contraseña actualizada"),
+        (status = 400, description = "Contraseña actual incorrecta"),
+        (status = 401, description = "No autenticado")
+    )
+)]
+pub async fn change_password(
+    State(pool): State<SqlitePool>,
+    cookies: Cookies,
+    Json(payload): Json<ChangePasswordRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    // 1. Validar inputs
+    if let Err(e) = payload.validate() {
+        return Err(AppError::Validation(format!("Datos inválidos: {}", e)));
+    }
+
+    // 2. Obtener usuario autenticado
+    let cookie = cookies.get("auth_token").ok_or(AppError::AuthError("No autenticado".to_string()))?;
+    let token_data = decode::<Claims>(
+        cookie.value(),
+        &DecodingKey::from_secret("secret".as_ref()),
+        &Validation::default(),
+    ).map_err(|_| AppError::AuthError("Token inválido".to_string()))?;
+
+    let user_id = token_data.claims.user_id;
+    let repo = SqliteRepository::new(pool);
+
+    // 3. Obtener usuario para verificar password actual
+    let user = repo.get_by_id(user_id).await?
+        .ok_or(AppError::NotFound("Usuario no encontrado".to_string()))?;
+
+    let parsed_hash = PasswordHash::new(&user.password_hash)
+        .map_err(|_| AppError::AuthError("Error verificando credenciales".to_string()))?;
+
+    if Argon2::default()
+        .verify_password(payload.current_password.as_bytes(), &parsed_hash)
+        .is_err()
+    {
+        return Err(AppError::Validation("La contraseña actual es incorrecta".to_string()));
+    }
+
+    // 4. Hashear nueva password
+    let salt = SaltString::generate(&mut rand::thread_rng());
+    let new_hash = Argon2::default()
+        .hash_password(payload.new_password.as_bytes(), &salt)
+        .map_err(|e| AppError::AuthError(format!("Error de seguridad: {}", e)))?
+        .to_string();
+
+    // 5. Actualizar en DB
+    repo.update_password(user_id, &new_hash).await?;
+
+    // 6. Revocar refresh tokens (opcional, pero recomendado por seguridad)
+    repo.revoke_user_refresh_tokens(user_id).await?;
+
+    Ok((StatusCode::OK, Json(json!({"message": "Contraseña actualizada correctamente"}))))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/roles",
+    responses(
+        (status = 200, description = "Lista de roles del sistema", body = Vec<DbRole>)
+    )
+)]
+pub async fn get_roles(State(pool): State<SqlitePool>) -> Result<Json<Vec<DbRole>>, AppError> {
+    let repo = SqliteRepository::new(pool);
+    let roles = repo.get_roles().await?;
+    Ok(Json(roles))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/permissions",
+    responses(
+        (status = 200, description = "Lista de permisos del sistema", body = Vec<Permission>)
+    )
+)]
+pub async fn get_permissions(State(pool): State<SqlitePool>) -> Result<Json<Vec<Permission>>, AppError> {
+    let repo = SqliteRepository::new(pool);
+    let permissions = repo.get_permissions().await?;
+    Ok(Json(permissions))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/roles/permissions",
+    responses(
+        (status = 200, description = "Asociaciones Rol-Permiso", body = Vec<RolePermission>)
+    )
+)]
+pub async fn get_role_permissions(State(pool): State<SqlitePool>) -> Result<Json<Vec<RolePermission>>, AppError> {
+    let repo = SqliteRepository::new(pool);
+    let rps = repo.get_role_permissions().await?;
+    Ok(Json(rps))
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/v1/roles",
+    request_body = CreateRoleRequest,
+    responses(
+        (status = 201, description = "Rol creado", body = DbRole),
+        (status = 409, description = "El rol ya existe")
+    )
+)]
+pub async fn create_role(
+    State(pool): State<SqlitePool>,
+    Json(payload): Json<CreateRoleRequest>,
+) -> Result<(StatusCode, Json<DbRole>), AppError> {
+    if let Err(e) = payload.validate() {
+        return Err(AppError::Validation(format!("Datos inválidos: {}", e)));
+    }
+    let repo = SqliteRepository::new(pool);
+    let role = repo.create_role(&payload.name, payload.description.as_deref(), &payload.permissions).await?;
+    Ok((StatusCode::CREATED, Json(role)))
+}
+
+#[utoipa::path(
+    put,
+    path = "/api/v1/roles/{id}",
+    request_body = UpdateRoleRequest,
+    responses(
+        (status = 200, description = "Rol actualizado", body = DbRole)
+    )
+)]
+pub async fn update_role(
+    State(pool): State<SqlitePool>,
+    Path(id): Path<i64>,
+    Json(payload): Json<UpdateRoleRequest>,
+) -> Result<Json<DbRole>, AppError> {
+    let repo = SqliteRepository::new(pool);
+    let role = repo.update_role(id, payload.name.as_deref(), payload.description.as_deref(), payload.permissions.as_deref()).await?;
+    Ok(Json(role))
+}
+
+pub async fn delete_role(State(pool): State<SqlitePool>, Path(id): Path<i64>) -> Result<StatusCode, AppError> {
+    let repo = SqliteRepository::new(pool);
+    repo.delete_role(id).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
+    put,
+    path = "/api/v1/permissions/{id}",
+    request_body = UpdatePermissionRequest,
+    responses(
+        (status = 200, description = "Permiso actualizado", body = Permission)
+    )
+)]
+pub async fn update_permission(
+    State(pool): State<SqlitePool>,
+    Path(id): Path<i64>,
+    Json(payload): Json<UpdatePermissionRequest>,
+) -> Result<Json<Permission>, AppError> {
+    let repo = SqliteRepository::new(pool);
+    let permission = repo.update_permission(id, &payload.description).await?;
+    Ok(Json(permission))
 }

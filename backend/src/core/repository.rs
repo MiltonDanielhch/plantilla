@@ -1,4 +1,4 @@
-use crate::core::models::user::{AuditLog, EmailVerificationToken, PasswordResetToken, RefreshToken, User};
+use crate::core::models::user::{AuditLog, DbRole, EmailVerificationToken, PasswordResetToken, Permission, RefreshToken, Role, RolePermission, User};
 use crate::error::AppError;
 use async_trait::async_trait;
 
@@ -17,7 +17,7 @@ pub trait UserRepository {
     async fn get_stats(&self) -> Result<(i64, i64, i64), AppError>;
     async fn delete_user(&self, id: i64, admin_username: &str) -> Result<(), AppError>;
     async fn get_audit_logs(&self) -> Result<Vec<AuditLog>, AppError>;
-    async fn update_user(&self, id: i64, email: Option<&str>) -> Result<User, AppError>;
+    async fn update_user(&self, id: i64, email: Option<&str>, role: Option<Role>) -> Result<User, AppError>;
     async fn update_avatar(&self, id: i64, avatar_url: &str) -> Result<User, AppError>;
     async fn update_password(&self, id: i64, password_hash: &str) -> Result<(), AppError>;
     async fn verify_email(&self, user_id: i64) -> Result<(), AppError>;
@@ -37,4 +37,13 @@ pub trait UserRepository {
     async fn create_email_verification_token(&self, user_id: i64, token: &str, expires_at: &str) -> Result<EmailVerificationToken, AppError>;
     async fn get_email_verification_token(&self, token: &str) -> Result<Option<EmailVerificationToken>, AppError>;
     async fn mark_email_verification_token_used(&self, token_id: i64) -> Result<(), AppError>;
+
+    // RBAC (Roles & Permissions)
+    async fn get_roles(&self) -> Result<Vec<DbRole>, AppError>;
+    async fn get_permissions(&self) -> Result<Vec<Permission>, AppError>;
+    async fn get_role_permissions(&self) -> Result<Vec<RolePermission>, AppError>;
+    async fn create_role(&self, name: &str, description: Option<&str>, permissions: &[i64]) -> Result<DbRole, AppError>;
+    async fn update_role(&self, id: i64, name: Option<&str>, description: Option<&str>, permissions: Option<&[i64]>) -> Result<DbRole, AppError>;
+    async fn delete_role(&self, id: i64) -> Result<(), AppError>;
+    async fn update_permission(&self, id: i64, description: &str) -> Result<Permission, AppError>;
 }

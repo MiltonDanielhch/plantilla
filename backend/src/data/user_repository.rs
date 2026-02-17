@@ -1,5 +1,5 @@
 use crate::core::{
-    models::user::{AuditLog, EmailVerificationToken, PasswordResetToken, RefreshToken, User},
+    models::user::{AuditLog, DbRole, EmailVerificationToken, PasswordResetToken, Permission, RefreshToken, Role, RolePermission, User},
     repository::UserRepository,
 };
 use crate::error::AppError;
@@ -146,17 +146,49 @@ impl UserRepository for SqliteRepository {
         .map_err(AppError::Database)
     }
 
-    async fn update_user(&self, id: i64, email: Option<&str>) -> Result<User, AppError> {
-        // Actualizamos solo el email por ahora. 
-        // COALESCE asegura que si pasamos NULL, no se borre (aunque aquí controlamos la lógica antes).
-        sqlx::query_as::<_, User>(
-            "UPDATE users SET email = $1, email_verified = FALSE WHERE id = $2 RETURNING id, username, email, password_hash, role, avatar_url, email_verified, created_at"
-        )
-        .bind(email)
-        .bind(id)
-        .fetch_one(&self.pool)
-        .await
-        .map_err(AppError::Database)
+    async fn update_user(&self, id: i64, email: Option<&str>, role: Option<Role>) -> Result<User, AppError> {
+        let mut tx = self.pool.begin().await.map_err(AppError::Database)?;
+        
+        // 1. Obtener usuario actual para preservar valores si vienen como None
+        let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(AppError::Database)?
+            .ok_or(AppError::NotFound("Usuario no encontrado".to_string()))?;
+
+        // 2. Determinar nuevos valores
+        let new_email = email.map(|s| s.to_string()).or(user.email.clone());
+        let new_role = role.unwrap_or(user.role);
+        
+        // 3. Si el email cambia, resetear email_verified a false
+        let email_changed = match (email, &user.email) {
+            (Some(new), Some(old)) => new != old,
+            (Some(_), None) => true,
+            _ => false,
+        };
+        let email_verified = if email_changed { false } else { user.email_verified };
+
+        // 4. Ejecutar Update
+        sqlx::query("UPDATE users SET email = $1, role = $2, email_verified = $3 WHERE id = $4")
+            .bind(&new_email)
+            .bind(new_role)
+            .bind(email_verified)
+            .bind(id)
+            .execute(&mut *tx)
+            .await
+            .map_err(AppError::Database)?;
+            
+        // 5. Retornar usuario actualizado
+        let updated_user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
+            .bind(id)
+            .fetch_one(&mut *tx)
+            .await
+            .map_err(AppError::Database)?;
+            
+        tx.commit().await.map_err(AppError::Database)?;
+        
+        Ok(updated_user)
     }
 
     async fn update_avatar(&self, id: i64, avatar_url: &str) -> Result<User, AppError> {
@@ -302,5 +334,107 @@ impl UserRepository for SqliteRepository {
             .await
             .map_err(AppError::Database)?;
         Ok(())
+    }
+
+    // RBAC Implementation
+    async fn get_roles(&self) -> Result<Vec<DbRole>, AppError> {
+        sqlx::query_as::<_, DbRole>("SELECT id, name, description, created_at FROM roles ORDER BY id")
+            .fetch_all(&self.pool)
+            .await
+            .map_err(AppError::Database)
+    }
+
+    async fn get_permissions(&self) -> Result<Vec<Permission>, AppError> {
+        sqlx::query_as::<_, Permission>(
+            "SELECT id, name, description, created_at FROM permissions ORDER BY name"
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(AppError::Database)
+    }
+
+    async fn get_role_permissions(&self) -> Result<Vec<RolePermission>, AppError> {
+        sqlx::query_as::<_, RolePermission>("SELECT role_id, permission_id FROM role_permissions")
+            .fetch_all(&self.pool)
+            .await
+            .map_err(AppError::Database)
+    }
+
+    async fn create_role(&self, name: &str, description: Option<&str>, permissions: &[i64]) -> Result<DbRole, AppError> {
+        let mut tx = self.pool.begin().await.map_err(AppError::Database)?;
+
+        let role = sqlx::query_as::<_, DbRole>(
+            "INSERT INTO roles (name, description) VALUES ($1, $2) RETURNING id, name, description, created_at"
+        )
+        .bind(name)
+        .bind(description)
+        .fetch_one(&mut *tx)
+        .await
+        .map_err(|e| {
+            if let Some(db_err) = e.as_database_error() {
+                if db_err.kind() == ErrorKind::UniqueViolation {
+                    return AppError::Conflict("El nombre del rol ya existe".to_string());
+                }
+            }
+            AppError::Database(e)
+        })?;
+
+        for perm_id in permissions {
+            sqlx::query("INSERT INTO role_permissions (role_id, permission_id) VALUES ($1, $2)")
+                .bind(role.id)
+                .bind(perm_id)
+                .execute(&mut *tx)
+                .await
+                .map_err(AppError::Database)?;
+        }
+
+        tx.commit().await.map_err(AppError::Database)?;
+        Ok(role)
+    }
+
+    async fn update_role(&self, id: i64, name: Option<&str>, description: Option<&str>, permissions: Option<&[i64]>) -> Result<DbRole, AppError> {
+        let mut tx = self.pool.begin().await.map_err(AppError::Database)?;
+
+        if name.is_some() || description.is_some() {
+            sqlx::query("UPDATE roles SET name = COALESCE($1, name), description = COALESCE($2, description) WHERE id = $3")
+                .bind(name)
+                .bind(description)
+                .bind(id)
+                .execute(&mut *tx)
+                .await
+                .map_err(AppError::Database)?;
+        }
+
+        if let Some(perms) = permissions {
+            sqlx::query("DELETE FROM role_permissions WHERE role_id = $1").bind(id).execute(&mut *tx).await.map_err(AppError::Database)?;
+            for perm_id in perms {
+                sqlx::query("INSERT INTO role_permissions (role_id, permission_id) VALUES ($1, $2)").bind(id).bind(perm_id).execute(&mut *tx).await.map_err(AppError::Database)?;
+            }
+        }
+
+        let role = sqlx::query_as::<_, DbRole>("SELECT id, name, description, created_at FROM roles WHERE id = $1")
+            .bind(id)
+            .fetch_one(&mut *tx)
+            .await
+            .map_err(AppError::Database)?;
+
+        tx.commit().await.map_err(AppError::Database)?;
+        Ok(role)
+    }
+
+    async fn delete_role(&self, id: i64) -> Result<(), AppError> {
+        sqlx::query("DELETE FROM roles WHERE id = $1").bind(id).execute(&self.pool).await.map_err(AppError::Database)?;
+        Ok(())
+    }
+
+    async fn update_permission(&self, id: i64, description: &str) -> Result<Permission, AppError> {
+        sqlx::query_as::<_, Permission>(
+            "UPDATE permissions SET description = $1 WHERE id = $2 RETURNING id, name, description, created_at"
+        )
+        .bind(description)
+        .bind(id)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(AppError::Database)
     }
 }

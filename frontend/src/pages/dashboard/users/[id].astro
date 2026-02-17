@@ -1,14 +1,16 @@
 ---
 import DashboardLayout from '../../../components/layout/dashboard-layout.astro';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../components/ui';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, Input } from '../../../components/ui';
 import Button from '../../../components/ui/button.astro';
 import { api } from '../../../lib/api';
 import type { User } from '../../../types';
+import { ArrowLeft } from 'lucide-react';
 
 export const prerender = false;
 
 const { id } = Astro.params;
 const userId = parseInt(id || '0');
+const currentUser = Astro.locals.user;
 
 let user: User | null = null;
 let error = null;
@@ -27,19 +29,21 @@ try {
 if (error) {
     return Astro.redirect('/dashboard/users');
 }
+
+const isAdmin = currentUser?.role === 'Admin';
 ---
 
 <DashboardLayout 
-  title="Editar Usuario" 
-  description={`Editando usuario #${userId}`}
+  title={`Editar Usuario: ${user?.username}`} 
+  description={`ID: ${user?.id} • Creado el ${user ? new Date(user.created_at).toLocaleDateString() : ''}`}
   currentPath="/dashboard/users/"
 >
-    <div class="max-w-2xl mx-auto">
-        <div class="mb-6">
-            <a href="/dashboard/users/" class="text-sm text-muted-foreground hover:text-primary flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                Volver a la lista
+    <div class="space-y-6 max-w-2xl mx-auto">
+        <div class="flex items-center gap-2">
+            <a href="/dashboard/users" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-9 w-9">
+                <ArrowLeft className="h-4 w-4" />
             </a>
+            <h1 class="text-2xl font-bold tracking-tight">Editar Usuario</h1>
         </div>
 
         <Card>
@@ -52,51 +56,44 @@ if (error) {
             <CardContent>
                 {user && (
                     <form id="edit-user-form" class="space-y-4" data-id={user.id}>
-                        <div class="grid gap-4 md:grid-cols-2">
-                            <div class="space-y-2">
-                                <label class="text-sm font-medium">ID</label>
-                                <input 
-                                    type="text" 
-                                    value={user.id} 
-                                    disabled 
-                                    class="h-10 w-full rounded-md border border-input bg-muted px-3 text-sm opacity-50"
-                                />
-                            </div>
-                            <div class="space-y-2">
-                                <label class="text-sm font-medium">Rol</label>
-                                <input 
-                                    type="text" 
-                                    value={user.role} 
-                                    disabled 
-                                    class="h-10 w-full rounded-md border border-input bg-muted px-3 text-sm opacity-50"
-                                />
-                                <p class="text-xs text-muted-foreground">El rol no se puede editar aquí.</p>
-                            </div>
-                        </div>
-
                         <div class="space-y-2">
                             <label class="text-sm font-medium">Nombre de Usuario</label>
-                            <input 
+                            <Input 
                                 type="text" 
                                 value={user.username} 
                                 disabled
-                                class="h-10 w-full rounded-md border border-input bg-muted px-3 text-sm opacity-50"
+                                class="bg-muted text-muted-foreground cursor-not-allowed"
                             />
+                            <p class="text-[0.8rem] text-muted-foreground">El nombre de usuario no se puede cambiar.</p>
                         </div>
 
                         <div class="space-y-2">
                             <label for="email" class="text-sm font-medium">Email</label>
-                            <input 
+                            <Input 
                                 type="email" 
                                 id="email" 
                                 name="email" 
                                 value={(user as any).email || ''} 
                                 placeholder="usuario@ejemplo.com"
-                                class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                             />
                         </div>
 
-                        <div class="flex justify-end pt-4">
+                        <div class="space-y-2">
+                            <label for="role" class="text-sm font-medium">Rol</label>
+                            <select 
+                                id="role" 
+                                name="role" 
+                                class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                disabled={!isAdmin}
+                            >
+                                <option value="User" selected={user.role === 'User'}>User</option>
+                                <option value="Admin" selected={user.role === 'Admin'}>Admin</option>
+                            </select>
+                            {!isAdmin && <p class="text-[0.8rem] text-muted-foreground">Solo los administradores pueden cambiar roles.</p>}
+                        </div>
+
+                        <div class="pt-4 flex justify-end gap-2">
+                            <Button variant="outline" type="button" onclick="history.back()">Cancelar</Button>
                             <Button type="submit" id="save-btn">Guardar Cambios</Button>
                         </div>
                     </form>
@@ -118,12 +115,13 @@ if (error) {
             e.preventDefault();
             const userId = parseInt(form.dataset.id || '0');
             const email = (document.getElementById('email') as HTMLInputElement).value;
+            const role = (document.getElementById('role') as HTMLSelectElement).value;
 
             saveBtn.disabled = true;
             saveBtn.textContent = 'Guardando...';
 
             try {
-                await api.updateUser(userId, { email });
+                await api.updateUser(userId, { email, role });
                 addToast({ type: 'success', message: 'Usuario actualizado correctamente' });
 
                 setTimeout(() => {

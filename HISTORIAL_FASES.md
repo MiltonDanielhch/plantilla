@@ -373,6 +373,25 @@ Este documento archiva el progreso detallado de las fases ya completadas para ma
 
 ---
 
+## ✅ Fases Completadas (V4.3 - Gestión Avanzada)
+
+### 👑 Fase 40: Gestión Avanzada (Roles y Edición)
+**Fecha:** 16 Feb 2026
+**Rama:** `feature/v4-dashboard`
+**Estado:** Completada al 100%
+
+#### 1. Gestión de Usuarios (CRUD Completo)
+- [x] **Edición de Usuarios:** Página `/dashboard/users/[id]` funcional con cambio de email y rol.
+- [x] **Cambio de Contraseña:** Endpoint y UI para cambio de clave interno en Settings.
+
+#### 2. Roles y Permisos (RBAC Dinámico)
+- [x] **Base de Datos:** Tablas `roles`, `permissions`, `role_permissions` implementadas.
+- [x] **API RBAC:** Endpoints para CRUD de roles y consulta de permisos.
+- [x] **UI de Roles:** Matriz de permisos interactiva en `/dashboard/roles`.
+- [x] **Gestión Visual:** Crear, editar y eliminar roles desde el dashboard.
+
+---
+
 ## ✅ Fases Completadas (V4.2 - UI Polish)
 
 ### 🎨 Fase 39: Mejoras Frontend / UI

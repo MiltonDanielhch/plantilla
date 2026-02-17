@@ -43,6 +43,7 @@ pub struct CreateUserRequest {
 pub struct UpdateUserRequest {
     #[validate(email(message = "Formato de email inválido"))]
     pub email: Option<String>,
+    pub role: Option<Role>,
     // Aquí podríamos agregar password o avatar en el futuro
 }
 
@@ -142,6 +143,55 @@ pub struct EmailVerificationToken {
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct VerifyEmailRequest {
     pub token: String,
+}
+
+#[derive(Debug, Deserialize, Validate, ToSchema)]
+pub struct ChangePasswordRequest {
+    pub current_password: String,
+    #[validate(length(min = 8, message = "La contraseña debe tener al menos 8 caracteres"))]
+    pub new_password: String,
+}
+
+#[derive(Debug, Serialize, FromRow, ToSchema)]
+pub struct DbRole {
+    pub id: i64,
+    pub name: String,
+    pub description: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Serialize, FromRow, ToSchema)]
+pub struct Permission {
+    pub id: i64,
+    pub name: String,
+    pub description: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Serialize, FromRow, ToSchema)]
+pub struct RolePermission {
+    pub role_id: i64,
+    pub permission_id: i64,
+}
+
+#[derive(Debug, Deserialize, Validate, ToSchema)]
+pub struct CreateRoleRequest {
+    #[validate(length(min = 3, message = "El nombre debe tener al menos 3 caracteres"))]
+    pub name: String,
+    pub description: Option<String>,
+    pub permissions: Vec<i64>,
+}
+
+#[derive(Debug, Deserialize, Validate, ToSchema)]
+pub struct UpdateRoleRequest {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub permissions: Option<Vec<i64>>,
+}
+
+#[derive(Debug, Deserialize, Validate, ToSchema)]
+pub struct UpdatePermissionRequest {
+    pub description: String,
 }
 
 #[cfg(test)]

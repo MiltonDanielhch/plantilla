@@ -545,7 +545,7 @@ export const prerender = false;
     })
     
     // Cambiar contraseña
-    document.getElementById('change-password-btn')?.addEventListener('click', () => {
+    document.getElementById('change-password-btn')?.addEventListener('click', async () => {
       const current = (document.getElementById('current-password') as HTMLInputElement)?.value
       const newPass = (document.getElementById('new-password') as HTMLInputElement)?.value
       const confirm = (document.getElementById('confirm-password') as HTMLInputElement)?.value
@@ -565,12 +565,26 @@ export const prerender = false;
         return
       }
       
-      showToast('Contraseña cambiada correctamente', 'success')
+      const btn = document.getElementById('change-password-btn') as HTMLButtonElement;
+      const originalText = btn.textContent || 'Cambiar contraseña';
       
-      // Limpiar campos
-      ;(document.getElementById('current-password') as HTMLInputElement).value = ''
-      ;(document.getElementById('new-password') as HTMLInputElement).value = ''
-      ;(document.getElementById('confirm-password') as HTMLInputElement).value = ''
+      try {
+        btn.disabled = true;
+        btn.textContent = 'Actualizando...';
+
+        await api.changePassword({ current_password: current, new_password: newPass });
+        showToast('Contraseña actualizada correctamente', 'success');
+        
+        // Limpiar campos
+        (document.getElementById('current-password') as HTMLInputElement).value = '';
+        (document.getElementById('new-password') as HTMLInputElement).value = '';
+        (document.getElementById('confirm-password') as HTMLInputElement).value = '';
+      } catch (error: any) {
+        showToast(error.message || 'Error al cambiar contraseña', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
     })
     
     // Eliminar cuenta
