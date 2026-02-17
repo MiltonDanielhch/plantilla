@@ -316,24 +316,32 @@ pub async fn delete_user(
     cookies: Cookies,
     Path(id): Path<i64>,
 ) -> Result<impl IntoResponse, AppError> {
-    // 1. Identificar al Admin (Auditoría)
-    // Aunque el middleware ya validó, necesitamos el username para el log.
-    let admin_username = if let Some(cookie) = cookies.get("auth_token") {
-        if let Ok(token_data) = decode::<Claims>(
-            cookie.value(),
-            &DecodingKey::from_secret("secret".as_ref()),
-            &Validation::default(),
-        ) {
-            token_data.claims.sub
-        } else {
-            "Desconocido".to_string()
-        }
-    } else {
-        "Desconocido".to_string()
-    };
+    // 1. Identificar al solicitante
+    let cookie = cookies.get("auth_token").ok_or(AppError::AuthError("No autenticado".to_string()))?;
+    let token_data = decode::<Claims>(
+        cookie.value(),
+        &DecodingKey::from_secret("secret".as_ref()),
+        &Validation::default(),
+    ).map_err(|_| AppError::AuthError("Token inválido".to_string()))?;
+
+    let requester_id = token_data.claims.user_id;
+    let requester_role = token_data.claims.role;
+    let requester_username = token_data.claims.sub;
+
+    // 2. Verificar permisos: Solo Admin o el mismo usuario pueden borrar
+    if requester_role != crate::core::models::user::Role::Admin && requester_id != id {
+        return Err(AppError::Forbidden("No tienes permiso para eliminar este usuario".to_string()));
+    }
 
     let repo = SqliteRepository::new(pool);
-    repo.delete_user(id, &admin_username).await?;
+    repo.delete_user(id, &requester_username).await?;
+
+    // Si el usuario se borró a sí mismo, limpiar cookie
+    if requester_id == id {
+        let mut cookie = Cookie::new("auth_token", "");
+        cookie.set_path("/");
+        cookies.remove(cookie);
+    }
 
     Ok((StatusCode::OK, Json(json!({"message": "Usuario eliminado y auditado"}))))
 }
@@ -1041,4 +1049,33 @@ pub async fn update_permission(
     let repo = SqliteRepository::new(pool);
     let permission = repo.update_permission(id, &payload.description).await?;
     Ok(Json(permission))
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/v1/logout-all",
+    responses(
+        (status = 200, description = "Todas las sesiones cerradas correctamente")
+    )
+)]
+pub async fn logout_all(
+    State(pool): State<SqlitePool>,
+    cookies: Cookies
+) -> Result<impl IntoResponse, AppError> {
+    let cookie = cookies.get("auth_token").ok_or(AppError::AuthError("No autenticado".to_string()))?;
+    let token_data = decode::<Claims>(
+        cookie.value(),
+        &DecodingKey::from_secret("secret".as_ref()),
+        &Validation::default(),
+    ).map_err(|_| AppError::AuthError("Token inválido".to_string()))?;
+
+    let repo = SqliteRepository::new(pool);
+    repo.revoke_user_refresh_tokens(token_data.claims.user_id).await?;
+
+    // Limpiar cookie actual también
+    let mut cookie = Cookie::new("auth_token", "");
+    cookie.set_path("/");
+    cookies.remove(cookie);
+
+    Ok((StatusCode::OK, Json(json!({"message": "Todas las sesiones han sido cerradas"}))))
 }

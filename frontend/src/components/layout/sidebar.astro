@@ -11,6 +11,9 @@ const { user } = Astro.locals
 
 const navItems = [
   { href: '/dashboard/', label: 'Dashboard', icon: 'home' },
+]
+
+const adminItems = [
   ...(isAdmin ? [
     { href: '/dashboard/users/', label: 'Usuarios', icon: 'users' },
     { href: '/dashboard/roles/', label: 'Roles y Permisos', icon: 'lock' },
@@ -25,17 +28,32 @@ const icons: Record<string, string> = {
   shield: 'M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.031-.057-2.062-.168-3.063A11.99 11.99 0 0020.401 6 11.959 11.959 0 0012 2.25z',
   settings: 'M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.212 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
   lock: 'M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z',
+  briefcase: 'M20.25 14.15v4.25c0 1.094-.887 1.994-1.981 2.002H5.731a1.992 1.992 0 0 1-1.981-2.002v-4.25m16.5 0H3.75m16.5 0v-4.5c0-1.094-.887-1.994-1.981-2.002H15.75v-1.5a2.25 2.25 0 0 0-2.25-2.25h-3a2.25 2.25 0 0 0-2.25 2.25v1.5H5.731a1.992 1.992 0 0 0-1.981 2.002v4.5',
+  chevronLeft: 'M15.75 19.5L8.25 12l7.5-7.5',
+  chevronDown: 'M19.5 8.25l-7.5 7.5-7.5-7.5',
 }
 ---
 
-<aside class="fixed left-0 top-0 z-40 h-screen w-64 border-r bg-card transition-transform md:translate-x-0">
+<aside 
+  id="sidebar"
+  class="fixed left-0 top-0 z-40 h-screen w-64 -translate-x-full border-r bg-card md:translate-x-0 data-[collapsed=true]:w-20"
+>
   <div class="flex h-full flex-col">
     <!-- Logo -->
-    <div class="flex h-16 items-center border-b px-6">
-      <a href="/dashboard/" class="flex items-center gap-2 font-bold text-xl">
+    <div class="flex h-16 items-center justify-between border-b px-6 data-[collapsed=true]:px-4" id="sidebar-header">
+      <a href="/dashboard/" class="flex items-center gap-2 font-bold text-xl overflow-hidden whitespace-nowrap">
         <span class="text-primary">Sintonía</span>
-        <span class="text-muted-foreground">3026</span>
+        <span class="text-muted-foreground sidebar-text">3026</span>
       </a>
+      <!-- Desktop Collapse Button -->
+      <button 
+        id="sidebar-toggle" 
+        class="hidden md:flex h-6 w-6 items-center justify-center rounded-md hover:bg-accent text-muted-foreground"
+      >
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d={icons.chevronLeft} />
+        </svg>
+      </button>
     </div>
     
     <!-- Navigation -->
@@ -44,14 +62,15 @@ const icons: Record<string, string> = {
         <a
           href={item.href}
           class={cn(
-            'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+            'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium group relative',
             currentPath === item.href
               ? 'bg-primary text-primary-foreground'
               : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
           )}
+          title={item.label}
         >
           <svg 
-            class="h-5 w-5" 
+            class="h-5 w-5 shrink-0" 
             fill="none" 
             viewBox="0 0 24 24" 
             stroke="currentColor" 
@@ -59,18 +78,59 @@ const icons: Record<string, string> = {
           >
             <path stroke-linecap="round" stroke-linejoin="round" d={icons[item.icon]} />
           </svg>
-          {item.label}
+          <span class="sidebar-text whitespace-nowrap overflow-hidden">{item.label}</span>
         </a>
       ))}
+
+      <!-- Group: Administrar -->
+      <div class="pt-4 mt-4 border-t border-border">
+        <details class="group/details" open>
+          <summary class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer select-none list-none transition-colors">
+            <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d={icons.briefcase} />
+            </svg>
+            <span class="sidebar-text flex-1 whitespace-nowrap overflow-hidden">Administrar</span>
+            <svg class="h-4 w-4 shrink-0 transition-transform group-open/details:rotate-180 sidebar-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d={icons.chevronDown} />
+            </svg>
+          </summary>
+          
+          <div class="mt-1 space-y-1 pl-0 md:pl-0 sidebar-submenu overflow-hidden">
+            {adminItems.map((item) => (
+              <a
+                href={item.href}
+                class={cn(
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium pl-10',
+                  currentPath === item.href
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                )}
+                title={item.label}
+              >
+                <svg 
+                  class="h-4 w-4 shrink-0" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor" 
+                  stroke-width="2"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" d={icons[item.icon]} />
+                </svg>
+                <span class="sidebar-text whitespace-nowrap overflow-hidden">{item.label}</span>
+              </a>
+            ))}
+          </div>
+        </details>
+      </div>
     </nav>
     
     <!-- Footer -->
     <div class="border-t p-4">
-      <a href="/dashboard/settings/" class="flex items-center gap-3 rounded-lg bg-muted px-3 py-2 hover:bg-accent transition-colors">
-        <div class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+      <a href="/dashboard/settings/" class="flex items-center gap-3 rounded-lg bg-muted px-3 py-2 hover:bg-accent overflow-hidden">
+        <div class="h-8 w-8 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
           <span class="text-sm font-medium">{user?.username?.charAt(0).toUpperCase() || 'U'}</span>
         </div>
-        <div class="flex-1 min-w-0">
+        <div class="flex-1 min-w-0 sidebar-text">
           <p class="text-sm font-medium truncate">{user?.username || 'Usuario'}</p>
           <p class="text-xs text-muted-foreground truncate">Ver perfil</p>
         </div>
@@ -80,4 +140,131 @@ const icons: Record<string, string> = {
 </aside>
 
 <!-- Mobile overlay -->
-<div class="fixed inset-0 z-30 bg-black/50 md:hidden" id="sidebar-overlay"></div>
+<div class="fixed inset-0 z-30 bg-black/50 hidden md:hidden" id="sidebar-overlay"></div>
+
+<script is:inline>
+  // Ejecutar inmediatamente para evitar parpadeos
+  (function() {
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    
+    // Recuperar estado
+    const savedState = localStorage.getItem('sidebar-collapsed') === 'true';
+    
+    if (savedState) {
+      // Aplicar estado colapsado INMEDIATAMENTE (sin animación)
+      sidebar?.setAttribute('data-collapsed', 'true');
+      sidebar?.classList.remove('w-64');
+      sidebar?.classList.add('w-20');
+      
+      // Rotar icono
+      sidebarToggle?.querySelector('svg')?.classList.add('rotate-180');
+      
+      // Ocultar textos
+      document.querySelectorAll('.sidebar-text').forEach(el => el.classList.add('hidden'));
+      
+      // Ajustar submenús
+      document.querySelectorAll('.sidebar-submenu a').forEach(el => {
+        el.classList.remove('pl-10');
+        el.classList.add('pl-2');
+        el.classList.add('justify-center');
+      });
+    }
+  })();
+
+  // Lógica diferida (Event Listeners y Transiciones)
+  document.addEventListener('DOMContentLoaded', () => {
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    const mobileMenuBtn = document.getElementById('mobile-menu-button');
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const mainContent = document.getElementById('main-content');
+
+    // Aplicar margen al contenido principal si está colapsado
+    const savedState = localStorage.getItem('sidebar-collapsed') === 'true';
+    if (savedState && mainContent) {
+      mainContent.classList.remove('md:ml-64');
+      mainContent.classList.add('md:ml-20');
+    }
+
+    // Habilitar transiciones después de un momento (para que los clicks futuros sí animen)
+    setTimeout(() => {
+      sidebar?.classList.add('transition-all', 'duration-300');
+      mainContent?.classList.add('transition-all', 'duration-300');
+      sidebarToggle?.querySelector('svg')?.classList.add('transition-transform', 'duration-300');
+      
+      document.querySelectorAll('.sidebar-text').forEach(el => el.classList.add('transition-all', 'duration-300'));
+      document.querySelectorAll('.sidebar-submenu').forEach(el => el.classList.add('transition-all', 'duration-300'));
+      document.querySelectorAll('nav a').forEach(el => el.classList.add('transition-colors'));
+    }, 100);
+
+    // Función Toggle (ahora sí con animación)
+    function toggleSidebar() {
+      const isCollapsed = sidebar?.getAttribute('data-collapsed') === 'true';
+      const newState = !isCollapsed;
+
+      if (newState) {
+        // Colapsar
+        sidebar?.setAttribute('data-collapsed', 'true');
+        sidebar?.classList.remove('w-64');
+        sidebar?.classList.add('w-20');
+        
+        if (mainContent) {
+          mainContent.classList.remove('md:ml-64');
+          mainContent.classList.add('md:ml-20');
+        }
+
+        sidebarToggle?.querySelector('svg')?.classList.add('rotate-180');
+        
+        document.querySelectorAll('.sidebar-text').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.sidebar-submenu a').forEach(el => {
+          el.classList.remove('pl-10');
+          el.classList.add('pl-2');
+          el.classList.add('justify-center');
+        });
+      } else {
+        // Expandir
+        sidebar?.setAttribute('data-collapsed', 'false');
+        sidebar?.classList.remove('w-20');
+        sidebar?.classList.add('w-64');
+        
+        if (mainContent) {
+          mainContent.classList.remove('md:ml-20');
+          mainContent.classList.add('md:ml-64');
+        }
+
+        sidebarToggle?.querySelector('svg')?.classList.remove('rotate-180');
+        
+        document.querySelectorAll('.sidebar-text').forEach(el => {
+          el.classList.remove('hidden');
+          el.classList.remove('w-0');
+          el.classList.remove('opacity-0');
+        });
+        
+        document.querySelectorAll('.sidebar-submenu a').forEach(el => {
+          el.classList.remove('pl-2');
+          el.classList.remove('justify-center');
+          el.classList.add('pl-10');
+        });
+      }
+      
+      localStorage.setItem('sidebar-collapsed', String(newState));
+    }
+
+    // Mobile Toggle
+    function toggleMobileMenu() {
+      const isClosed = sidebar?.classList.contains('-translate-x-full');
+      if (isClosed) {
+        sidebar?.classList.remove('-translate-x-full');
+        sidebarOverlay?.classList.remove('hidden');
+      } else {
+        sidebar?.classList.add('-translate-x-full');
+        sidebarOverlay?.classList.add('hidden');
+      }
+    }
+
+    mobileMenuBtn?.addEventListener('click', toggleMobileMenu);
+    sidebarOverlay?.addEventListener('click', toggleMobileMenu);
+    sidebarToggle?.addEventListener('click', toggleSidebar);
+  });
+</script>

@@ -53,6 +53,7 @@ use utoipa_swagger_ui::SwaggerUi;
         api::handlers::user::create_role,
         api::handlers::user::update_role,
         api::handlers::user::update_permission,
+        api::handlers::user::logout_all,
     ),
         components(schemas(
             core::models::user::User,
@@ -111,6 +112,7 @@ pub fn create_app(pool: SqlitePool) -> Router {
     // 2. Rutas Protegidas (Requieren Auth)
     let protected_routes = Router::new()
         .route("/users", get(api::handlers::user::get_users))
+        .route("/users/:id", delete(api::handlers::user::delete_user)) // Movido aquí
         .route("/users/:id/profile", put(api::handlers::user::update_user))
         .route("/users/password", put(api::handlers::user::change_password))
         .route("/users/avatar", post(api::handlers::user::upload_avatar))
@@ -120,13 +122,13 @@ pub fn create_app(pool: SqlitePool) -> Router {
         .route("/permissions", get(api::handlers::user::get_permissions))
         .route("/roles/permissions", get(api::handlers::user::get_role_permissions))
         .route("/stats", get(api::handlers::user::get_stats))
+        .route("/logout-all", post(api::handlers::user::logout_all))
         .route_layer(middleware::from_fn(api::middleware::auth_guard));
 
     // 3. Rutas Admin (Requieren Rol Admin)
     let admin_routes = Router::new()
         .route("/users/:id", 
-            delete(api::handlers::user::delete_user)
-            .get(api::handlers::user::get_user_by_id)) // Agregamos GET para ver detalle/editar
+            get(api::handlers::user::get_user_by_id)) // DELETE movido a protected
         .route("/users/export", get(api::handlers::user::export_users))
         .route("/roles", post(api::handlers::user::create_role))
         .route("/roles/:id", put(api::handlers::user::update_role).delete(api::handlers::user::delete_role))

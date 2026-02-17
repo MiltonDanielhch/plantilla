@@ -54,7 +54,7 @@ const isAdmin = user?.role === 'Admin';
   <div class="flex h-screen overflow-hidden">
     <Sidebar currentPath={currentPath} isAdmin={isAdmin} />
     
-    <div class="flex flex-1 flex-col overflow-hidden md:ml-64">
+    <div class="flex flex-1 flex-col overflow-hidden md:ml-64" id="main-content">
       <Header title={title} />
       
       <main class="flex-1 overflow-auto p-6">

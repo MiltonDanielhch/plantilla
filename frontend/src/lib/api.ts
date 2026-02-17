@@ -146,6 +146,13 @@ class ApiClient {
     window.location.href = '/login';
   }
 
+  async logoutAll() {
+    await this.request<void>('/api/v1/logout-all', { method: 'POST' })
+    this.setRefreshToken(null)
+    document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    window.location.href = '/login';
+  }
+
   async getDashboard() {
     return this.request<{ message: string; user: User }>('/api/v1/dashboard')
   }

@@ -588,17 +588,22 @@ export const prerender = false;
     })
     
     // Eliminar cuenta
-    document.getElementById('delete-account-btn')?.addEventListener('click', () => {
+    document.getElementById('delete-account-btn')?.addEventListener('click', async () => {
+      const id = (document.getElementById('id-input') as HTMLInputElement).value
       if (confirm('¿Estás seguro? Esta acción no se puede deshacer.')) {
-        showToast('Función no disponible - Contacta a un administrador', 'info')
+        try {
+          await api.deleteUser(parseInt(id))
+          window.location.href = '/login'
+        } catch (err: any) {
+          showToast(err.message || 'Error al eliminar cuenta', 'error')
+        }
       }
     })
     
     // Cerrar todas las sesiones
     document.getElementById('logout-all-btn')?.addEventListener('click', async () => {
       if (confirm('¿Cerrar todas las sesiones? Tendrás que iniciar sesión nuevamente.')) {
-        await api.logout()
-        window.location.href = '/login/'
+        await api.logoutAll()
       }
     })
     

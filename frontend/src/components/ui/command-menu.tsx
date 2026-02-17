@@ -1,18 +1,32 @@
 import * as React from "react"
-import { Command } from "cmdk"
 import { 
-  LayoutDashboard, 
-  Users, 
-  FileText, 
   Settings, 
-  LogOut, 
-  Search,
-  UserPlus
+  User,
+  LayoutDashboard,
+  LogOut,
+  Moon,
+  Sun,
+  Users,
+  Shield,
 } from "lucide-react"
-import { cn } from "../../lib/utils"
+
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "../../components/ui/command"
+import { api } from "../../lib/api"
 
 export function CommandMenu() {
   const [open, setOpen] = React.useState(false)
+  const [query, setQuery] = React.useState("")
+  const [users, setUsers] = React.useState<any[]>([])
+  const [roles, setRoles] = React.useState<any[]>([])
+  const [loading, setLoading] = React.useState(false)
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -26,87 +40,142 @@ export function CommandMenu() {
     return () => document.removeEventListener("keydown", down)
   }, [])
 
+  React.useEffect(() => {
+    const openMenu = () => setOpen(true)
+    document.addEventListener("open-command-menu", openMenu)
+    return () => document.removeEventListener("open-command-menu", openMenu)
+  }, [])
+
+  // Búsqueda dinámica
+  React.useEffect(() => {
+    if (query.length === 0) {
+        setUsers([])
+        setRoles([])
+        return
+    }
+    
+    const delayDebounceFn = setTimeout(async () => {
+      setLoading(true)
+      try {
+        // Buscar usuarios
+        const usersRes = await api.getUsers({ search: query, limit: 5 })
+        setUsers(usersRes.data || [])
+
+        // Buscar roles (filtrado en cliente)
+        const rolesRes = await api.getRoles()
+        const filteredRoles = (rolesRes || []).filter((r: any) => 
+            r.name.toLowerCase().includes(query.toLowerCase()) || 
+            (r.description && r.description.toLowerCase().includes(query.toLowerCase()))
+        )
+        setRoles(filteredRoles)
+      } catch (error) {
+        console.error(error)
+      } finally {
+        setLoading(false)
+      }
+    }, 300)
+
+    return () => clearTimeout(delayDebounceFn)
+  }, [query])
+
   const runCommand = React.useCallback((command: () => unknown) => {
     setOpen(false)
     command()
   }, [])
 
   return (
-    <>
-      <Command.Dialog
-        open={open}
-        onOpenChange={setOpen}
-        label="Global Command Menu"
-        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[640px] rounded-xl border bg-popover p-0 shadow-2xl text-popover-foreground z-[9999] overflow-hidden"
-      >
-        <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
-            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-            <Command.Input 
-                placeholder="Escribe un comando o busca..." 
-                className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 border-none focus:ring-0"
-            />
-        </div>
-        <Command.List className="max-h-[300px] overflow-y-auto overflow-x-hidden p-2">
-          <Command.Empty className="py-6 text-center text-sm">No se encontraron resultados.</Command.Empty>
-          
-          <Command.Group heading="Navegación">
-            <CommandItem onSelect={() => runCommand(() => window.location.href = '/dashboard')}>
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              <span>Dashboard</span>
-            </CommandItem>
-            <CommandItem onSelect={() => runCommand(() => window.location.href = '/dashboard/users')}>
-              <Users className="mr-2 h-4 w-4" />
-              <span>Usuarios</span>
-            </CommandItem>
-            <CommandItem onSelect={() => runCommand(() => window.location.href = '/dashboard/audit')}>
-              <FileText className="mr-2 h-4 w-4" />
-              <span>Auditoría</span>
-            </CommandItem>
-            <CommandItem onSelect={() => runCommand(() => window.location.href = '/dashboard/settings')}>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Configuración</span>
-            </CommandItem>
-          </Command.Group>
+    <CommandDialog open={open} onOpenChange={setOpen}>
+      <CommandInput placeholder="Escribe un comando o busca..." value={query} onValueChange={setQuery} />
+      <CommandList>
+        <CommandEmpty>No se encontraron resultados.</CommandEmpty>
+        
+        {/* Resultados de Roles */}
+        {roles.length > 0 && (
+            <CommandGroup heading="Roles">
+                {roles.map((role) => (
+                    <CommandItem
+                        key={role.id}
+                        onSelect={() => {
+                            runCommand(() => window.location.href = `/dashboard/roles`)
+                        }}
+                    >
+                        <Shield className="mr-2 h-4 w-4" />
+                        <span>{role.name}</span>
+                        <span className="ml-2 text-xs text-muted-foreground truncate">{role.description}</span>
+                    </CommandItem>
+                ))}
+            </CommandGroup>
+        )}
 
-          <Command.Separator className="-mx-1 h-px bg-border my-1" />
+        {/* Resultados de Usuarios */}
+        {users.length > 0 && (
+            <CommandGroup heading="Usuarios">
+                {users.map((user) => (
+                    <CommandItem
+                        key={user.id}
+                        onSelect={() => {
+                            runCommand(() => window.location.href = `/dashboard/users/${user.id}`)
+                        }}
+                    >
+                        <User className="mr-2 h-4 w-4" />
+                        <span>{user.username}</span>
+                        <span className="ml-2 text-xs text-muted-foreground">{user.email}</span>
+                    </CommandItem>
+                ))}
+            </CommandGroup>
+        )}
+        
+        {(users.length > 0 || roles.length > 0) && <CommandSeparator />}
 
-          <Command.Group heading="Acciones Rápidas">
-             <CommandItem onSelect={() => runCommand(() => window.location.href = '/register')}>
-              <UserPlus className="mr-2 h-4 w-4" />
-              <span>Nuevo Usuario</span>
+        <CommandGroup heading="Navegación">
+          <CommandItem onSelect={() => runCommand(() => window.location.href = '/dashboard')}>
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            <span>Dashboard</span>
+          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => window.location.href = '/dashboard/users')}>
+            <Users className="mr-2 h-4 w-4" />
+            <span>Usuarios</span>
+          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => window.location.href = '/dashboard/audit')}>
+            <Shield className="mr-2 h-4 w-4" />
+            <span>Auditoría</span>
+          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => window.location.href = '/dashboard/settings')}>
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Configuración</span>
+          </CommandItem>
+        </CommandGroup>
+        
+        <CommandSeparator />
+        
+        <CommandGroup heading="Tema">
+          <CommandItem onSelect={() => runCommand(() => {
+              document.documentElement.classList.remove('dark')
+              localStorage.setItem('theme', 'light')
+          })}>
+            <Sun className="mr-2 h-4 w-4" />
+            <span>Claro</span>
+          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => {
+              document.documentElement.classList.add('dark')
+              localStorage.setItem('theme', 'dark')
+          })}>
+            <Moon className="mr-2 h-4 w-4" />
+            <span>Oscuro</span>
+          </CommandItem>
+        </CommandGroup>
+
+        <CommandSeparator />
+
+        <CommandGroup heading="Cuenta">
+            <CommandItem onSelect={() => runCommand(async () => {
+                await api.logout()
+            })}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Cerrar Sesión</span>
             </CommandItem>
-          </Command.Group>
-
-          <Command.Separator className="-mx-1 h-px bg-border my-1" />
-
-          <Command.Group heading="Cuenta">
-            <CommandItem 
-                onSelect={() => runCommand(() => {
-                    document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
-                    window.location.href = '/login';
-                })}
-                className="text-destructive aria-selected:text-destructive"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Cerrar Sesión</span>
-            </CommandItem>
-          </Command.Group>
-        </Command.List>
-      </Command.Dialog>
-    </>
+        </CommandGroup>
+      </CommandList>
+    </CommandDialog>
   )
-}
-
-function CommandItem({ children, className, ...props }: any) {
-    return (
-        <Command.Item 
-            className={cn(
-                "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 cursor-pointer", 
-                className
-            )}
-            {...props}
-        >
-            {children}
-        </Command.Item>
-    )
 }
