@@ -7,11 +7,11 @@ import type {
   UserSearch,
   PaginatedResponse,
   StatsData,
-  Role, // Asumiendo que tienes tipos para esto, si no, usa any o crea la interfaz
+  Role,
   Permission
 } from '../types'
 
-const API_BASE_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000'
+export const API_BASE_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000'
 
 class ApiError extends Error {
   constructor(public message: string, public status: number) {
@@ -247,7 +247,7 @@ class ApiClient {
     if (token) {
         headers['Cookie'] = `auth_token=${token}`;
     }
-    return this.request<any[]>('/api/v1/roles', { headers })
+    return this.request<Role[]>('/api/v1/roles', { headers })
   }
 
   async getRolePermissions(token?: string) {
@@ -259,14 +259,14 @@ class ApiClient {
   }
 
   async createRole(data: { name: string; description?: string; permissions: number[] }) {
-    return this.request<any>('/api/v1/roles', {
+    return this.request<Role>('/api/v1/roles', {
       method: 'POST',
       body: JSON.stringify(data)
     })
   }
 
   async updateRole(id: number, data: { name?: string; description?: string; permissions?: number[] }) {
-    return this.request<any>(`/api/v1/roles/${id}`, {
+    return this.request<Role>(`/api/v1/roles/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data)
     })
@@ -283,11 +283,11 @@ class ApiClient {
     if (token) {
         headers['Cookie'] = `auth_token=${token}`;
     }
-    return this.request<any[]>('/api/v1/permissions', { headers })
+    return this.request<Permission[]>('/api/v1/permissions', { headers })
   }
 
   async updatePermission(id: number, description: string) {
-    return this.request<any>(`/api/v1/permissions/${id}`, {
+    return this.request<Permission>(`/api/v1/permissions/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ description })
     })

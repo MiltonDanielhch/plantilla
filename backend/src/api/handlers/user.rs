@@ -1,6 +1,6 @@
 use crate::core::models::user::{
     AuditLog, ChangePasswordRequest, Claims, CreateRoleRequest, CreateUserRequest, DbRole, ForgotPasswordRequest, 
-    LoginRequest, Permission, RefreshRequest, ResetPasswordRequest, RolePermission, TokenResponse, UpdatePermissionRequest, UpdateRoleRequest, User, UserSearch, VerifyEmailRequest,
+    LoginRequest, Permission, RefreshRequest, ResetPasswordRequest, RolePermission, TokenResponse, UpdatePermissionRequest, UpdateRoleRequest, User, UserSearch,
 };
 use crate::core::models::user::UpdateUserRequest;
 use crate::services::email::create_email_service;
@@ -67,7 +67,7 @@ pub async fn create_user(
             .timestamp();
         
         // Guardar token en base de datos
-        let expires_at = chrono::NaiveDateTime::from_timestamp(expiration, 0)
+        let expires_at = chrono::DateTime::from_timestamp(expiration, 0).unwrap().naive_utc()
             .format("%Y-%m-%d %H:%M:%S")
             .to_string();
         
@@ -221,7 +221,7 @@ pub async fn login(
         repo.create_refresh_token(
             user_id,
             &refresh_token_str,
-            &chrono::NaiveDateTime::from_timestamp(refresh_expiration, 0)
+            &chrono::DateTime::from_timestamp(refresh_expiration, 0).unwrap().naive_utc()
                 .format("%Y-%m-%d %H:%M:%S")
                 .to_string()
         ).await?;
@@ -271,7 +271,10 @@ pub async fn logout(cookies: Cookies) -> impl IntoResponse {
         (status = 200, description = "Información del usuario actual")
     )
 )]
-pub async fn dashboard(cookies: Cookies) -> Result<impl IntoResponse, AppError> {
+pub async fn dashboard(
+    State(pool): State<SqlitePool>,
+    cookies: Cookies
+) -> Result<impl IntoResponse, AppError> {
     let cookie = cookies
         .get("auth_token")
         .map(|c| c.value().to_string())
@@ -285,17 +288,19 @@ pub async fn dashboard(cookies: Cookies) -> Result<impl IntoResponse, AppError> 
     );
 
     match token_data {
-        Ok(c) => Ok((
-            StatusCode::OK,
-            Json(json!({
-                "user": {
-                    "id": c.claims.user_id,
-                    "username": c.claims.sub,
-                    "role": c.claims.role
-                },
-                "message": format!("🔐 Panel de Control | Agente: {} | Rango: {:?}", c.claims.sub, c.claims.role)
-            })),
-        )),
+        Ok(c) => {
+            let repo = SqliteRepository::new(pool);
+            let user = repo.get_by_id(c.claims.user_id).await?
+                .ok_or(AppError::NotFound("Usuario no encontrado".to_string()))?;
+
+            Ok((
+                StatusCode::OK,
+                Json(json!({
+                    "user": user,
+                    "message": format!("🔐 Panel de Control | Agente: {} | Rango: {:?}", user.username, user.role)
+                })),
+            ))
+        },
         Err(_) => Err(AppError::AuthError(
             "Sesión inválida o expirada".to_string(),
         )),
@@ -523,7 +528,7 @@ pub async fn upload_avatar(
     // 2. Procesar el archivo
     let mut file_data: Option<(String, Vec<u8>, String)> = None;
     
-    while let Some(mut field) = multipart.next_field().await
+    while let Some(field) = multipart.next_field().await
         .map_err(|e| AppError::Validation(format!("Error leyendo formulario: {}", e)))? 
     {
         let name = field.name().unwrap_or("").to_string();
@@ -646,7 +651,7 @@ pub async fn refresh_token(
     let new_refresh = repo.create_refresh_token(
         user.id, 
         &refresh_token_str,
-        &chrono::NaiveDateTime::from_timestamp(refresh_expiration, 0)
+        &chrono::DateTime::from_timestamp(refresh_expiration, 0).unwrap().naive_utc()
             .format("%Y-%m-%d %H:%M:%S")
             .to_string()
     ).await?;
@@ -704,7 +709,7 @@ pub async fn forgot_password(
         .timestamp();
     
     // Guardar token en base de datos
-    let expires_at = chrono::NaiveDateTime::from_timestamp(expiration, 0)
+    let expires_at = chrono::DateTime::from_timestamp(expiration, 0).unwrap().naive_utc()
         .format("%Y-%m-%d %H:%M:%S")
         .to_string();
     
@@ -822,7 +827,7 @@ pub async fn send_verification_email(
         .timestamp();
     
     // Guardar token en base de datos
-    let expires_at = chrono::NaiveDateTime::from_timestamp(expiration, 0)
+    let expires_at = chrono::DateTime::from_timestamp(expiration, 0).unwrap().naive_utc()
         .format("%Y-%m-%d %H:%M:%S")
         .to_string();
     

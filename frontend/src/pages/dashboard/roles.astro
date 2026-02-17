@@ -2,12 +2,13 @@
 import DashboardLayout from '../../components/layout/dashboard-layout.astro';
 import { RolesMatrix } from '../../components/dashboard/roles/roles-matrix';
 import { api } from '../../lib/api';
+import type { Role, Permission } from '../../types';
 
 export const prerender = false;
 
-let roles = [];
-let permissions = [];
-let rolePermissions = [];
+let roles: Role[] = [];
+let permissions: Permission[] = [];
+let rolePermissions: any[] = [];
 let error = null;
 
 try {

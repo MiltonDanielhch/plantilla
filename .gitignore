@@ -1,13 +1,62 @@
-# Secretos y variables de entorno
+# ==========================================
+# 🛠️ .gitignore Maestro - Proyecto 3026
+# ==========================================
+
+# --- Secretos y Configuración ---
 .env
+.env.local
+.env.production
+.env*.local
+!.env.example
 
-# Guía de desarrollo y manuales
-guia/
+# --- Sistema Operativo e IDEs ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
 
-# Artefactos de compilación de Rust
-target/
-
-# Dependencias de Node.js
-node_modules/
-
+# --- Documentación y Archivos Temporales ---
 1.md
+archive/
+guia/
+falta.md
+buscar*.md
+
+# --- BACKEND (Rust & Python) ---
+backend/target/
+backend/backend.db
+backend/backend.db-journal
+backend/uploads/
+# Si usas sqlx offline mode
+backend/.sqlx/
+
+# Python cache
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# --- FRONTEND (Astro & Node) ---
+frontend/node_modules/
+frontend/dist/
+frontend/.astro/
+frontend/package-lock.json
+# Logs de Node
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# --- Testing (Playwright) ---
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
+frontend/playwright/.cache/
+frontend/playwright/.auth/
+
+# --- INFRAESTRUCTURA & DOCKER ---
+.docker/
+uploads/

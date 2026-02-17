@@ -7,6 +7,7 @@ interface EmptyStateProps extends React.HTMLAttributes<HTMLDivElement> {
   description?: string
   icon?: React.ElementType
   action?: React.ReactNode
+  className?: string
 }
 
 export function EmptyState({
@@ -15,6 +16,7 @@ export function EmptyState({
   icon: Icon = FileX2,
   action,
   className,
+  children,
   ...props
 }: EmptyStateProps) {
   return (
@@ -34,6 +36,7 @@ export function EmptyState({
           {description}
         </p>
       )}
+      {children}
       {action && <div className="mt-6">{action}</div>}
     </div>
   )

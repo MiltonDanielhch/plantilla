@@ -6,10 +6,25 @@ export interface User {
   email?: string
   role: 'Admin' | 'User'
   created_at?: string
+  avatar_url?: string
+  email_verified?: boolean
 }
 
 export interface UserDetails extends User {
   // Hereda todas las propiedades de User
+}
+
+export interface Role {
+  id: number
+  name: string
+  description?: string
+  permissions?: Permission[]
+}
+
+export interface Permission {
+  id: number
+  name: string
+  description?: string
 }
 
 export interface AuditLog {

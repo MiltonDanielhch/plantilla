@@ -12,10 +12,21 @@ run-backend:
 run-frontend:
     cd frontend; npm run dev
 
+# 🔍 Auditoría Maestro (Ejecuta tu script de consultoría)
+audit:
+    Write-Host "🌀 Activando Sintonía: Analizando arquitectura..." -ForegroundColor Magenta
+    python infra/scripts/consultor.py
+
 # 🧹 Verificar Calidad de Código (Lint & Format)
 check:
     Write-Host "🦀 Verificando Backend..." -ForegroundColor Cyan
     cd backend; cargo fmt; cargo clippy
     Write-Host "🎨 Verificando Frontend..." -ForegroundColor Cyan
     cd frontend; npm run lint
-    Write-Host "✅ Todo limpio." -ForegroundColor Green
+    just audit
+    Write-Host "✅ Todo limpio y auditado." -ForegroundColor Green
+
+# 🛡️ Escudo de Seguridad (Shield)
+shield:
+    Write-Host "🛡️ Escaneando secretos y API Keys..." -ForegroundColor Yellow
+    python infra/scripts/shield.py

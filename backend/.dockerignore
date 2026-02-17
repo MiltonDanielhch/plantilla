@@ -1,7 +1,38 @@
+# --- Artefactos de Rust (El mayor ahorro de espacio) ---
 target/
-backend.db
-backend.db-shm
-backend.db-wal
+**/*.rs.bk
+debug/
+release/
+
+# --- Base de Datos (Seguridad y Sintonía) ---
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-journal
+
+# --- Configuración y Secretos ---
 .env
+.env.*
+!.env.example
+config/local.toml
+
+# --- Python & Herramientas de Soporte ---
+**/__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# --- Git y Documentación ---
 .git
-node_modules
+.github
+.gitignore
+.dockerignore
+docs/
+README.md
+
+# --- Otros ---
+Dockerfile
+node_modules/
+uploads/

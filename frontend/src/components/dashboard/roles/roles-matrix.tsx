@@ -201,7 +201,7 @@ export function RolesMatrix({ initialRoles, initialPermissions, initialRolePermi
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-125">
           <DialogHeader>
             <DialogTitle>{editingRole ? 'Editar Rol' : 'Crear Nuevo Rol'}</DialogTitle>
             <DialogDescription>Configura el nombre y los permisos del rol.</DialogDescription>
@@ -217,7 +217,7 @@ export function RolesMatrix({ initialRoles, initialPermissions, initialRolePermi
             </div>
             <div className="grid gap-2">
               <label className="text-sm font-medium mb-2">Permisos</label>
-              <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto border p-2 rounded-md">
+              <div className="grid grid-cols-2 gap-2 max-h-50 overflow-y-auto border p-2 rounded-md">
                 {initialPermissions.map(perm => (
                   <div key={perm.id} className="flex items-center space-x-2">
                     <input type="checkbox" id={`perm-${perm.id}`} checked={formData.permissions.includes(perm.id)} onChange={() => togglePermission(perm.id)} className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" />
@@ -234,7 +234,7 @@ export function RolesMatrix({ initialRoles, initialPermissions, initialRolePermi
       </Dialog>
 
       <Dialog open={isPermDialogOpen} onOpenChange={setIsPermDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-106.25">
           <DialogHeader>
             <DialogTitle>Editar Permiso: {editingPermission?.name}</DialogTitle>
             <DialogDescription>Actualiza la descripción para que sea más clara para los usuarios.</DialogDescription>

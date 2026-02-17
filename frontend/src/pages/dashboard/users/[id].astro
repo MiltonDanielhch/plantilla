@@ -35,7 +35,7 @@ const isAdmin = currentUser?.role === 'Admin';
 
 <DashboardLayout 
   title={`Editar Usuario: ${user?.username}`} 
-  description={`ID: ${user?.id} • Creado el ${user ? new Date(user.created_at).toLocaleDateString() : ''}`}
+  description={`ID: ${user?.id} • Creado el ${user?.created_at ? new Date(user.created_at).toLocaleDateString() : ''}`}
   currentPath="/dashboard/users/"
 >
     <div class="space-y-6 max-w-2xl mx-auto">
@@ -93,7 +93,7 @@ const isAdmin = currentUser?.role === 'Admin';
                         </div>
 
                         <div class="pt-4 flex justify-end gap-2">
-                            <Button variant="outline" type="button" onclick="history.back()">Cancelar</Button>
+                            <Button variant="outline" type="button" id="cancel-btn">Cancelar</Button>
                             <Button type="submit" id="save-btn">Guardar Cambios</Button>
                         </div>
                     </form>
@@ -109,6 +109,7 @@ const isAdmin = currentUser?.role === 'Admin';
 
     const form = document.getElementById('edit-user-form') as HTMLFormElement;
     const saveBtn = document.getElementById('save-btn') as HTMLButtonElement;
+    const cancelBtn = document.getElementById('cancel-btn');
 
     if (form) {
         form.addEventListener('submit', async (e) => {
@@ -134,5 +135,9 @@ const isAdmin = currentUser?.role === 'Admin';
                 saveBtn.textContent = 'Guardar Cambios';
             }
         });
+    }
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => history.back());
     }
 </script>

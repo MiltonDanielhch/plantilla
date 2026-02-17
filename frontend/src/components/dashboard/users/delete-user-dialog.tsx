@@ -40,7 +40,7 @@ export function DeleteUserDialog({ userId, username }: DeleteUserDialogProps) {
            Eliminar
         </button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-106.25">
         <DialogHeader>
           <DialogTitle>¿Eliminar usuario?</DialogTitle>
           <DialogDescription>
