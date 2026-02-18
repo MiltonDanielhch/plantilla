@@ -76,7 +76,7 @@ async fn test_login_flow() {
         .oneshot(
             Request::builder()
                 .method("POST")
-                .uri("/users")
+                .uri("/api/v1/users")
                 .header("content-type", "application/json")
                 .extension(ConnectInfo(SocketAddr::new(
                     IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
@@ -98,7 +98,7 @@ async fn test_login_flow() {
         .oneshot(
             Request::builder()
                 .method("POST")
-                .uri("/login")
+                .uri("/api/v1/login")
                 .header("content-type", "application/json")
                 .extension(ConnectInfo(SocketAddr::new(
                     IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
@@ -142,7 +142,7 @@ async fn test_delete_user_rbac_protection() {
         .oneshot(
             Request::builder()
                 .method("POST")
-                .uri("/users")
+                .uri("/api/v1/users")
                 .header("content-type", "application/json")
                 .extension(ConnectInfo(SocketAddr::new(
                     IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
@@ -165,7 +165,7 @@ async fn test_delete_user_rbac_protection() {
         .oneshot(
             Request::builder()
                 .method("POST")
-                .uri("/users")
+                .uri("/api/v1/users")
                 .header("content-type", "application/json")
                 .extension(ConnectInfo(SocketAddr::new(
                     IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
@@ -188,7 +188,7 @@ async fn test_delete_user_rbac_protection() {
         .oneshot(
             Request::builder()
                 .method("POST")
-                .uri("/login")
+                .uri("/api/v1/login")
                 .header("content-type", "application/json")
                 .extension(ConnectInfo(SocketAddr::new(
                     IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
@@ -219,7 +219,7 @@ async fn test_delete_user_rbac_protection() {
         .oneshot(
             Request::builder()
                 .method("DELETE")
-                .uri("/users/1")
+                .uri("/api/v1/users/1")
                 .header("cookie", cookie)
                 .extension(ConnectInfo(SocketAddr::new(
                     IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
@@ -279,37 +279,68 @@ async fn test_pagination() {
         .expect("Fallo Migrations");
     let app = create_app(pool);
 
-    // 2. Crear 2 Usuarios
-    for i in 1..=2 {
-        let _ = app
-            .clone()
-            .oneshot(
-                Request::builder()
-                    .method("POST")
-                    .uri("/users")
-                    .header("content-type", "application/json")
-                    .extension(ConnectInfo(SocketAddr::new(
-                        IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
-                        8080,
-                    )))
-                    .body(Body::from(
-                        json!({
-                            "username": format!("user_{}", i),
-                            "password": "password123"
-                        })
-                        .to_string(),
-                    ))
-                    .unwrap(),
-            )
-            .await;
-    }
+    // 2. Crear Usuario
+    let _ = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/v1/users")
+                .header("content-type", "application/json")
+                .extension(ConnectInfo(SocketAddr::new(
+                    IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
+                    8080,
+                )))
+                .body(Body::from(
+                    json!({
+                        "username": "pagination_user",
+                        "password": "password123"
+                    })
+                    .to_string(),
+                ))
+                .unwrap(),
+        )
+        .await;
 
-    // 3. Pedir lista con limit=1
+    // 3. Login para obtener cookie
+    let login_response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/v1/login")
+                .header("content-type", "application/json")
+                .extension(ConnectInfo(SocketAddr::new(
+                    IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
+                    8080,
+                )))
+                .body(Body::from(
+                    json!({
+                        "username": "pagination_user",
+                        "password": "password123"
+                    })
+                    .to_string(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    let cookie = login_response
+        .headers()
+        .get("set-cookie")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
+
+    // 4. Pedir lista con limit=1
     let response = app
         .oneshot(
             Request::builder()
                 .method("GET")
-                .uri("/users?page=1&limit=1")
+                .uri("/api/v1/users?page=1&limit=1")
+                .header("cookie", cookie)
                 .extension(ConnectInfo(SocketAddr::new(
                     IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
                     8080,
@@ -322,8 +353,11 @@ async fn test_pagination() {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    // 4. Verificar que solo devuelve 1
+    // 5. Verificar estructura de respuesta paginada
     let body_bytes = response.into_body().collect().await.unwrap().to_bytes();
-    let users: Vec<Value> = serde_json::from_slice(&body_bytes).unwrap();
-    assert_eq!(users.len(), 1);
+    let body_json: Value = serde_json::from_slice(&body_bytes).unwrap();
+    
+    // La respuesta ahora tiene formato { data: [...], meta: {...} }
+    assert!(body_json.get("data").is_some());
+    assert!(body_json.get("meta").is_some());
 }

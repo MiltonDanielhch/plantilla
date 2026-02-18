@@ -1,9 +1,20 @@
+use crate::core::container::AppState;
 use crate::core::models::user::{Claims, Role};
-use axum::{extract::Request, http::StatusCode, middleware::Next, response::Response};
+use axum::{
+    extract::{Request, State},
+    http::StatusCode,
+    middleware::Next,
+    response::Response,
+};
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use tower_cookies::Cookies;
 
+/// Middleware que verifica autenticación
+/// 
+/// Extrae el token de las cookies y valida que sea válido
+/// No requiere acceso a la base de datos, solo validación JWT
 pub async fn auth_guard(
+    State(state): State<AppState>,
     cookies: Cookies,
     req: Request,
     next: Next,
@@ -13,7 +24,7 @@ pub async fn auth_guard(
         // Validar que el token sea real y no haya expirado
         let validation = decode::<Claims>(
             cookie.value(),
-            &DecodingKey::from_secret("secret".as_ref()),
+            &DecodingKey::from_secret(state.container().jwt_secret().as_bytes()),
             &Validation::default(),
         );
 
@@ -25,7 +36,12 @@ pub async fn auth_guard(
     Err(StatusCode::UNAUTHORIZED)
 }
 
+/// Middleware que verifica permisos de administrador
+/// 
+/// Extrae el token, lo valida y verifica que el rol sea Admin
+/// No requiere acceso a la base de datos, solo validación JWT
 pub async fn admin_guard(
+    State(state): State<AppState>,
     cookies: Cookies,
     req: Request,
     next: Next,
@@ -36,7 +52,7 @@ pub async fn admin_guard(
         Some(t) => {
             let token_data = decode::<Claims>(
                 &t,
-                &DecodingKey::from_secret("secret".as_ref()),
+                &DecodingKey::from_secret(state.container().jwt_secret().as_bytes()),
                 &Validation::default(),
             );
 

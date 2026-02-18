@@ -124,9 +124,10 @@ pub struct ForgotPasswordRequest {
     pub email: String,
 }
 
-#[derive(Debug, Deserialize, ToSchema)]
+#[derive(Debug, Deserialize, ToSchema, Validate)]
 pub struct ResetPasswordRequest {
     pub token: String,
+    #[validate(length(min = 8, message = "La contraseña debe tener al menos 8 caracteres"))]
     pub new_password: String,
 }
 

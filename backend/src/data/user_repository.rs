@@ -1,23 +1,21 @@
-use crate::core::{
-    models::user::{AuditLog, DbRole, EmailVerificationToken, PasswordResetToken, Permission, RefreshToken, Role, RolePermission, User},
-    repository::UserRepository,
-};
+use crate::core::models::user::{Role, User};
+use crate::core::repository::UserRepository;
 use crate::error::AppError;
 use async_trait::async_trait;
 use sqlx::{error::ErrorKind, SqlitePool};
 
-pub struct SqliteRepository {
+pub struct SqliteUserRepository {
     pool: SqlitePool,
 }
 
-impl SqliteRepository {
+impl SqliteUserRepository {
     pub fn new(pool: SqlitePool) -> Self {
         Self { pool }
     }
 }
 
 #[async_trait]
-impl UserRepository for SqliteRepository {
+impl UserRepository for SqliteUserRepository {
     async fn create_user(&self, username: &str, password_hash: &str, email: Option<&str>) -> Result<User, AppError> {
         let result = sqlx::query_as::<_, User>(
             "INSERT INTO users (username, password_hash, email) VALUES ($1, $2, $3) RETURNING id, username, email, password_hash, role, avatar_url, email_verified, created_at"
@@ -58,6 +56,16 @@ impl UserRepository for SqliteRepository {
             "SELECT id, username, email, password_hash, role, avatar_url, email_verified, created_at FROM users WHERE id = $1",
         )
         .bind(id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(AppError::Database)
+    }
+
+    async fn get_by_email(&self, email: &str) -> Result<Option<User>, AppError> {
+        sqlx::query_as::<_, User>(
+            "SELECT id, username, email, password_hash, role, avatar_url, email_verified, created_at FROM users WHERE email = $1",
+        )
+        .bind(email)
         .fetch_optional(&self.pool)
         .await
         .map_err(AppError::Database)
@@ -123,27 +131,24 @@ impl UserRepository for SqliteRepository {
     }
 
     async fn delete_user(&self, id: i64, admin_username: &str) -> Result<(), AppError> {
-        // Transacción implícita o lógica de negocio encapsulada
         let target = sqlx::query_scalar::<_, String>("SELECT username FROM users WHERE id = $1")
             .bind(id)
             .fetch_optional(&self.pool)
             .await?
             .unwrap_or("Fantasma".to_string());
+            
         sqlx::query("DELETE FROM users WHERE id = $1")
             .bind(id)
             .execute(&self.pool)
             .await?;
-        sqlx::query("INSERT INTO audit_logs (admin_username, action, target) VALUES ($1, 'DELETE_USER', $2)").bind(admin_username).bind(target).execute(&self.pool).await?;
+            
+        sqlx::query("INSERT INTO audit_logs (admin_username, action, target) VALUES ($1, 'DELETE_USER', $2)")
+            .bind(admin_username)
+            .bind(target)
+            .execute(&self.pool)
+            .await?;
+            
         Ok(())
-    }
-
-    async fn get_audit_logs(&self) -> Result<Vec<AuditLog>, AppError> {
-        sqlx::query_as::<_, AuditLog>(
-            "SELECT id, admin_username, action, target, timestamp FROM audit_logs ORDER BY id DESC",
-        )
-        .fetch_all(&self.pool)
-        .await
-        .map_err(AppError::Database)
     }
 
     async fn update_user(&self, id: i64, email: Option<&str>, role: Option<Role>) -> Result<User, AppError> {
@@ -202,93 +207,10 @@ impl UserRepository for SqliteRepository {
         .map_err(AppError::Database)
     }
 
-    // Refresh Tokens
-    async fn create_refresh_token(&self, user_id: i64, token: &str, expires_at: &str) -> Result<RefreshToken, AppError> {
-        sqlx::query_as::<_, RefreshToken>(
-            "INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3) RETURNING id, user_id, token, expires_at, created_at, used"
-        )
-        .bind(user_id)
-        .bind(token)
-        .bind(expires_at)
-        .fetch_one(&self.pool)
-        .await
-        .map_err(AppError::Database)
-    }
-
-    async fn get_refresh_token(&self, token: &str) -> Result<Option<RefreshToken>, AppError> {
-        sqlx::query_as::<_, RefreshToken>(
-            "SELECT id, user_id, token, expires_at, created_at, used FROM refresh_tokens WHERE token = $1"
-        )
-        .bind(token)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(AppError::Database)
-    }
-
-    async fn mark_refresh_token_used(&self, token_id: i64) -> Result<(), AppError> {
-        sqlx::query("UPDATE refresh_tokens SET used = TRUE WHERE id = $1")
-            .bind(token_id)
-            .execute(&self.pool)
-            .await
-            .map_err(AppError::Database)?;
-        Ok(())
-    }
-
-    async fn revoke_user_refresh_tokens(&self, user_id: i64) -> Result<(), AppError> {
-        sqlx::query("DELETE FROM refresh_tokens WHERE user_id = $1")
-            .bind(user_id)
-            .execute(&self.pool)
-            .await
-            .map_err(AppError::Database)?;
-        Ok(())
-    }
-
-    async fn get_by_email(&self, email: &str) -> Result<Option<User>, AppError> {
-        sqlx::query_as::<_, User>(
-            "SELECT id, username, email, password_hash, role, avatar_url, email_verified, created_at FROM users WHERE email = $1",
-        )
-        .bind(email)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(AppError::Database)
-    }
-
     async fn update_password(&self, id: i64, password_hash: &str) -> Result<(), AppError> {
         sqlx::query("UPDATE users SET password_hash = $1 WHERE id = $2")
             .bind(password_hash)
             .bind(id)
-            .execute(&self.pool)
-            .await
-            .map_err(AppError::Database)?;
-        Ok(())
-    }
-
-    // Password Reset Tokens
-    async fn create_password_reset_token(&self, user_id: i64, token: &str, expires_at: &str) -> Result<PasswordResetToken, AppError> {
-        sqlx::query_as::<_, PasswordResetToken>(
-            "INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ($1, $2, $3) RETURNING id, user_id, token, expires_at, created_at, used"
-        )
-        .bind(user_id)
-        .bind(token)
-        .bind(expires_at)
-        .fetch_one(&self.pool)
-        .await
-        .map_err(AppError::Database)
-    }
-
-    async fn get_password_reset_token(&self, token: &str) -> Result<Option<PasswordResetToken>, AppError> {
-        sqlx::query_as::<_, PasswordResetToken>(
-            "SELECT id, user_id, token, expires_at, created_at, used FROM password_reset_tokens WHERE token = $1"
-        )
-        .bind(token)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(AppError::Database)
-    }
-
-    async fn mark_password_reset_token_used(&self, token_id: i64) -> Result<(), AppError> {
-        sqlx::query("UPDATE password_reset_tokens SET used = TRUE WHERE id = $1")
-            .bind(token_id)
             .execute(&self.pool)
             .await
             .map_err(AppError::Database)?;
@@ -302,139 +224,5 @@ impl UserRepository for SqliteRepository {
             .await
             .map_err(AppError::Database)?;
         Ok(())
-    }
-
-    // Email Verification Tokens
-    async fn create_email_verification_token(&self, user_id: i64, token: &str, expires_at: &str) -> Result<EmailVerificationToken, AppError> {
-        sqlx::query_as::<_, EmailVerificationToken>(
-            "INSERT INTO email_verification_tokens (user_id, token, expires_at) VALUES ($1, $2, $3) RETURNING id, user_id, token, expires_at, created_at, used"
-        )
-        .bind(user_id)
-        .bind(token)
-        .bind(expires_at)
-        .fetch_one(&self.pool)
-        .await
-        .map_err(AppError::Database)
-    }
-
-    async fn get_email_verification_token(&self, token: &str) -> Result<Option<EmailVerificationToken>, AppError> {
-        sqlx::query_as::<_, EmailVerificationToken>(
-            "SELECT id, user_id, token, expires_at, created_at, used FROM email_verification_tokens WHERE token = $1"
-        )
-        .bind(token)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(AppError::Database)
-    }
-
-    async fn mark_email_verification_token_used(&self, token_id: i64) -> Result<(), AppError> {
-        sqlx::query("UPDATE email_verification_tokens SET used = TRUE WHERE id = $1")
-            .bind(token_id)
-            .execute(&self.pool)
-            .await
-            .map_err(AppError::Database)?;
-        Ok(())
-    }
-
-    // RBAC Implementation
-    async fn get_roles(&self) -> Result<Vec<DbRole>, AppError> {
-        sqlx::query_as::<_, DbRole>("SELECT id, name, description, created_at FROM roles ORDER BY id")
-            .fetch_all(&self.pool)
-            .await
-            .map_err(AppError::Database)
-    }
-
-    async fn get_permissions(&self) -> Result<Vec<Permission>, AppError> {
-        sqlx::query_as::<_, Permission>(
-            "SELECT id, name, description, created_at FROM permissions ORDER BY name"
-        )
-        .fetch_all(&self.pool)
-        .await
-        .map_err(AppError::Database)
-    }
-
-    async fn get_role_permissions(&self) -> Result<Vec<RolePermission>, AppError> {
-        sqlx::query_as::<_, RolePermission>("SELECT role_id, permission_id FROM role_permissions")
-            .fetch_all(&self.pool)
-            .await
-            .map_err(AppError::Database)
-    }
-
-    async fn create_role(&self, name: &str, description: Option<&str>, permissions: &[i64]) -> Result<DbRole, AppError> {
-        let mut tx = self.pool.begin().await.map_err(AppError::Database)?;
-
-        let role = sqlx::query_as::<_, DbRole>(
-            "INSERT INTO roles (name, description) VALUES ($1, $2) RETURNING id, name, description, created_at"
-        )
-        .bind(name)
-        .bind(description)
-        .fetch_one(&mut *tx)
-        .await
-        .map_err(|e| {
-            if let Some(db_err) = e.as_database_error() {
-                if db_err.kind() == ErrorKind::UniqueViolation {
-                    return AppError::Conflict("El nombre del rol ya existe".to_string());
-                }
-            }
-            AppError::Database(e)
-        })?;
-
-        for perm_id in permissions {
-            sqlx::query("INSERT INTO role_permissions (role_id, permission_id) VALUES ($1, $2)")
-                .bind(role.id)
-                .bind(perm_id)
-                .execute(&mut *tx)
-                .await
-                .map_err(AppError::Database)?;
-        }
-
-        tx.commit().await.map_err(AppError::Database)?;
-        Ok(role)
-    }
-
-    async fn update_role(&self, id: i64, name: Option<&str>, description: Option<&str>, permissions: Option<&[i64]>) -> Result<DbRole, AppError> {
-        let mut tx = self.pool.begin().await.map_err(AppError::Database)?;
-
-        if name.is_some() || description.is_some() {
-            sqlx::query("UPDATE roles SET name = COALESCE($1, name), description = COALESCE($2, description) WHERE id = $3")
-                .bind(name)
-                .bind(description)
-                .bind(id)
-                .execute(&mut *tx)
-                .await
-                .map_err(AppError::Database)?;
-        }
-
-        if let Some(perms) = permissions {
-            sqlx::query("DELETE FROM role_permissions WHERE role_id = $1").bind(id).execute(&mut *tx).await.map_err(AppError::Database)?;
-            for perm_id in perms {
-                sqlx::query("INSERT INTO role_permissions (role_id, permission_id) VALUES ($1, $2)").bind(id).bind(perm_id).execute(&mut *tx).await.map_err(AppError::Database)?;
-            }
-        }
-
-        let role = sqlx::query_as::<_, DbRole>("SELECT id, name, description, created_at FROM roles WHERE id = $1")
-            .bind(id)
-            .fetch_one(&mut *tx)
-            .await
-            .map_err(AppError::Database)?;
-
-        tx.commit().await.map_err(AppError::Database)?;
-        Ok(role)
-    }
-
-    async fn delete_role(&self, id: i64) -> Result<(), AppError> {
-        sqlx::query("DELETE FROM roles WHERE id = $1").bind(id).execute(&self.pool).await.map_err(AppError::Database)?;
-        Ok(())
-    }
-
-    async fn update_permission(&self, id: i64, description: &str) -> Result<Permission, AppError> {
-        sqlx::query_as::<_, Permission>(
-            "UPDATE permissions SET description = $1 WHERE id = $2 RETURNING id, name, description, created_at"
-        )
-        .bind(description)
-        .bind(id)
-        .fetch_one(&self.pool)
-        .await
-        .map_err(AppError::Database)
     }
 }
