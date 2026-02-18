@@ -1,0 +1,29 @@
+---
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/index.ts'
+import { EmptyState } from '../ui/empty-state'
+---
+
+<Card>
+  <CardHeader>
+    <CardTitle>Registro de Eventos</CardTitle>
+    <CardDescription>
+      Historial cronológico de todas las acciones realizadas en el sistema.
+    </CardDescription>
+  </CardHeader>
+  <CardContent>
+    <div id="audit-timeline" class="space-y-0">
+      <EmptyState 
+        title="Cargando..."
+        description="Cargando registros de auditoría..."
+        client:load
+      />
+    </div>
+    
+    <div id="pagination-controls" class="flex items-center justify-between pt-6 border-t mt-6">
+      <div class="text-sm text-muted-foreground">
+        Mostrando 0 eventos
+      </div>
+      <div></div>
+    </div>
+  </CardContent>
+</Card>

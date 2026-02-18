@@ -1,0 +1,123 @@
+---
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/index.ts'
+import Button from '../ui/button.astro'
+---
+
+<Card>
+  <CardHeader>
+    <CardTitle>Información del Perfil</CardTitle>
+    <CardDescription>
+      Actualiza tu información personal y datos de contacto.
+    </CardDescription>
+  </CardHeader>
+  <CardContent class="space-y-6">
+    <!-- Avatar -->
+    <div class="flex items-center gap-6">
+      <div class="relative">
+        <img 
+          id="profile-avatar-img"
+          src="" 
+          alt="Avatar" 
+          class="h-20 w-20 rounded-full object-cover border-2 border-border hidden"
+        />
+        <div id="profile-avatar-fallback" class="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
+          U
+        </div>
+        <div id="avatar-loading" class="absolute inset-0 hidden items-center justify-center bg-background/80 rounded-full">
+          <div class="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/gif" class="hidden" />
+        <Button variant="outline" size="sm" id="upload-avatar-btn">
+          Cambiar avatar
+        </Button>
+        <Button variant="ghost" size="sm" id="remove-avatar-btn" class="hidden text-destructive hover:text-destructive">
+          Eliminar avatar
+        </Button>
+        <p class="text-xs text-muted-foreground">
+          JPG, PNG o GIF. Máximo 2MB.
+        </p>
+      </div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="grid gap-4 md:grid-cols-2">
+      <div class="space-y-2">
+        <label class="text-sm font-medium">Nombre de usuario</label>
+        <input 
+          type="text" 
+          id="username-input"
+          class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+          disabled
+        />
+        <p class="text-xs text-muted-foreground">El nombre de usuario no se puede cambiar.</p>
+      </div>
+      
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <label class="text-sm font-medium">Email</label>
+          <span id="email-verification-status" class="hidden"></span>
+        </div>
+        <input 
+          type="email" 
+          id="email-input"
+          placeholder="tu@email.com"
+          class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+        />
+        <div id="verification-actions" class="hidden">
+          <button id="resend-verification-btn" class="text-xs text-primary hover:underline">
+            Reenviar email de verificación
+          </button>
+        </div>
+      </div>
+      
+      <div class="space-y-2">
+        <label class="text-sm font-medium">Rol</label>
+        <input 
+          type="text" 
+          id="role-input"
+          class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+          disabled
+        />
+        <p class="text-xs text-muted-foreground">Contacta a un administrador para cambiar tu rol.</p>
+      </div>
+      
+      <div class="space-y-2">
+        <label class="text-sm font-medium">ID de Usuario</label>
+        <input 
+          type="text" 
+          id="id-input"
+          class="h-10 w-full rounded-md border border-input bg-background px-3 font-mono text-xs"
+          disabled
+        />
+      </div>
+    </div>
+
+    <div class="flex justify-end">
+      <Button id="save-profile-btn">Guardar cambios</Button>
+    </div>
+  </CardContent>
+</Card>
+
+<Card class="mt-6 border-destructive/50">
+  <CardHeader>
+    <CardTitle class="text-destructive">Zona de Peligro</CardTitle>
+    <CardDescription>
+      Acciones irreversibles para tu cuenta.
+    </CardDescription>
+  </CardHeader>
+  <CardContent>
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="font-medium">Eliminar cuenta</p>
+        <p class="text-sm text-muted-foreground">
+          Elimina permanentemente tu cuenta y todos tus datos.
+        </p>
+      </div>
+      <Button variant="destructive" size="sm" id="delete-account-btn">
+        Eliminar cuenta
+      </Button>
+    </div>
+  </CardContent>
+</Card>

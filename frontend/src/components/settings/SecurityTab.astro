@@ -1,0 +1,82 @@
+---
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/index.ts'
+import Button from '../ui/button.astro'
+---
+
+<Card>
+  <CardHeader>
+    <CardTitle>Cambiar Contraseña</CardTitle>
+    <CardDescription>
+      Actualiza tu contraseña para mantener tu cuenta segura.
+    </CardDescription>
+  </CardHeader>
+  <CardContent class="space-y-6">
+    <div class="space-y-2">
+      <label class="text-sm font-medium">Contraseña actual</label>
+      <input 
+        type="password" 
+        id="current-password"
+        class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+      />
+    </div>
+    
+    <div class="space-y-2">
+      <label class="text-sm font-medium">Nueva contraseña</label>
+      <input 
+        type="password" 
+        id="new-password"
+        class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+      />
+      <p class="text-xs text-muted-foreground">
+        Mínimo 8 caracteres, incluyendo mayúsculas, minúsculas y números.
+      </p>
+    </div>
+    
+    <div class="space-y-2">
+      <label class="text-sm font-medium">Confirmar nueva contraseña</label>
+      <input 
+        type="password" 
+        id="confirm-password"
+        class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+      />
+    </div>
+
+    <div class="flex justify-end">
+      <Button id="change-password-btn">Cambiar contraseña</Button>
+    </div>
+  </CardContent>
+</Card>
+
+<Card class="mt-6">
+  <CardHeader>
+    <CardTitle>Sesiones Activas</CardTitle>
+    <CardDescription>
+      Gestiona tus sesiones activas en diferentes dispositivos.
+    </CardDescription>
+  </CardHeader>
+  <CardContent>
+    <div class="space-y-4">
+      <div class="flex items-center justify-between p-4 rounded-lg border">
+        <div class="flex items-center gap-4">
+          <div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+          </div>
+          <div>
+            <p class="font-medium">Este dispositivo</p>
+            <p class="text-sm text-muted-foreground">Último acceso: Ahora</p>
+          </div>
+        </div>
+        <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
+          Activa
+        </span>
+      </div>
+    </div>
+    
+    <div class="mt-4 pt-4 border-t">
+      <Button variant="outline" id="logout-all-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+        Cerrar todas las sesiones
+      </Button>
+    </div>
+  </CardContent>
+</Card>
