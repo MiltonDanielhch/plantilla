@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-GHOST-HUNTER - Cazador de Código Fantasma
+GHOST-INSPECTOR - Cazador de Código Fantasma
 Detecta dependencias instaladas pero no usadas en el proyecto.
 Trigger: Ejecución manual con `just ghost` o semanalmente
 """
@@ -18,6 +18,7 @@ from pathlib import Path
 
 
 def find_imports_python(root_dir):
+    """Encuentra todos los imports en archivos .py"""
     imports = set()
     for filepath in Path(root_dir).rglob("*.py"):
         if "__pycache__" in str(filepath) or "venv" in str(filepath):
@@ -37,6 +38,7 @@ def find_imports_python(root_dir):
 
 
 def find_imports_js(root_dir):
+    """Encuentra todos los imports en archivos .js/.ts"""
     imports = set()
     patterns = ["*.js", "*.jsx", "*.ts", "*.tsx"]
 
@@ -61,6 +63,7 @@ def find_imports_js(root_dir):
 
 
 def get_package_json_deps(root_dir):
+    """Lee las dependencias de package.json"""
     pkg_path = Path(root_dir) / "package.json"
     if pkg_path.exists():
         with open(pkg_path, "r") as f:
@@ -72,6 +75,7 @@ def get_package_json_deps(root_dir):
 
 
 def get_requirements_deps(root_dir):
+    """Lee las dependencias de requirements.txt"""
     req_path = Path(root_dir) / "requirements.txt"
     deps = set()
     if req_path.exists():
@@ -86,15 +90,19 @@ def get_requirements_deps(root_dir):
 
 
 def main():
-    print("👻 GHOST-HUNTER - Cazador de Código Fantasma")
+    print("[GHOST] GHOST-INSPECTOR - Cazador de Codigo Fantasma")
     print("=" * 50)
 
     root_dir = os.getcwd()
+
+    print("\n[INFO] Detectando tipo de proyecto...")
 
     py_imports = find_imports_python(root_dir)
     js_imports = find_imports_js(root_dir)
 
     all_imports = py_imports | js_imports
+    print(f"   [OK] Imports Python encontrados: {len(py_imports)}")
+    print(f"   [OK] Imports JS/TS encontrados: {len(js_imports)}")
 
     ghost_deps = set()
     project_type = None
@@ -102,23 +110,32 @@ def main():
     pkg_deps = get_package_json_deps(root_dir)
     if pkg_deps:
         project_type = "Node.js"
+        print(f"\n[INFO] Dependencias en package.json: {len(pkg_deps)}")
         ghost_deps = pkg_deps - all_imports
+        print(f"   [OK] Dependencias usadas en codigo: {len(pkg_deps - ghost_deps)}")
 
     req_deps = get_requirements_deps(root_dir)
     if req_deps:
         project_type = "Python"
+        print(f"\n[INFO] Dependencias en requirements.txt: {len(req_deps)}")
         ghost_deps = req_deps - all_imports
+        print(f"   [OK] Dependencias usadas en codigo: {len(req_deps - ghost_deps)}")
 
     if not project_type:
-        print("⚠️ No se detectó requirements.txt ni package.json")
+        print("\n[WARNING] No se detecto requirements.txt ni package.json")
         return 1
 
+    print("\n" + "=" * 50)
+
     if ghost_deps:
-        print(f"⚠️ Se detectaron {len(ghost_deps)} dependencia(s) NO USADA(S):\n")
+        print(f"[ALERTA] Se detectaron {len(ghost_deps)} dependencia(s) NO USADA(S):\n")
         for dep in sorted(ghost_deps):
-            print(f"   👻 {dep}")
+            print(f"   [GHOST] {dep}")
+        print(
+            "\n[INFO] Recomendacion: Ejecuta `pip uninstall` o `npm uninstall` para eliminar."
+        )
     else:
-        print("✅ ¡Todas las dependencias están siendo usadas! No hay fantasmas.")
+        print("[OK] Todas las dependencias estan siendo usadas! No hay fantasmas.")
 
     return 0 if not ghost_deps else 1
 

@@ -42,6 +42,7 @@ EXCLUDE_FILES = {".env", ".env.local", ".env.production"}
 
 
 def scan_file(filepath):
+    """Escanea un archivo en busca de secretos."""
     secrets_found = []
     try:
         with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
@@ -56,12 +57,13 @@ def scan_file(filepath):
                                 "content": line.strip()[:80],
                             }
                         )
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ Error leyendo {filepath}: {e}")
     return secrets_found
 
 
 def scan_directory(root_dir):
+    """Escanea recursivamente un directorio."""
     all_secrets = []
     root_path = Path(root_dir)
 
@@ -79,26 +81,28 @@ def scan_directory(root_dir):
 
 
 def main():
-    print("🛡️ SHIELD - Guardian de Secretos")
+    print("[SHIELD] Guardian de Secretos")
     print("=" * 50)
 
     project_root = os.getcwd()
-    print(f"📂 Escaneando: {project_root}\n")
+    print(f"[OK] Escaneando: {project_root}\n")
 
     secrets = scan_directory(project_root)
 
     if not secrets:
-        print("✅ ¡Ningún secreto detectado! Tu código está protegido.")
+        print("[OK] Ningun secreto detectado! Tu codigo esta protegido.")
         return 0
 
-    print(f"⚠️ ¡ALERTA! Se detectaron {len(secrets)} posible(s) secreto(s):\n")
+    print(f"[ALERTA] Se detectaron {len(secrets)} posible(s) secreto(s):\n")
     for i, secret in enumerate(secrets, 1):
         print(f"{i}. [{secret['type']}]")
-        print(f"   📄 {secret['file']}:{secret['line']}")
-        print(f"   💻 {secret['content']}")
+        print(f"   {secret['file']}:{secret['line']}")
+        print(f"   {secret['content']}")
         print()
 
-    print("🔴 RECOMENDACIÓN: Elimina o enmascara estos secretos antes de hacer commit.")
+    print(
+        "[ERROR] RECOMENDACION: Elimina o enmascara estos secretos antes de hacer commit."
+    )
     return 1
 
 
