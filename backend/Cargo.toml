@@ -18,6 +18,7 @@ sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite", "migrate
 # Observabilidad (Los Ojos)
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-appender = "0.2"
 
 # Utilidades (Herramientas)
 dotenv = "0.15"

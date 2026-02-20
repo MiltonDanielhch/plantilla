@@ -31,11 +31,17 @@ interface TokenResponse {
 class ApiClient {
   private refreshPromise: Promise<void> | null = null
 
+  private isClient(): boolean {
+    return typeof window !== 'undefined' && typeof localStorage !== 'undefined'
+  }
+
   private getRefreshToken(): string | null {
+    if (!this.isClient()) return null
     return localStorage.getItem('refresh_token')
   }
 
   private setRefreshToken(token: string | null) {
+    if (!this.isClient()) return
     if (token) {
       localStorage.setItem('refresh_token', token)
     } else {
@@ -58,7 +64,6 @@ class ApiClient {
       })
 
       if (!response.ok) {
-        // Refresh failed, clear tokens
         this.setRefreshToken(null)
         throw new ApiError('Session expired', 401)
       }
@@ -72,12 +77,10 @@ class ApiClient {
   }
 
   private async refreshAccessToken(): Promise<void> {
-    // If already refreshing, wait for that promise
     if (this.refreshPromise) {
       return this.refreshPromise
     }
 
-    // Create new refresh promise
     this.refreshPromise = this.doRefresh().finally(() => {
       this.refreshPromise = null
     })
@@ -101,15 +104,14 @@ class ApiClient {
 
     let response = await makeRequest()
     
-    // If unauthorized, try to refresh token
     if (response.status === 401) {
       try {
         await this.refreshAccessToken()
-        // Retry request with new token
         response = await makeRequest()
       } catch (refreshError) {
-        // Refresh failed, redirect to login
-        window.location.href = '/login/'
+        if (this.isClient()) {
+          window.location.href = '/login/'
+        }
         throw new ApiError('Session expired', 401)
       }
     }
@@ -125,14 +127,12 @@ class ApiClient {
     return response.json()
   }
 
-  // Auth
   async login(credentials: LoginRequest): Promise<TokenResponse> {
     const response = await this.request<TokenResponse>('/api/v1/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     })
     
-    // Guardar refresh token
     this.setRefreshToken(response.refresh_token)
     
     return response
@@ -140,27 +140,29 @@ class ApiClient {
 
   async logout() {
     await this.request<void>('/api/v1/logout', { method: 'POST' })
-    // Limpiar refresh token y cookies
     this.setRefreshToken(null)
-    document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    window.location.href = '/login';
+    if (this.isClient()) {
+      document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      window.location.href = '/login';
+    }
   }
 
   async logoutAll() {
     await this.request<void>('/api/v1/logout-all', { method: 'POST' })
     this.setRefreshToken(null)
-    document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    window.location.href = '/login';
+    if (this.isClient()) {
+      document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      window.location.href = '/login';
+    }
   }
 
   async getDashboard() {
     return this.request<{ message: string; user: User }>('/api/v1/dashboard')
   }
 
-  // Users
   async getUsers(params?: UserSearch, token?: string) {
     const query = new URLSearchParams()
-    if (params?.search) query.set('q', params.search) // Fix: Backend espera 'q', no 'search'
+    if (params?.search) query.set('q', params.search)
     if (params?.page) query.set('page', params.page.toString())
     if (params?.limit) query.set('limit', params.limit.toString())
     
@@ -175,17 +177,16 @@ class ApiClient {
       { headers }
     )
 
-    // Normalizar respuesta si el backend devuelve array plano
     if (Array.isArray(response)) {
         return {
             data: response,
             meta: {
-                total: response.length, // Temporal: backend no devuelve total real aún
+                total: response.length,
                 page: params?.page || 1,
                 limit: params?.limit || 10,
-                totalPages: 1 // Temporal
+                totalPages: 1
             }
-        } as any; // Cast for compatibility
+        } as any;
     }
 
     return response as PaginatedResponse<UserDetails>;
@@ -241,7 +242,6 @@ class ApiClient {
     })
   }
 
-  // RBAC
   async getRoles(token?: string) {
     const headers: Record<string, string> = {};
     if (token) {
@@ -293,7 +293,6 @@ class ApiClient {
     })
   }
 
-  // Audit
   async getAuditLogs(params?: { page?: number; limit?: number }, token?: string) {
     const query = new URLSearchParams()
     if (params?.page) query.set('page', params.page.toString())
@@ -323,7 +322,6 @@ class ApiClient {
     return response as PaginatedResponse<AuditLog>;
   }
 
-  // Stats (endpoint que necesitamos crear en backend)
   async getStats(token?: string) {
     const headers: Record<string, string> = {};
     if (token) {
@@ -332,8 +330,9 @@ class ApiClient {
     return this.request<StatsData>('/api/v1/stats', { headers })
   }
 
-  // Export CSV
   async exportUsers() {
+    if (!this.isClient()) throw new ApiError('Export only available in browser', 400)
+    
     const url = `${API_BASE_URL}/api/v1/users/export`
     const response = await fetch(url, {
       method: 'GET',
@@ -348,7 +347,6 @@ class ApiClient {
       )
     }
     
-    // Descargar archivo
     const blob = await response.blob()
     const downloadUrl = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -361,6 +359,8 @@ class ApiClient {
   }
 
   async exportAuditLogs() {
+    if (!this.isClient()) throw new ApiError('Export only available in browser', 400)
+    
     const url = `${API_BASE_URL}/api/v1/audit-logs/export`
     const response = await fetch(url, {
       method: 'GET',
@@ -375,7 +375,6 @@ class ApiClient {
       )
     }
     
-    // Descargar archivo
     const blob = await response.blob()
     const downloadUrl = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -387,8 +386,9 @@ class ApiClient {
     window.URL.revokeObjectURL(downloadUrl)
   }
 
-  // Avatar Upload
   async uploadAvatar(file: File): Promise<User> {
+    if (!this.isClient()) throw new ApiError('Upload only available in browser', 400)
+    
     const url = `${API_BASE_URL}/api/v1/users/avatar`
     const formData = new FormData()
     formData.append('avatar', file)
@@ -397,7 +397,6 @@ class ApiClient {
       method: 'POST',
       credentials: 'include',
       body: formData,
-      // No agregar Content-Type, el browser lo agrega automáticamente con boundary
     })
     
     if (!response.ok) {
@@ -411,7 +410,6 @@ class ApiClient {
     return response.json()
   }
 
-  // Password Reset
   async forgotPassword(email: string): Promise<{ message: string }> {
     return this.request<{ message: string }>('/api/v1/forgot-password', {
       method: 'POST',
@@ -426,7 +424,6 @@ class ApiClient {
     })
   }
 
-  // Email Verification
   async sendVerificationEmail(): Promise<{ message: string }> {
     return this.request<{ message: string }>('/api/v1/send-verification-email', {
       method: 'POST',

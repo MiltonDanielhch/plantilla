@@ -30,3 +30,19 @@ check:
 shield:
     Write-Host "🛡️ Escaneando secretos y API Keys..." -ForegroundColor Yellow
     python infra/scripts/shield.py
+
+# 📝 Iniciar con Logs (Backend + Frontend con logging a archivo)
+run-with-logs:
+    Write-Host "🚀 Iniciando Sintonía 3026 con logging..." -ForegroundColor Green
+    Write-Host "📁 Logs se guardarán en: logs/" -ForegroundColor Cyan
+    bash scripts/start-with-logs.sh
+
+# 📊 Ver logs en tiempo real
+logs-backend:
+    Get-Content logs/backend-(Get-Date -Format "yyyy-MM-dd").log -Wait
+
+logs-frontend:
+    Get-Content logs/frontend-(Get-Date -Format "yyyy-MM-dd").log -Wait
+
+logs-all:
+    Get-Content logs/sistema-(Get-Date -Format "yyyy-MM-dd").log -Wait

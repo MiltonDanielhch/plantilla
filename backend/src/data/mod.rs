@@ -8,7 +8,7 @@ use crate::core::models::user::{
     RefreshToken, Role, RolePermission, User
 };
 use crate::core::repository::{
-    AuditRepository, RbacRepository, Repository, TokenRepository, UserRepository
+    AuditRepository, RbacRepository, TokenRepository, UserRepository
 };
 use crate::data::{
     audit_repository::SqliteAuditRepository,

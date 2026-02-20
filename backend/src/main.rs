@@ -1,7 +1,8 @@
-use backend::{create_app, settings::Settings}; // Importamos Settings
+use backend::{create_app, settings::Settings};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use std::{net::SocketAddr, str::FromStr};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_appender::rolling::{RollingFileAppender, Rotation};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 #[tokio::main]
 async fn main() {
@@ -11,13 +12,33 @@ async fn main() {
     // 1.1 Cargar Configuración Jerárquica
     let settings = Settings::new().expect("❌ Fallo al cargar configuración (config/default.toml)");
 
-    // 2. Inicializar Observabilidad (Logs avanzados)
+    // 2. Crear directorio de logs si no existe
+    std::fs::create_dir_all("logs").expect("❌ No se pudo crear directorio logs/");
+
+    // 3. Configurar Logging a Archivo y Consola
+    // Appender con rotación diaria: logs/backend-YYYY-MM-DD.log
+    let file_appender = RollingFileAppender::new(Rotation::DAILY, "logs", "backend.log");
+    
+    // Layer para archivo (formato JSON)
+    let file_layer = tracing_subscriber::fmt::layer()
+        .json()
+        .with_writer(file_appender);
+    
+    // Layer para consola (formato legible)
+    let console_layer = tracing_subscriber::fmt::layer()
+        .with_target(false)
+        .with_thread_ids(false);
+    
+    // Inicializar subscriber con ambos layers
     tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(&settings.log_level))
-        .with(tracing_subscriber::fmt::layer().json())
+        .with(EnvFilter::new(&settings.log_level))
+        .with(file_layer)
+        .with(console_layer)
         .init();
 
-    // 3. Conexión a Base de Datos (Crear archivo si no existe)
+    tracing::info!("📝 Logs configurados: consola + archivo logs/backend-YYYY-MM-DD.log");
+
+    // 4. Conexión a Base de Datos
     let db_url = settings.database_url;
 
     let connection_options = SqliteConnectOptions::from_str(&db_url)
@@ -29,7 +50,7 @@ async fn main() {
         .await
         .expect("❌ Fallo al conectar a la Base de Datos");
 
-    // 3.1 Ejecutar Migraciones (Evolución de la DB)
+    // 4.1 Ejecutar Migraciones
     sqlx::migrate!("./migrations")
         .run(&pool)
         .await
@@ -37,14 +58,17 @@ async fn main() {
 
     tracing::info!("💾 Memoria conectada: {}", db_url);
 
-    // 4. Construir la aplicación e inyectar el pool
+    // 5. Construir la aplicación
     let app = create_app(pool);
 
-    // 5. Definir dirección y arrancar
+    // 6. Definir dirección y arrancar
     let addr = format!("{}:{}", settings.host, settings.port)
         .parse::<SocketAddr>()
         .expect("Dirección inválida");
+    
     tracing::info!("🚀 Sintonía 3026 Activada en {}", addr);
+    tracing::info!("📊 Stats disponibles en: http://{}/api/v1/stats", addr);
+    tracing::info!("📚 API Docs en: http://{}/swagger-ui", addr);
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(
@@ -56,7 +80,7 @@ async fn main() {
     .unwrap();
 }
 
-/// Escucha señales de apagado (Ctrl+C o SIGTERM) para cerrar conexiones limpiamente
+/// Escucha señales de apagado (Ctrl+C o SIGTERM)
 async fn shutdown_signal() {
     let ctrl_c = async {
         tokio::signal::ctrl_c()
