@@ -20,7 +20,14 @@ from datetime import datetime
 def run_cmd(cmd, capture=True):
     try:
         if capture:
-            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+            result = subprocess.run(
+                cmd,
+                shell=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            )
             return result.returncode, result.stdout, result.stderr
         else:
             return os.system(cmd), "", ""
@@ -81,6 +88,7 @@ def git_commit(message=None):
 
     print(f"[INFO] Commit: {message}")
     code, stdout, stderr = run_cmd(f'git commit -m "{message}"')
+    stderr = stderr or ""
 
     if code == 0:
         print("   [OK] Commit creado")

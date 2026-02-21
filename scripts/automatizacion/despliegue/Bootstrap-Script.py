@@ -11,6 +11,13 @@ import subprocess
 import platform
 from pathlib import Path
 
+# Fix for Windows UTF-8 encoding
+if sys.platform == "win32":
+    import codecs
+
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
+    sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
+
 SYSTEM = platform.system()
 
 
@@ -118,7 +125,7 @@ echo "✅ Commit aprobado"
 exit 0
 """
 
-    with open(pre_commit, "w") as f:
+    with open(pre_commit, "w", encoding="utf-8") as f:
         f.write(hook_content)
 
     os.chmod(pre_commit, 0o755)

@@ -8,7 +8,13 @@ Trigger: Ejecución manual con `just util-clean` o cron (diario)
 import os
 import shutil
 import sys
+import codecs
 from pathlib import Path
+
+# Fix for Windows UTF-8 encoding
+if sys.platform == "win32":
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
+    sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
 
 DRY_RUN = False
 

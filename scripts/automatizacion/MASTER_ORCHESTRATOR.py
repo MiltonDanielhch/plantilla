@@ -59,8 +59,10 @@ class MasterOrchestrator:
                 capture_output=True,
                 text=True,
                 timeout=300,
+                encoding="utf-8",
+                errors="replace",
             )
-            return result.returncode == 0, result.stdout
+            return result.returncode == 0, result.stdout or ""
         except Exception as e:
             return False, str(e)
 

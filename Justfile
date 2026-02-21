@@ -48,9 +48,9 @@ run-with-logs:
     bash scripts/start-with-logs.sh
 
 # ⚙️ Utilidades de Automatización
-util-clean:
+util-clean dry_run='--dry-run':
     Write-Host "🧹 Ejecutando Pruning-Script..." -ForegroundColor Cyan
-    python scripts/automatizacion/utilidades/Pruning-Script.py
+    python scripts/automatizacion/utilidades/Pruning-Script.py {{dry_run}}
 
 util-bulk:
     Write-Host "📦 Ejecutando Bulk-Renamer..." -ForegroundColor Cyan
@@ -62,9 +62,9 @@ monitor:
     python scripts/automatizacion/monitoreo/Watchdog.py
 
 # 🧩 The Creator - Generador de Módulos
-create:
+create name='':
     Write-Host "🧩 Creando nuevo módulo..." -ForegroundColor Cyan
-    python scripts/automatizacion/utilidades/The-Creator.py
+    python scripts/automatizacion/utilidades/The-Creator.py {{name}}
 
 # 📸 Snapshot - Backup Rápido
 snapshot:
@@ -241,9 +241,9 @@ cache-stats:
     python scripts/automatizacion/utilidades/cache-manager.py --stats
 
 # 🔔 Notification Center - Centro de Notificaciones
-notify:
+notify *args:
     Write-Host "🔔 Enviando notificación..." -ForegroundColor Cyan
-    python scripts/automatizacion/utilidades/notification-center.py
+    python scripts/automatizacion/utilidades/notification-center.py {{args}}
 
 # 🐳 Container Manager - Gestor de Docker
 containers:

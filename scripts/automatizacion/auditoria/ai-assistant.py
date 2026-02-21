@@ -36,10 +36,17 @@ def run_analyzer(name):
         return f"Archivo no encontrado: {path}"
 
     result = subprocess.run(
-        ["python", path], capture_output=True, text=True, timeout=60
+        ["python", path],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        encoding="utf-8",
+        errors="replace",
     )
 
-    return result.stdout + result.stderr
+    stdout = result.stdout or ""
+    stderr = result.stderr or ""
+    return stdout + stderr
 
 
 def analyze_all():
@@ -174,7 +181,7 @@ def main():
         report_path = Path("logs/ai_report.md")
         report_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(report_path, "w") as f:
+        with open(report_path, "w", encoding="utf-8") as f:
             f.write(report)
 
         print(f"\n[OK] Reporte guardado: {report_path}")

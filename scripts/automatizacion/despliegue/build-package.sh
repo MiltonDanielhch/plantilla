@@ -12,7 +12,7 @@ PROJECT_NAME="${PROJECT_NAME:-sintonia3026}"
 VERSION="${VERSION:-1.0.0}"
 DOCKER_REGISTRY="${DOCKER_REGISTRY:-}"
 BUILD_DIR="${BUILD_DIR:-dist}"
-LOG_FILE="${LOG_FILE:-logs/build.log"
+LOG_FILE="${LOG_FILE:-logs/build.log}"
 
 # Colores
 RED='\033[0;31m'
@@ -145,8 +145,8 @@ main() {
     docker_build
     package
     
-   ✅ BUILD COMPLETADO${NC}"
-    log "   log "${GREEN} Versión: $VERSION"
+    log "${GREEN}✅ BUILD COMPLETADO${NC}"
+    log "   Versión: $VERSION"
     log "   Directorio: $BUILD_DIR"
     
     return 0

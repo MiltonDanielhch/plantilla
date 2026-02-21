@@ -8,8 +8,14 @@ Trigger: Ejecución manual cuando necesitas convertir archivos
 import json
 import csv
 import sys
+import codecs
 import yaml
 from pathlib import Path
+
+# Fix for Windows UTF-8 encoding
+if sys.platform == "win32":
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
+    sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
 
 
 def csv_to_json(csv_path):

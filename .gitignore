@@ -60,3 +60,18 @@ frontend/playwright/.auth/
 # --- INFRAESTRUCTURA & DOCKER ---
 .docker/
 uploads/
+
+# --- SCRIPTS AUTOMATIZACIÓN (Logs y Outputs) ---
+logs/
+backups/
+snapshots/
+dist/
+*.log
+*.tmp
+
+# --- Documentación Generada ---
+docs/generated/
+
+# --- Módulos de Prueba ---
+test_modulo/
+AUDITORIA_MASTER.md

@@ -8,9 +8,15 @@ Trigger: Ejecución manual o integración con editor (Vim, VSCode)
 import os
 import json
 import sys
+import codecs
 import time
 from datetime import datetime, date
 from pathlib import Path
+
+# Fix for Windows UTF-8 encoding
+if sys.platform == "win32":
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
+    sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
 
 LOG_FILE = Path.home() / ".sintonía" / "deep_work_log.json"
 

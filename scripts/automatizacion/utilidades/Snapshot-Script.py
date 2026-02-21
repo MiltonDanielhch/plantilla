@@ -9,8 +9,14 @@ import os
 import sys
 import zipfile
 import shutil
+import codecs
 from datetime import datetime
 from pathlib import Path
+
+# Fix for Windows UTF-8 encoding
+if sys.platform == "win32":
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
+    sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
 
 EXCLUDE = {
     ".git",

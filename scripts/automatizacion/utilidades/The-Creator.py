@@ -7,8 +7,14 @@ Trigger: Ejecución manual cuando necesitas crear un nuevo componente
 
 import os
 import sys
+import codecs
 from pathlib import Path
 from datetime import datetime
+
+# Fix for Windows UTF-8 encoding
+if sys.platform == "win32":
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
+    sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
 
 TEMPLATE_PY = '''"""
 {MODULE_NAME} - Módulo de {MODULE_NAME}
@@ -140,7 +146,7 @@ def create_module(module_name, module_type=None, target_dir=None):
 
         content = content.replace("{module_name_lower}", module_name_snake)
 
-        with open(filepath, "w") as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             f.write(content)
 
         print(f"   ✅ {filename}")
