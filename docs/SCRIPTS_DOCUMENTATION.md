@@ -536,6 +536,137 @@ nombre:
 | `just containers` | Gestor Docker |
 | `just db-health` | Salud de BD |
 | `just config-backup` | Backup configs |
+| `just ai-analyze all` | Análisis completo IA |
+| `just ai-analyze-code` | Analizador de código |
+| `just ai-analyze-security` | Analizador de seguridad |
+| `just ai-analyze-performance` | Analizador de rendimiento |
+| `just ai-refactor` | Asesor de refactorización |
+| `just ai-heal` | Auto-reparador de código |
+| `just ai-learn` | Aprendizaje de patrones |
+| `just ai-interactive` | Asistente IA |
+
+---
+
+## 🤖 IA - Auto-mejora
+
+El Laboratorio Master 3026 incluye scripts de IA que analizan, aprenden y mejoran el código automáticamente.
+
+### Code Analyzer
+
+**¿Qué hace?** Escanea el código y da una puntuación de calidad (0-100). Detecta: métodos sin type hints, except vacío, prints en producción, comparaciones redundantes.
+
+**¿Para qué sirve?** Saber la calidad general del código con sugerencias específicas.
+
+**Trigger:** Manual
+
+```bash
+just ai-analyze-code
+```
+
+**Ejemplo de salida:**
+```
+[AI] CODE-ANALYZER
+[INFO] Archivos analizados: 45
+[INFO] Issues encontrados: 12
+[SCORE] Puntuación de calidad: 78/100
+[ALERT] 3 issues de prioridad ALTA
+```
+
+---
+
+### Refactor Advisor
+
+**¿Qué hace?** Analiza funciones largas (>30 líneas), código duplicado, anidación profunda y sugiere patrones mejores.
+
+**¿Para qué sirve?** Mejora la arquitectura del código automáticamente.
+
+**Trigger:** Manual
+
+```bash
+just ai-refactor
+```
+
+---
+
+### Performance Profiler
+
+**¿Qué hace?** Detecta código ineficiente: iteraciones innecesarias, concatenación de strings, uso de .keys() en Python.
+
+**¿Para qué sirve?** Optimizar el rendimiento antes de que sea un problema.
+
+**Trigger:** Manual
+
+```bash
+just ai-analyze-performance
+```
+
+---
+
+### Security Advisor
+
+**¿Qué hace?** Encuentra vulnerabilidades: SQL injection, XSS, código unsafe, passwords hardcoded.
+
+**¿Para qué sirve?** Seguridad proactiva del código.
+
+**Trigger:** Manual
+
+```bash
+just ai-analyze-security
+```
+
+---
+
+### Self-Healer
+
+**¿Qué hace?** Auto-repara errores comunes: except vacío, true→True, false→False, comparaciones incorrectas.
+
+**¿Para qué sirve?** Reparación automática de errores triviales.
+
+**Trigger:** Manual
+
+```bash
+just ai-heal
+```
+
+**Nota:** Crea archivos .bak de respaldo antes de modificar.
+
+---
+
+### Learning Logger
+
+**¿Qué hace?** Aprende de tus patrones: imports más usados, funciones más comunes, errores frecuentes, estilo de commits.
+
+**¿Para qué sirve?** Personalizar sugerencias basadas en tu estilo.
+
+**Trigger:** Análisis automático o manual
+
+```bash
+just ai-learn              # Ejecutar aprendizaje
+just ai-learn-dashboard  # Ver dashboard
+```
+
+---
+
+### AI Assistant
+
+**¿Qué hace?** Combina todos los analizadores en un asistente conversacional. Puede ejecutar análisis específicos o completos.
+
+**¿Para qué sirve?** Interfaz unificada para todos los análisis de IA.
+
+**Trigger:** Manual
+
+```bash
+just ai-interactive       # Modo interactivo
+just ai-analyze all     # Análisis completo
+just ai-report          # Generar reporte
+```
+
+**En modo interactivo:**
+```
+🤖 > analyze security
+🤖 > refactor
+🤖 > help
+```
 
 ---
 
@@ -561,4 +692,5 @@ just orchestrator-deploy
 ---
 
 *Documento generado por Laboratorio Master 3026*
-*Actualizado: 2026-02-19*
+*Actualizado: 2026-02-20*
+*75+ scripts de automatización + 7 scripts de IA*

@@ -98,6 +98,17 @@ scripts/automatizacion/
 | Log Analyzer | Resume errores en logs | Diario |
 | Deep Work Logger | Registra tiempo de trabajo por archivo | Sesión activa |
 
+### IA - Auto-mejora
+| Script | Función | Trigger |
+|--------|---------|---------|
+| Code Analyzer | Analiza código y sugiere mejoras | Manual |
+| Refactor Advisor | Sugiere refactorizaciones | Manual |
+| Performance Profiler | Detecta código ineficiente | Manual |
+| Security Advisor | Analiza vulnerabilidades | Manual |
+| Self-Healer | Auto-repara errores comunes | Manual |
+| Learning Logger | Aprende de patrones del usuario | Análisis automático |
+| AI Assistant | Asistente conversacional IA | Manual |
+
 ### Orquestación
 | Script | Función | Trigger |
 |--------|---------|---------|

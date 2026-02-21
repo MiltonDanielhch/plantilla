@@ -272,6 +272,41 @@ config-backup:
     Write-Host "📋 Respaldando configuraciones..." -ForegroundColor Cyan
     bash scripts/automatizacion/utilidades/config-backup.sh
 
+# 🤖 IA - Analizadores Automáticos
+ai-analyze:
+    Write-Host "🤖 Ejecutando análisis IA..." -ForegroundColor Magenta
+    python scripts/automatizacion/auditoria/ai-assistant.py --analyze
+
+ai-analyze-code:
+    python scripts/automatizacion/auditoria/code-analyzer.py
+
+ai-analyze-security:
+    python scripts/automatizacion/seguridad/security-advisor.py
+
+ai-analyze-performance:
+    python scripts/automatizacion/auditoria/performance-profiler.py
+
+ai-refactor:
+    python scripts/automatizacion/auditoria/refactor-advisor.py
+
+ai-heal:
+    Write-Host "🤖 Ejecutando auto-reparación..." -ForegroundColor Magenta
+    python scripts/automatizacion/utilidades/self-healer.py
+
+ai-learn:
+    Write-Host "🤖 Aprendiendo de patrones..." -ForegroundColor Magenta
+    python scripts/automatizacion/utilidades/learning-logger.py --learn
+
+ai-learn-dashboard:
+    python scripts/automatizacion/utilidades/learning-logger.py --dashboard
+
+ai-report:
+    Write-Host "🤖 Generando reporte IA..." -ForegroundColor Magenta
+    python scripts/automatizacion/auditoria/ai-assistant.py --report
+
+ai-interactive:
+    python scripts/automatizacion/auditoria/ai-assistant.py --interactive
+
 # 📊 Ver logs en tiempo real
 logs-backend:
     Get-Content logs/backend-(Get-Date -Format "yyyy-MM-dd").log -Wait
